@@ -75,9 +75,11 @@ def load_confounds(confounds,scrubbing):
     if(scrubbing == True):
         scrub_paramters = confounds[['scrub']]
         scrub_confounds = scrub_encode(scrub_paramters)
+        confounds_light = pd.concat([motion_confounds,avgs_confound,scrub_confounds], axis=1)
 
+    else:
+        confounds_light = pd.concat([motion_confounds,avgs_confound], axis=1)
 
-    confounds_light = pd.concat([motion_confounds,avgs_confound,scrub_confounds], axis=1)
 
     return confounds_light
 
