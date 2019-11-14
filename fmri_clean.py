@@ -11,7 +11,8 @@ from nilearn import datasets
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-def scrub(img_data,confounds_file):
+
+def remove_frames(img_data,confounds_file):
 
         #Load the confound file
         vols_to_scrub = np.array(pd.read_csv(confounds_file,sep='\t')['scrub'].values)
@@ -21,51 +22,94 @@ def scrub(img_data,confounds_file):
         tseries_scrubbed = np.delete(img_data,indices_vols_to_scrub,3)
 
         print(len(indices_vols_to_scrub)," volumes are being scrubbed")
+
         return tseries_scrubbed
 
 
 
-def clean_nii(fmri_path,output,scrubbing,n_conf=0.9):
-    # n_conf : int or float in ]0;1[, if int : number of components
-    #          from the pca of the confounds to use,
-    #          -1 to use all confounds, 0 to use none.
-    #          Float between 0 and 1 to use the number
-    #          of components that explain this proportion 
-    #          of the variance
+def scrub_encode(scrub_paramters):
 
-    img_4d = nb.load(fmri_path)
-    confounds_file = fmri_path.replace(".nii.gz", "_confounds.tsv.gz")
+    frames = 0
+    scrub_vol = []
 
-    img_data = img_4d.get_data().astype(np.float32)
+    for vol in scrub_paramters.values:
+        if vol == 1:
+            scrub_vol_str = "scrub_vol"+str(frames)
+            scrub_vol.append(scrub_vol_str)
+        else:
+            scrub_vol.append(0)
+        frames+=1
+
+    scrub_confounds = pd.get_dummies(scrub_vol,drop_first= False)
+
+    scrub_confounds.drop(columns = 0 ,inplace=True)
+
+    return scrub_confounds
 
 
-    #Scrub Image
+def pca_motion(motion_parameters):
+
+    pca = PCA(n_components=0.95)
+    confounds = pca.fit_transform(motion_parameters.values)
+
+    motion_confounds = pd.DataFrame(confounds)
+
+    motion_confounds.columns = ["motion_pca_"+str(col+1) for col in motion_confounds.columns]
+
+    return motion_confounds
+
+
+def load_confounds(confounds,scrubbing):
+
+    if not isinstance(confounds, pd.DataFrame):
+        confounds = pd.read_csv(confounds ,delimiter='\t',encoding='utf-8')
+
+    avgs_confound = confounds[['wm_avg', 'vent_avg']]
+
+    #Run PCA on motion parameters
+    motion_parameters = confounds[['motion_tx', 'motion_ty', 'motion_tz', 'motion_rx', 'motion_ry','motion_rz']]
+    motion_confounds = pca_motion(motion_parameters)
+
+
+    #Get column vectors from scrub labels
     if(scrubbing == True):
-        img_data = scrub(img_data,confounds_file)
+        scrub_paramters = confounds[['scrub']]
+        scrub_confounds = scrub_encode(scrub_paramters)
 
-    nii_img = nb.Nifti1Image(img_data, img_4d.get_affine(), img_4d.get_header())
 
-     #Load Mask
+    confounds_light = pd.concat([motion_confounds,avgs_confound,scrub_confounds], axis=1)
+
+    return confounds_light
+
+
+
+def clean_nii(fmri_path,output,scrubbing):
+
+    #Generate confounds
+    confounds_file = fmri_path.replace(".nii.gz", "_confounds.tsv.gz")
+    confounds_light = load_confounds(confounds_file,scrubbing)
+
+    #Load Mask
     parcellations = datasets.fetch_atlas_basc_multiscale_2015(version='sym')
     networks_122 = parcellations['scale122']
     masker = NiftiLabelsMasker(labels_img=networks_122, standardize=True, memory='nilearn_cache')
 
-    #Regress Confounds
-    confounds = None
-    if n_conf != 0:
-        confounds = pd.read_csv(confounds_file ,delimiter='\t',encoding='utf-8')
-        if n_conf != -1:
-            pca = PCA(n_components=n_conf)
-            confounds = pca.fit_transform(confounds)
-    img_data_regressed = masker.fit_transform(nii_img, confounds=confounds)
+    #clean nifti
+    img_data_regressed = masker.fit_transform(fmri_path, confounds=confounds_light.values)
+
+    #Save file
+    img_4d = nb.load(fmri_path)
     nii_img = nb.Nifti1Image(img_data_regressed, img_4d.get_affine(), img_4d.get_header())
 
     #Save Nifti image
-    fmri_path_out = str(output)+"/"+fmri_path.split("/")[-1].split(".nii.gz")[0]+"_scrubbed.nii.gz"
+    fmri_path_out = str(output)+"/"+fmri_path.split("/")[-1].split(".nii.gz")[0]+"_clean.nii.gz"
     print("Saving file:",fmri_path_out.split("/")[-1], "\n")
     nb.save(nii_img, fmri_path_out)
 
+    confounds_light.to_csv(str(output)+"/confounds_light.csv",index=False)
+
     return None
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -73,7 +117,7 @@ if __name__ == "__main__":
                         help="resmaple folder from NIAK output directory")
     parser.add_argument("output_dir", type=str,
                         help="output directory for scrubbed data")
-    parser.add_argument("--scrub", type=bool, default=False,
+    parser.add_argument("--scrub", type=bool, default=True,
                         help="If set to True, volumes will be scrubbed. Default is False.")
     parser.add_argument("--n_conf", type=float, default=0.9,
                         help="Number of components to use from confounds if int, if -1 all\
