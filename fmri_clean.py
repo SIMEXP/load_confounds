@@ -47,8 +47,8 @@ def scrub_encode(scrub_paramters):
     return scrub_confounds
 
 
-def pca_motion(motion_parameters, n_components=0.95):
-
+def _pca_motion(motion_parameters, n_components=0.95):
+    """Reduce the motion paramaters using PCA."""
     pca = PCA(n_components=n_components)
     confounds = pca.fit_transform(motion_parameters.values)
 
@@ -72,7 +72,7 @@ def load_confounds(confounds, scrubbing, n_components=0.95):
     motion_parameters = confounds[
         ["motion_tx", "motion_ty", "motion_tz", "motion_rx", "motion_ry", "motion_rz"]
     ]
-    motion_confounds = pca_motion(motion_parameters, n_components)
+    motion_confounds = _pca_motion(motion_parameters, n_components)
 
     # Get column vectors from scrub labels
     if scrubbing == True:
