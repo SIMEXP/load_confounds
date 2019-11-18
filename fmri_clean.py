@@ -61,31 +61,35 @@ def _pca_motion(motion_parameters, n_components=0.95):
     return motion_confounds
 
 
-def load_confounds(confounds, scrubbing, n_components=0.95):
+def load_confounds(confounds, strategy='minimal', scrubbing, n_components=0.95):
+
+    if isinstance(strategy, basestring):
+        if strategy == "minimal":
+            strategy = ["motion", "avg", "slow_drift"]
 
     if not isinstance(confounds, pd.DataFrame):
         confounds = pd.read_csv(confounds, delimiter="\t", encoding="utf-8")
 
-    avgs_confound = confounds[["wm_avg", "vent_avg"]]
+    confounds_dict = dict()
+
+    confounds_dict["avg"] = confounds[["wm_avg", "vent_avg"]]
 
     # Run PCA on motion parameters
     motion_parameters = confounds[
         ["motion_tx", "motion_ty", "motion_tz", "motion_rx", "motion_ry", "motion_rz"]
     ]
-    motion_confounds = _pca_motion(motion_parameters, n_components)
+    confounds_dict["motion"] = _pca_motion(motion_parameters, n_components)
+
+    # Extract scrubbing parameters
+    scrub_paramters = confounds[["scrub"]]
+    confounds["scrub"] = scrub_encode(scrub_paramters)
 
     # Get column vectors from scrub labels
-    if scrubbing == True:
-        scrub_paramters = confounds[["scrub"]]
-        scrub_confounds = scrub_encode(scrub_paramters)
-        confounds_light = pd.concat(
-            [motion_confounds, avgs_confound, scrub_confounds], axis=1
-        )
+    confounds_full = pd.DataFrame()
+    for type in strategy:
+        confounds_full = pd.concat(confounds_full, confounds_dict[type], axis=1)
 
-    else:
-        confounds_light = pd.concat([motion_confounds, avgs_confound], axis=1)
-
-    return confounds_light
+    return confounds_full
 
 
 def clean_nii(fmri_path, output, scrubbing):
