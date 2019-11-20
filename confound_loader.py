@@ -138,7 +138,7 @@ if __name__ == "__main__":
     )
 
     confounds_test = load_confounds(
-        tsv_file, strategy=["minimal"], model="full", n_components=0
+        tsv_file, strategy=["minimal"], model="6params", n_components=0.95
     )
     print(confounds_test)
     confounds_test.to_csv("csv_output/confounds_test.csv", index=False)
