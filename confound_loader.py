@@ -67,8 +67,7 @@ def _pca_motion(
 
                 The number of compnents for PCA
 
-                -if ``0 < n_components < 1``, then number of components is the amount of variance that needs to beexplained as a percentage.
-                -if n_components == 0, the raw motion parameters are returned
+                -if ``0 < n_components < 1``, n_components is percentage that represents the amount of variance that needs to be explained,            -if n_components == 0, the raw motion parameters are returned
                 -if n_components >1, the number of components are returned
 
 
@@ -77,9 +76,9 @@ def _pca_motion(
                 Temporal and quadratic terms for head motion estimates 
 
                 -6params: standard motion parameters (6)
-                -square: standard  motion paramters + quadratic terms (12)
+                -square: standard motion paramters + quadratic terms (12)
                 -derivatives: standard motion paramters + derivatives (12)
-                -full: standard standard motion paramteres + derivatives + quadratic terms + squared derivatives 
+                -full: standard motion paramteres + derivatives + quadratic terms + squared derivatives 
 
 
     """
@@ -138,7 +137,7 @@ def load_confounds(
                     
                        The strategy used to select a subset of the confounds from fmriprep
 
-                       -minimal: basic strategy that uses motion, high pass filter, csf and white matter paramters
+                       -minimal: basic strategy that uses motion, high pass filter, csf and white matter parameters
                     
                        -motion: ["trans_x", "trans_y", "trans_z", "rot_x", "rot_y", "rot_z"]
                        -high_pass_filter = ["cosine00", "cosine01", ..]
