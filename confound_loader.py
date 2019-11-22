@@ -36,9 +36,7 @@ high_pass_filter = [
     "cosine05",
     "cosine06",
 ]
-
 matter = ["csf", "white_matter"]
-
 confound_dict = {
     "motion": motion,
     "matter": matter,
@@ -48,74 +46,72 @@ confound_dict = {
 }
 
 
+def _add_motion_model(motion_confounds, motion_model):
+    """
+    Add the motion model confounds to the list of motion confounds.
+
+    Parameters
+        motion_confounds: Set of strings
+
+                Set of the motion confounds
+
+        motion_model: string
+
+                Name of the motion model to use
+    """
+    if motion_model != "full":
+        motion_confounds |= {motion_models[motion_model].format(mot) for mot in set(motion) & set(motion_confounds)}
+    else:
+        motion_confounds |= {motion_models[model].format(mot) for mot in set(motion) & set(motion_confounds) for model in motion_models.keys()}
+
+    return motion_confounds
+
+
 def _pca_motion(
-    confounds_out, confounds_raw, n_components=0.95, motion_model="6params"
+    confounds_out, confounds_raw, motion_confounds, n_components=0.95, motion_model="6params"
 ):
     """
     Reduce the motion paramaters using PCA.
 
-    Parameters 
+    Parameters
         confounds_out: Pandas Dataframe
 
                 Confounds that will be loaded
-        
+
         confounds_raw: Pandas Dataframe
 
                 The raw confounds from fmriprep
+
+        motion_confounds: List of strings
+
+                Names of the motion confounds to do the PCA on
 
         n_compenents: int,float
 
                 The number of compnents for PCA
 
-                -if ``0 < n_components < 1``, n_components is percentage that represents the amount of variance that needs to be explained,            -if n_components == 0, the raw motion parameters are returned
+                -if ``0 < n_components < 1``, n_components is percentage that represents the amount of variance that needs to be explained
+                -if n_components == 0, the raw motion parameters are returned
                 -if n_components >1, the number of components are returned
-
-
-        motion_model: String
-
-                Temporal and quadratic terms for head motion estimates 
-
-                -6params: standard motion parameters (6)
-                -square: standard motion paramters + quadratic terms (12)
-                -derivatives: standard motion paramters + derivatives (12)
-                -full: standard motion paramteres + derivatives + quadratic terms + squared derivatives 
-
 
     """
 
-    # Get columns to use based on motion model
-    if motion_model != "full":
-        motion_columns = list(
-            set(motion + [motion_models[motion_model].format(col) for col in motion])
-        )
-    else:
-        motion_columns = [
-            motion_models[model].format(col)
-            for col in motion
-            for model in motion_models.keys()
-        ]
-
     # Run PCA to reduce parameters
-    motion_parameters_raw = confounds_raw[motion_columns]
+    motion_parameters_raw = confounds_raw[motion_confounds]
 
     if n_components == 0:
-        motion_confounds = motion_parameters_raw
+        confounds_pca = motion_parameters_raw
 
     else:
         motion_parameters_raw = motion_parameters_raw.dropna()
         pca = PCA(n_components=n_components)
-        confounds_pca = pca.fit_transform(motion_parameters_raw.values)
-        motion_confounds = pd.DataFrame(confounds_pca)
-        motion_confounds.columns = [
-            "motion_pca_" + str(col + 1) for col in motion_confounds.columns
+        confounds_pca = pd.DataFrame(pca.fit_transform(motion_parameters_raw.values))
+        confounds_pca.columns = [
+            "motion_pca_" + str(col + 1) for col in confounds_pca.columns
         ]
 
-    
-
-    confounds_out.drop(columns=motion, inplace=True)
-
     # Add motion parameters to confounds dataframe
-    confounds_out = pd.concat((confounds_out, motion_confounds), axis=1)
+    confounds_out = pd.concat((confounds_out, confounds_pca), axis=1)
 
     return confounds_out
 
@@ -128,21 +124,31 @@ def load_confounds(
 
     Parameters
 
-        confounds_raw: Pandas Dataframe
-                    
+        confounds_raw: Pandas Dataframe or path to tsv file
+
                        Raw confounds from fmriprep
 
 
-        strategy: A list of strings 
-                    
-                       The strategy used to select a subset of the confounds from fmriprep
+        strategy: List of strings
+
+                       The strategy used to select a subset of the confounds from fmriprep: each string can be
+                       either the name of one of the following subset of confounds or the name of a confound to add.
 
                        -minimal: basic strategy that uses motion, high pass filter, csf and white matter parameters
-                    
                        -motion: ["trans_x", "trans_y", "trans_z", "rot_x", "rot_y", "rot_z"]
                        -high_pass_filter = ["cosine00", "cosine01", ..]
                        -matter: ["csf", "white_matter"]
                        -compcor: ["t_comp_cor_00","t_comp_cor_01",..]
+
+
+        motion_model: String
+
+                Temporal and quadratic terms for head motion estimates
+
+                -6params: standard motion parameters (6)
+                -square: standard motion paramters + quadratic terms (12)
+                -derivatives: standard motion paramters + derivatives (12)
+                -full: standard motion paramteres + derivatives + quadratic terms + squared derivatives (24)
     """
 
     # Convert tsv file to pandas dataframe
@@ -150,26 +156,26 @@ def load_confounds(
         confounds_raw = pd.read_csv(confounds_raw, delimiter="\t", encoding="utf-8")
 
     # Add chosen confounds based on strategy to dataframe
+    confounds_names = set()
     confounds_out = pd.DataFrame()
+
     for strat in strategy:
-
         if strat in confound_dict.keys():
-
-            confounds_out = pd.concat(
-                (confounds_out, confounds_raw[confound_dict[strat]]), axis=1
-            )
+            confounds_names |= set(confound_dict[strat])
         else:
-            confounds_out = pd.concat((confounds_out, confounds_raw[strat]), axis=1)
+            confounds_names.add(strat)
 
-    # Throw an error if strategy has duplicate confounds
-    if len(confounds_out.columns) != len(set(confounds_out.columns)):
-        raise ValueError("Your strategy has duplicate confounds.")
+    # isolate motion confounds and augment them according to the motion model
+    motion_confounds = {confound for confound in confounds_names if confound.split("_")[0] in ["trans", "rot"]}
+    motion_confounds = _add_motion_model(motion_confounds, motion_model)
 
-    # Add motion parameters 
-    if set(motion) & set(confounds_out.columns):
-        confounds_out = _pca_motion(
-            confounds_out, confounds_raw, n_components, motion_model
-        )
+    # load non motion confounds
+    non_motion_confounds = confounds_names - motion_confounds
+    confounds_out = pd.concat((confounds_out, confounds_raw[list(non_motion_confounds)]), axis=1)
+
+    # Apply PCA on motion confounds
+    if motion_confounds:
+        confounds_out = _pca_motion(confounds_out, confounds_raw, list(motion_confounds), n_components)
 
     return confounds_out
 
