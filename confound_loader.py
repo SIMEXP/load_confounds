@@ -60,15 +60,26 @@ def _add_motion_model(motion_confounds, motion_model):
                 Name of the motion model to use
     """
     if motion_model != "full":
-        motion_confounds |= {motion_models[motion_model].format(mot) for mot in set(motion) & set(motion_confounds)}
+        motion_confounds |= {
+            motion_models[motion_model].format(mot)
+            for mot in set(motion) & set(motion_confounds)
+        }
     else:
-        motion_confounds |= {motion_models[model].format(mot) for mot in set(motion) & set(motion_confounds) for model in motion_models.keys()}
+        motion_confounds |= {
+            motion_models[model].format(mot)
+            for mot in set(motion) & set(motion_confounds)
+            for model in motion_models.keys()
+        }
 
     return motion_confounds
 
 
 def _pca_motion(
-    confounds_out, confounds_raw, motion_confounds, n_components=0.95, motion_model="6params"
+    confounds_out,
+    confounds_raw,
+    motion_confounds,
+    n_components=0.95,
+    motion_model="6params",
 ):
     """
     Reduce the motion paramaters using PCA.
@@ -166,16 +177,24 @@ def load_confounds(
             confounds_names.add(strat)
 
     # isolate motion confounds and augment them according to the motion model
-    motion_confounds = {confound for confound in confounds_names if confound.split("_")[0] in ["trans", "rot"]}
+    motion_confounds = {
+        confound
+        for confound in confounds_names
+        if confound.split("_")[0] in ["trans", "rot"]
+    }
     motion_confounds = _add_motion_model(motion_confounds, motion_model)
 
     # load non motion confounds
     non_motion_confounds = confounds_names - motion_confounds
-    confounds_out = pd.concat((confounds_out, confounds_raw[list(non_motion_confounds)]), axis=1)
+    confounds_out = pd.concat(
+        (confounds_out, confounds_raw[list(non_motion_confounds)]), axis=1
+    )
 
     # Apply PCA on motion confounds
     if motion_confounds:
-        confounds_out = _pca_motion(confounds_out, confounds_raw, list(motion_confounds), n_components)
+        confounds_out = _pca_motion(
+            confounds_out, confounds_raw, list(motion_confounds), n_components
+        )
 
     return confounds_out
 
