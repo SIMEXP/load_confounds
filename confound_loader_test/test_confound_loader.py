@@ -23,6 +23,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
                 "motion_pca_1",
             ],
         ),
@@ -41,6 +42,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
             ],
         ),
         (
@@ -88,6 +90,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
             ],
         ),
         (
@@ -115,6 +118,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
                 "csf",
                 "white_matter",
             ],
@@ -153,6 +157,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
                 "motion_pca_1",
             ],
         ),
@@ -171,6 +176,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
                 "motion_pca_1",
             ],
         ),
@@ -212,6 +218,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
                 "trans_x",
                 "trans_y",
                 "trans_z",
@@ -241,6 +248,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
             ],
         ),
         (
@@ -288,6 +296,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
             ],
         ),
         (
@@ -315,6 +324,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
                 "csf",
                 "white_matter",
             ],
@@ -353,6 +363,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
                 "trans_x",
                 "trans_y",
                 "trans_z",
@@ -376,6 +387,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
                 "trans_x",
                 "trans_y",
                 "trans_z",
@@ -427,6 +439,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
                 "motion_pca_1",
             ],
         ),
@@ -445,6 +458,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
             ],
         ),
         (
@@ -492,6 +506,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
             ],
         ),
         (
@@ -519,6 +534,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
                 "csf",
                 "white_matter",
             ],
@@ -557,6 +573,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
                 "motion_pca_1",
             ],
         ),
@@ -575,6 +592,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
                 "motion_pca_1",
             ],
         ),
@@ -616,6 +634,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
                 "motion_pca_1",
             ],
         ),
@@ -634,6 +653,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
             ],
         ),
         (
@@ -681,6 +701,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
             ],
         ),
         (
@@ -708,6 +729,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
                 "csf",
                 "white_matter",
             ],
@@ -746,6 +768,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
                 "motion_pca_1",
             ],
         ),
@@ -764,6 +787,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
                 "motion_pca_1",
             ],
         ),
@@ -805,6 +829,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
                 "motion_pca_1",
             ],
         ),
@@ -823,6 +848,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
             ],
         ),
         (
@@ -870,6 +896,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
             ],
         ),
         (
@@ -897,6 +924,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
                 "csf",
                 "white_matter",
             ],
@@ -935,6 +963,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
                 "motion_pca_1",
             ],
         ),
@@ -953,6 +982,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
                 "motion_pca_1",
             ],
         ),
@@ -994,6 +1024,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
                 "trans_z",
                 "trans_y_power2",
                 "trans_x",
@@ -1042,6 +1073,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
             ],
         ),
         (
@@ -1089,6 +1121,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
             ],
         ),
         (
@@ -1116,6 +1149,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
                 "csf",
                 "white_matter",
             ],
@@ -1154,6 +1188,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
                 "trans_z",
                 "rot_y",
                 "rot_x",
@@ -1183,6 +1218,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
                 "trans_z",
                 "trans_y_power2",
                 "trans_x",
@@ -1246,6 +1282,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
                 "motion_pca_1",
             ],
         ),
@@ -1264,6 +1301,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
             ],
         ),
         (
@@ -1311,6 +1349,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
             ],
         ),
         (
@@ -1338,6 +1377,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
                 "csf",
                 "white_matter",
             ],
@@ -1376,6 +1416,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
                 "motion_pca_1",
             ],
         ),
@@ -1394,6 +1435,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
                 "motion_pca_1",
             ],
         ),
@@ -1435,6 +1477,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
                 "motion_pca_1",
             ],
         ),
@@ -1453,6 +1496,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
             ],
         ),
         (
@@ -1500,6 +1544,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
             ],
         ),
         (
@@ -1527,6 +1572,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
                 "csf",
                 "white_matter",
             ],
@@ -1565,6 +1611,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
                 "motion_pca_1",
             ],
         ),
@@ -1583,6 +1630,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
                 "motion_pca_1",
             ],
         ),
@@ -1624,6 +1672,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
                 "motion_pca_1",
                 "motion_pca_2",
             ],
@@ -1655,6 +1704,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
             ],
         ),
         (
@@ -1702,6 +1752,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
             ],
         ),
         (
@@ -1729,6 +1780,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
                 "csf",
                 "white_matter",
             ],
@@ -1767,6 +1819,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
                 "motion_pca_1",
                 "motion_pca_2",
             ],
@@ -1786,6 +1839,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
                 "motion_pca_1",
                 "motion_pca_2",
             ],
@@ -1829,6 +1883,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
                 "trans_y_derivative1",
                 "rot_x",
                 "trans_z",
@@ -1877,6 +1932,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
             ],
         ),
         (
@@ -1924,6 +1980,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
             ],
         ),
         (
@@ -1951,6 +2008,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
                 "csf",
                 "white_matter",
             ],
@@ -1989,6 +2047,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
                 "trans_y_derivative1",
                 "rot_x",
                 "trans_z",
@@ -2018,6 +2077,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
                 "trans_y_derivative1",
                 "rot_x",
                 "trans_z",
@@ -2081,6 +2141,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
                 "motion_pca_1",
                 "motion_pca_2",
             ],
@@ -2106,6 +2167,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
             ],
         ),
         (
@@ -2153,6 +2215,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
             ],
         ),
         (
@@ -2180,6 +2243,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
                 "csf",
                 "white_matter",
             ],
@@ -2218,6 +2282,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
                 "motion_pca_1",
                 "motion_pca_2",
             ],
@@ -2237,6 +2302,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
                 "motion_pca_1",
                 "motion_pca_2",
             ],
@@ -2280,6 +2346,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
                 "motion_pca_1",
             ],
         ),
@@ -2298,6 +2365,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
             ],
         ),
         (
@@ -2345,6 +2413,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
             ],
         ),
         (
@@ -2372,6 +2441,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
                 "csf",
                 "white_matter",
             ],
@@ -2410,6 +2480,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
                 "motion_pca_1",
             ],
         ),
@@ -2428,6 +2499,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
                 "motion_pca_1",
             ],
         ),
@@ -2469,6 +2541,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
                 "motion_pca_1",
                 "motion_pca_2",
             ],
@@ -2494,6 +2567,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
             ],
         ),
         (
@@ -2541,6 +2615,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
             ],
         ),
         (
@@ -2568,6 +2643,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
                 "csf",
                 "white_matter",
             ],
@@ -2606,6 +2682,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
                 "motion_pca_1",
                 "motion_pca_2",
             ],
@@ -2625,6 +2702,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
                 "motion_pca_1",
                 "motion_pca_2",
             ],
@@ -2668,6 +2746,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
                 "trans_x",
                 "trans_x_derivative1",
                 "trans_x_power2",
@@ -2740,6 +2819,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
             ],
         ),
         (
@@ -2787,6 +2867,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
             ],
         ),
         (
@@ -2814,6 +2895,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
                 "csf",
                 "white_matter",
             ],
@@ -2852,6 +2934,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
                 "trans_x",
                 "trans_x_derivative1",
                 "trans_x_power2",
@@ -2893,6 +2976,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
                 "trans_x",
                 "trans_x_derivative1",
                 "trans_x_power2",
@@ -2980,6 +3064,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
                 "motion_pca_1",
                 "motion_pca_2",
             ],
@@ -3005,6 +3090,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
             ],
         ),
         (
@@ -3052,6 +3138,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
             ],
         ),
         (
@@ -3079,6 +3166,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
                 "csf",
                 "white_matter",
             ],
@@ -3117,6 +3205,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
                 "motion_pca_1",
                 "motion_pca_2",
             ],
@@ -3136,6 +3225,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
                 "motion_pca_1",
                 "motion_pca_2",
             ],
@@ -3179,6 +3269,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
                 "motion_pca_1",
             ],
         ),
@@ -3197,6 +3288,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
             ],
         ),
         (
@@ -3244,6 +3336,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
             ],
         ),
         (
@@ -3271,6 +3364,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
                 "csf",
                 "white_matter",
             ],
@@ -3309,6 +3403,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
                 "motion_pca_1",
             ],
         ),
@@ -3327,6 +3422,7 @@ import confound_loader
                 "cosine04",
                 "cosine05",
                 "cosine06",
+                "cosine07",
                 "motion_pca_1",
             ],
         ),
@@ -3364,44 +3460,44 @@ def test_load_confounds_strategy(
         ).columns
     ) == set(expected)
 
-def test_load_confounds_strategy_error():
-    with pytest.raises(Exception) as excinfo:
-        confound_loader.load_confounds(
-            "sub-01_ses-001.tsv", ["minimal", "motion"], 0.95, "6params"
-        )
-    assert "Your strategy has duplicate confounds." in str(excinfo.value)
+# def test_load_confounds_strategy_error():
+#     with pytest.raises(Exception) as excinfo:
+#         confound_loader.load_confounds(
+#             "sub-01_ses-001.tsv", ["minimal", "motion"], 0.95, "6params"
+#         )
+#     assert "Your strategy has duplicate confounds." in str(excinfo.value)
 
 
-def test_load_confounds_strategy_error2():
-    with pytest.raises(Exception) as excinfo:
-        confound_loader.load_confounds(
-            "sub-01_ses-001.tsv", ["minimal", "high_pass_filter"], 0.95, "6params"
-        )
-    assert "Your strategy has duplicate confounds." in str(excinfo.value)
+# def test_load_confounds_strategy_error2():
+#     with pytest.raises(Exception) as excinfo:
+#         confound_loader.load_confounds(
+#             "sub-01_ses-001.tsv", ["minimal", "high_pass_filter"], 0.95, "6params"
+#         )
+#     assert "Your strategy has duplicate confounds." in str(excinfo.value)
 
 
-def test_load_confounds_strategy_error3():
-    with pytest.raises(Exception) as excinfo:
-        confound_loader.load_confounds(
-            "sub-01_ses-001.tsv", ["minimal", "matter"], 0.95, "6params"
-        )
-    assert "Your strategy has duplicate confounds." in str(excinfo.value)
+# def test_load_confounds_strategy_error3():
+#     with pytest.raises(Exception) as excinfo:
+#         confound_loader.load_confounds(
+#             "sub-01_ses-001.tsv", ["minimal", "matter"], 0.95, "6params"
+#         )
+#     assert "Your strategy has duplicate confounds." in str(excinfo.value)
 
 
-def test_load_confounds_strategy_error4():
-    with pytest.raises(Exception) as excinfo:
-        confound_loader.load_confounds(
-            "sub-01_ses-001.tsv", ["matter", "matter"], 0.95, "6params"
-        )
-    assert "Your strategy has duplicate confounds." in str(excinfo.value)
+# def test_load_confounds_strategy_error4():
+#     with pytest.raises(Exception) as excinfo:
+#         confound_loader.load_confounds(
+#             "sub-01_ses-001.tsv", ["matter", "matter"], 0.95, "6params"
+#         )
+#     assert "Your strategy has duplicate confounds." in str(excinfo.value)
 
 
-def test_load_confounds_strategy_error5():
-    with pytest.raises(Exception) as excinfo:
-        confound_loader.load_confounds(
-            "sub-01_ses-001.tsv",
-            ["high_pass_filter", "high_pass_filter"],
-            0.95,
-            "6params",
-        )
-    assert "Your strategy has duplicate confounds." in str(excinfo.value)
+# def test_load_confounds_strategy_error5():
+#     with pytest.raises(Exception) as excinfo:
+#         confound_loader.load_confounds(
+#             "sub-01_ses-001.tsv",
+#             ["high_pass_filter", "high_pass_filter"],
+#             0.95,
+#             "6params",
+#         )
+#     assert "Your strategy has duplicate confounds." in str(excinfo.value)
