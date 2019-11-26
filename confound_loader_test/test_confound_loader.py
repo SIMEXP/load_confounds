@@ -38159,7 +38159,7 @@ def test_load_confounds_strategy(
 #         )
 #     assert "Your strategy has duplicate confounds." in str(excinfo.value)
 
-
+#
 # def test_load_confounds_strategy_error3():
 #     with pytest.raises(Exception) as excinfo:
 #         confound_loader.load_confounds(

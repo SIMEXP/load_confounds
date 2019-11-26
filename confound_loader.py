@@ -246,7 +246,7 @@ if __name__ == "__main__":
     tsv_file = "sub-01_ses-001.tsv"
 
     confounds_test = load_confounds(
-        tsv_file, strategy=["matter"], motion_model="square", n_components=0
+        tsv_file, strategy=["minimal"], motion_model="6params", n_components=0.95
     )
     print(confounds_test.columns)
     confounds_test.to_csv("csv_output/confounds_test.csv", index=False)
