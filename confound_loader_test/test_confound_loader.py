@@ -1,9 +1,7 @@
 import pytest
 import sys
 import os
-
-sys.path.append(os.getcwd())
-import confound_loader
+import load_confounds
 
 
 @pytest.mark.parametrize(
@@ -38138,7 +38136,7 @@ def test_load_confounds_strategy(
     tsv_file, strategy, n_components, motion_model, expected
 ):
     assert set(
-        confound_loader.load_confounds(
+        load_confounds.load_confounds(
             tsv_file, strategy, n_components, motion_model
         ).columns
     ) == set(expected)
