@@ -23,8 +23,6 @@ confound_dict = {
 }
 
 
-
-
 minimal = (
     confound_dict["motion"]
     + confound_dict["high_pass_filter"]
@@ -86,7 +84,6 @@ def _add_motion_model(motion_model):
 
                 motions confounds to use
     """
-    print(motion_model)
     if motion_model != "full":
         motion_confounds = set(
             motion_6params
@@ -239,3 +236,21 @@ def load_confounds(
         )
 
     return confounds_out
+
+
+def load_confounds_multi(
+    tsv_file_array, strategy=["minimal"], n_components=0.95, motion_model="6params"
+):
+
+    confound_array = []
+    for file in tsv_file_array:
+        confound_array.append(
+            load_confounds(
+                file,
+                strategy=strategy,
+                n_components=n_components,
+                motion_model=motion_model,
+            )
+        )
+
+    return confound_array
