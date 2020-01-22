@@ -2,11 +2,11 @@
 
 This package was developed by the SIMEXP Lab. It is used to create a matrix of confound variables from [FMRIPREP](https://fmriprep.readthedocs.io/en/stable/) bold confounds. Users have the option of implementing several strageties based on which parameters they would like to use. 
 
-In order to use `load_confounds` it needs to be installed as a python environment (Python >=3.5). You can then install using `pip `
+In order to use `load_confounds` it needs to be installed as a python environment (Python >=3.5) using `pip `
 
 ` pip install load_confounds`
 
-This module can then be imported by adding `import load_confounds` at the top of your script. 
+This module can then be imported: `import load_confounds` 
 
 
 Take the following tsv file sub-01_ses-001.tsv with the following confounds. 
