@@ -159,7 +159,7 @@ def _pca_motion(
     return confounds_out
 
 
-def load_confounds(
+def _load_confounds_helper(
     confounds_raw, strategy=["minimal"], n_components=0.95, motion_model="6params"
 ):
     """
@@ -238,19 +238,70 @@ def load_confounds(
     return confounds_out
 
 
-def load_confounds_multi(
-    tsv_file_array, strategy=["minimal"], n_components=0.95, motion_model="6params"
+def load_confounds(
+    confounds_raw, strategy=["minimal"], n_components=0.95, motion_model="6params"
 ):
+    """
+    Load confounds from fmriprep
 
-    confound_array = []
-    for file in tsv_file_array:
-        confound_array.append(
-            load_confounds(
-                file,
-                strategy=strategy,
-                n_components=n_components,
-                motion_model=motion_model,
-            )
+    Parameters
+
+        confounds_raw: Pandas Dataframe or path to tsv file(s)
+
+                       Raw confounds from fmriprep
+
+
+        strategy: List of strings
+
+                       The strategy used to select a subset of the confounds from fmriprep: each string can be
+                       either the name of one of the following subset of confounds or the name of a confound to add.
+
+                       -minimal: basic strategy that uses motion, high pass filter, csf and white matter parameters
+                       -motion: ["trans_x", "trans_y", "trans_z", "rot_x", "rot_y", "rot_z"]
+                       -high_pass_filter = ["cosine00", "cosine01", ..]
+                       -matter: ['csf', 'csf_derivative1_power2', 'csf_derivative1', 'white_matter','white_matter_derivative1_power2', 'white_matter_derivative1',
+                       'white_matter_power2', 'csf_power2']
+                       -compcor: ["t_comp_cor_00","t_comp_cor_01",..]
+
+
+        motion_model: String
+
+                Temporal and quadratic terms for head motion estimates
+
+                -6params: standard motion parameters (6)
+                -square: standard motion paramters + quadratic terms (12)
+                -derivatives: standard motion paramters + derivatives (12)
+                -full: standard motion paramteres + derivatives + quadratic terms + squared derivatives (24)
+
+
+    Returns
+
+        confounds_out:  Pandas DataFrame(s)
+
+                A reduced version of FMRIPREP confounds based on strategy specified by user
+    """
+    if type(confounds_raw) == str:
+        confounds_out = _load_confounds_helper(
+            confounds_raw,
+            strategy=strategy,
+            n_components=n_components,
+            motion_model=motion_model,
         )
 
-    return confound_array
+    elif type(confounds_raw) == list:
+        confounds_out = []
+        for file in confounds_raw:
+            confounds_out.append(
+                _load_confounds_helper(
+                    file,
+                    strategy=strategy,
+                    n_components=n_components,
+                    motion_model=motion_model,
+                )
+            )
+
+    else:
+        confounds_out = 0
+        raise ValueError("Invalid input type")
+
+    return confounds_out
