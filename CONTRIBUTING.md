@@ -1,4 +1,4 @@
-The SIMEXP lab are strong proponents of open science. We openly invite anybody to contribute to this repository. Most conversations take place on open [issues](https://github.com/SIMEXP/fmriprep_load_confounds/issues). We aim to create a welcoming environment where everybodies viewpoints are respected and aknowledged.
+The SIMEXP lab openly invites anybody to contribute to this repository. Most conversations take place on open [issues](https://github.com/SIMEXP/fmriprep_load_confounds/issues). We aim to create a welcoming environment where everybodies viewpoints are respected and aknowledged.
 
 If you are interested in making changes we encourage you to do it as follows:
 
@@ -10,8 +10,7 @@ If you are interested in making changes we encourage you to do it as follows:
 6. Ensure that your fork is up to date with master
 7. Submit a pull request
 
-You can test your changes by running `pytest` or `pytest -vvv`. This will display the number of passes and fails. Please refer to the [pytest documentation](https://docs.pytest.org/en/latest/usage.html) for more details. 
-
+You can test your changes by running `pytest` or `pytest -vvv`. This will display the number of passes and fails. Please refer to the [pytest documentation](https://docs.pytest.org/en/latest/usage.html) for more details.   
 
 Thank you for your help  :smiley:
 
