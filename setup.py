@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
    name='load_confounds',
-   version='0.1',
+   version='0.2',
    description='load fMRIprep confounds in python',
    author='Hanad Sharmarke and collaborators',
    packages=['.'],  #same as name
