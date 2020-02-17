@@ -159,7 +159,7 @@ def _pca_motion(
     return confounds_out
 
 
-def _load_confounds_helper(
+def _load_confounds_main(
     confounds_raw, strategy=["minimal"], n_components=0.95, motion_model="6params"
 ):
     """
@@ -238,9 +238,39 @@ def _load_confounds_helper(
     return confounds_out
 
 
+def _load_confounds_helper(
+    confound_raw, strategy=["minimal"], n_components=0.95, motion_model="6params"
+):
+    """
+    Load confounds from fmriprep
+
+    """
+    if "nii" not in confound_raw[-6:]:
+        confounds_out = _load_confounds_main(
+            confound_raw,
+            strategy=strategy,
+            n_components=n_components,
+            motion_model=motion_model,
+        )
+
+    else:
+        confound_raw = confound_raw.replace(
+            "_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz",
+            "_desc-confounds_regressors.tsv",
+        )
+        confounds_out = _load_confounds_main(
+            confound_raw,
+            strategy=strategy,
+            n_components=n_components,
+            motion_model=motion_model,
+        )
+    return confounds_out
+
+
 def load_confounds(
     confounds_raw, strategy=["minimal"], n_components=0.95, motion_model="6params"
 ):
+
     """
     Load confounds from fmriprep
 
