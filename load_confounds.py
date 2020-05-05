@@ -35,23 +35,6 @@ def _confound_strat(strategy, confound_raw):
     """
     Retrieves the column names from raw confounds file
 
-    Parameters
-        strategy: string
-
-                can be one of five keys found in confound_dict.
-
-               -minimal: basic strategy that uses motion, high pass filter, csf and white matter parameters
-               -motion: ["trans_x", "trans_y", "trans_z", "rot_x", "rot_y", "rot_z"]
-               -high_pass_filter = ["cosine00", "cosine01", ..]
-               -matter: ['csf', 'csf_derivative1_power2', 'csf_derivative1', 'white_matter','white_matter_derivative1_power2',
-                'white_matter_derivative1','white_matter_power2', 'csf_power2']
-               -compcor: ["t_comp_cor_00","t_comp_cor_01",..]
-               
-
-        confounds_raw: Pandas Dataframe
-
-                the raw confounds from fmriprep
-
     Returns
 
         param: list
@@ -178,12 +161,6 @@ def _load_confounds_main(
                        either the name of one of the following subset of confounds or the name of a confound to add.
 
                        -minimal: basic strategy that uses motion, high pass filter, csf and white matter parameters
-                       -motion: ["trans_x", "trans_y", "trans_z", "rot_x", "rot_y", "rot_z"]
-                       -high_pass_filter = ["cosine00", "cosine01", ..]
-                       -matter: ['csf', 'csf_derivative1_power2', 'csf_derivative1', 'white_matter','white_matter_derivative1_power2', 'white_matter_derivative1',
-                       'white_matter_power2', 'csf_power2']
-                       -compcor: ["t_comp_cor_00","t_comp_cor_01",..]
-
 
         motion_model: String
 
@@ -273,36 +250,6 @@ def load_confounds(
 
     """
     Load confounds from fmriprep
-
-    Parameters
-
-        confounds_raw: Pandas Dataframe or path to tsv file(s)
-
-                       Raw confounds from fmriprep
-
-
-        strategy: List of strings
-
-                       The strategy used to select a subset of the confounds from fmriprep: each string can be
-                       either the name of one of the following subset of confounds or the name of a confound to add.
-
-                       -minimal: basic strategy that uses motion, high pass filter, csf and white matter parameters
-                       -motion: ["trans_x", "trans_y", "trans_z", "rot_x", "rot_y", "rot_z"]
-                       -high_pass_filter = ["cosine00", "cosine01", ..]
-                       -matter: ['csf', 'csf_derivative1_power2', 'csf_derivative1', 'white_matter','white_matter_derivative1_power2', 'white_matter_derivative1',
-                       'white_matter_power2', 'csf_power2']
-                       -compcor: ["t_comp_cor_00","t_comp_cor_01",..]
-
-
-        motion_model: String
-
-                Temporal and quadratic terms for head motion estimates
-
-                -6params: standard motion parameters (6)
-                -square: standard motion paramters + quadratic terms (12)
-                -derivatives: standard motion paramters + derivatives (12)
-                -full: standard motion paramteres + derivatives + quadratic terms + squared derivatives (24)
-
 
     Returns
 
