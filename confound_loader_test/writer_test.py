@@ -14,7 +14,7 @@ strategies = list(combinations(strategy_list))[1:]
 n_components = {"0.50", "0.80", "0.95"}
 motion_models = ["6params", "derivatives", "square", "full"]
 
-with open("test_confounds_loader_reduced.py", "w") as test_writer:
+with open("test_confound_loader.py", "w") as test_writer:
 
     test_writer.write("from load_confounds import load_confounds \n")
 
