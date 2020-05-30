@@ -192,7 +192,7 @@ def _load_confounds_main(
     return confounds_out
 
 
-def _load_confounds_helper(
+def _get_confounds_files(
     confound_raw, strategy=["minimal"], n_components=0.95, motion_model="6params"
 ):
     """
