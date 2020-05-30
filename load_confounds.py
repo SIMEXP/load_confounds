@@ -121,8 +121,8 @@ def _pca_motion(
         confounds_out:  Pandas DataFrame
 
                 A reduced version of FMRIPREP confounds based on strategy specified by user
-        
-        
+
+
 
     """
 
