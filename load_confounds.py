@@ -192,7 +192,7 @@ def _load_confounds_main(
     return confounds_out
 
 
-def _load_confounds_helper(
+def _get_confounds_files(
     confound_raw, strategy=["minimal"], n_components=0.95, motion_model="6params"
 ):
     """
@@ -208,10 +208,8 @@ def _load_confounds_helper(
         )
 
     else:
-        confound_raw = confound_raw.replace(
-            "_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz",
-            "_desc-confounds_regressors.tsv",
-        )
+        suffix = "_space-" + confound_raw.split("space-")[1]
+        confound_raw = confound_raw.replace(suffix, "_desc-confounds_regressors.tsv",)
         confounds_out = _load_confounds_main(
             confound_raw,
             strategy=strategy,
