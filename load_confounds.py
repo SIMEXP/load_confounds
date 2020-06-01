@@ -95,7 +95,7 @@ def _pca_motion(motion, n_components):
     return motion_pca
 
 
-def _init_strategy(strategy):
+def _sanitize_strategy(strategy):
     """Defines the supported denoising strategies."""
     init_strategy = {
         "minimal": ["motion", "high_pass", "wm_csf"],
@@ -149,7 +149,7 @@ def _load_confounds_single(
     """Load a single confounds file from fmriprep."""
     # Convert tsv file to pandas dataframe
     confounds_raw = _confounds2df(confounds_raw)
-    strategy = _init_strategy(strategy)
+    strategy = _sanitize_strategy(strategy)
 
     confounds = pd.DataFrame()
 
@@ -167,7 +167,6 @@ def _load_confounds_single(
 
     if "global" in strategy:
         confounds_global_signal = _load_global(confounds_raw, global_signal)
-        print(confounds_global_signal.columns)
         confounds = pd.concat([confounds, confounds_global_signal], axis=1)
 
     return confounds

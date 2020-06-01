@@ -28,9 +28,8 @@ def test_minimal():
     assert(len(conf) == 2)
 
 
-def test_motion_model():
+def test_motion():
     file_confounds = _load_test_data()
-
 
     params = ['trans_x', 'trans_y', 'trans_z', 'rot_x', 'rot_y', 'rot_z']
     for param in params:
