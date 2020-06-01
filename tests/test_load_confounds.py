@@ -48,14 +48,14 @@ def test_motion_model():
         assert(f'{param}_power2' not in conf.columns)
         assert(f'{param}_derivative1_power2' not in conf.columns)
 
-        # Use a 6 params + square motion model
-        conf = lc.load_confounds(file_confounds, strategy='minimal', motion="square")
+        # Use a 6 params + power2 motion model
+        conf = lc.load_confounds(file_confounds, strategy='minimal', motion="power2")
         assert(f'{param}' in conf.columns)
         assert(f'{param}_derivative1' not in conf.columns)
         assert(f'{param}_power2' in conf.columns)
         assert(f'{param}_derivative1_power2' not in conf.columns)
 
-        # Use a 6 params + derivatives + square + squared derivatives motion model
+        # Use a 6 params + derivatives + power2 + power2d derivatives motion model
         conf = lc.load_confounds(file_confounds, strategy='minimal', motion="full")
         assert(f'{param}' in conf.columns)
         assert(f'{param}_derivative1' in conf.columns)
