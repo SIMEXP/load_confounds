@@ -14,18 +14,20 @@ def _add_suffix(params, model):
     Suffixes includes derivatives, square and full
     """
     params_s = params
-    if (model is "derivatives") or (model is "full"):
-        params_s.append([f"{param}_derivative1" for param in params])
-    if (model is "square") or (model is "full"):
-        params.append([f"{param}_power2" for param in params])
-    if model is "full":
-        params_s.append([f"{param}_derivative1_power2" for param in params])
-    return params
+    for param in params:
+        if (model is "derivatives") or (model is "full"):
+            params_s.append(f"{param}_derivative1")
+        if (model is "square") or (model is "full"):
+            params_s.append(f"{param}_power2")
+        if model is "full":
+            params_s.append(f"{param}_derivative1_power2")
+    return params_s
 
 
 def _check_params(confounds_raw, params):
     """Check that specified parameters can be found in the confounds."""
     for param in params:
+        print(param)
         if not param in confounds_raw.columns:
             raise ValueError(
                 f"The parameter {param} cannot be found in the available confounds. You may want to use a different denoising strategy'"
