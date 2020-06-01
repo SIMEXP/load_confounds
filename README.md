@@ -4,6 +4,8 @@
 
 [![codecov](https://codecov.io/gh/SIMEXP/load_confounds/branch/master/graph/badge.svg)](https://codecov.io/gh/SIMEXP/load_confounds)
 
+[![CircleCI](https://circleci.com/gh/simexp/load_confounds.svg?style=svg)](https://circleci.com/gh/simexp/load_confounds)
+
 This package was developed by the SIMEXP Lab. It is used to create a matrix of confound variables from [FMRIPREP](https://fmriprep.readthedocs.io/en/stable/) bold confounds. Users have the option of implementing several strageties based on which parameters they would like to use.
 
 In order to use `load_confounds` it needs to be installed as a python environment (Python >=3.5) using `pip `
