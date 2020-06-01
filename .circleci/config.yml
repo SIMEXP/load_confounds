@@ -17,7 +17,7 @@ jobs:
             pip install --progress-bar off -e .
       - run:
           command: |
-            coverage run --source load_confounds -m pytest tests/test_load_confounds.py
+            coverage run --source . -m pytest tests/test_load_confounds.py
             coverage report
             coverage html
           name: test_load_confounds
