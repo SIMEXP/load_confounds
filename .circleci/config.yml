@@ -1,0 +1,34 @@
+version: 2.1
+
+orbs:
+  python: circleci/python@0.2.1
+
+jobs:
+  build-and-test:
+    working_directory: ~/test_load_confounds
+    docker:
+      - image: circleci/python:3.7
+    steps:
+      - checkout
+      - run:
+          command: |
+            pip install --progress-bar off -r requirements.txt
+            pip install --progress-bar off pytest coverage
+            pip install --progress-bar off -e .
+      - run:
+          command: |
+            coverage run --source load_confounds -m pytest load_confounds/tests/test_load_confounds.py
+            coverage report
+            coverage html
+          name: test_load_confounds
+      - run:
+          command: |
+            bash <(curl -s https://codecov.io/bash)
+          name: Upload_codecov
+      - store_artifacts:
+          path: htmlcov
+
+workflows:
+  main:
+    jobs:
+      - build-and-test
