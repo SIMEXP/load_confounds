@@ -93,17 +93,24 @@ def _pca_motion(motion, n_components):
 
 
 def _init_strategy(strategy):
-    """Defines the different denoising strategies."""
+    """Defines the supported denoising strategies."""
     init_strategy = {
         "minimal": ["motion", "high_pass", "wm_csf"],
         "minimal_glob": ["motion", "high_pass", "wm_csf", "global"],
     }
-
-    # check that the specified strategy is implemented
-    if strategy not in init_strategy.keys():
-        raise ValueError(f"strategy {strategy} is not supported")
-
-    return init_strategy[strategy]
+    if isinstance(strategy, str):
+        # check that the specified strategy is implemented
+        if strategy not in init_strategy.keys():
+            raise ValueError(f"strategy {strategy} is not supported")
+        strategy = init_strategy[strategy]
+    elif isinstance(strategy, list):
+        all_confounds = ["motion", "high_pass", "wm_csf", "global"]
+        for conf in strategy:
+            if not conf in all_confounds:
+                raise ValueError(f"{conf} is not a supported type of confounds.")
+    else:
+        raise ValueError("strategy needs to be a string or a list of strings")
+    return strategy
 
 
 def _confounds2df(confounds_raw):
@@ -115,6 +122,7 @@ def _confounds2df(confounds_raw):
                 suffix, "_desc-confounds_regressors.tsv",
             )
         confounds_raw = pd.read_csv(confounds_raw, delimiter="\t", encoding="utf-8")
+    return confounds_raw
 
 
 def _sanitize_confounds(confounds_raw):
@@ -138,29 +146,24 @@ def _load_confounds_single(
     """Load a single confounds file from fmriprep."""
     # Convert tsv file to pandas dataframe
     confounds_raw = _confounds2df(confounds_raw)
-
-    if isinstance(strategy, str):
-        strategy = _init_strategy(strategy)
-    elif not insinstance(strategy, list):
-        raise ValueError("strategy needs to be a string or a list of strings")
+    strategy = _init_strategy(strategy)
 
     confounds = pd.DataFrame()
-
     if "motion" in strategy:
-        confounds_motion = _load_motion(confounds_raw, motion_model, pca_motion)
-        pd.concat([confounds, confounds_motion], axis=1)
+        confounds_motion = _load_motion(confounds_raw, motion, pca_motion)
+        confounds = pd.concat([confounds, confounds_motion], axis=1)
 
     if "high_pass" in strategy:
         confounds_high_pass = _load_high_pass(confounds_raw)
-        pd.concat([confounds, confounds_high_pass], axis=1)
+        confounds = pd.concat([confounds, confounds_high_pass], axis=1)
 
     if "wm_csf" in strategy:
         confounds_wm_csf = _load_wm_csf(confounds_raw, wm_csf)
-        pd.concat([confounds, confounds_wm_csf], axis=1)
+        confounds = pd.concat([confounds, confounds_wm_csf], axis=1)
 
     if "global" in strategy:
         confounds_global_signal = _load_global(confounds_raw, global_signal)
-        pd.concat([confounds, confounds_global_signal], axis=1)
+        confounds = pd.concat([confounds, confounds_global_signal], axis=1)
 
     return confounds
 
@@ -234,6 +237,7 @@ def load_confounds(
                 motion=motion,
                 pca_motion=pca_motion,
                 wm_csf=wm_csf,
+                global_signal=global_signal,
             )
         )
 
