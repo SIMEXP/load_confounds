@@ -1,5 +1,4 @@
 import os
-from nilearn import datasets
 import load_confounds as lc
 import pandas as pd
 
