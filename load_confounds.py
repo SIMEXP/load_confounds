@@ -7,6 +7,20 @@ import pandas as pd
 from sklearn.decomposition import PCA
 
 
+init_strategy = {
+    "minimal": ["motion", "high_pass", "wm_csf"],
+    "minimal_glob": ["motion", "high_pass", "wm_csf", "global"],
+}
+
+all_confounds = list(
+    set(
+        itertools.chain.from_iterable(
+            [init_strategy[strat] for strat in init_strategy.keys()]
+        )
+    )
+)
+
+
 def _add_suffix(params, model):
     """
     Add suffixes to a list of parameters.
@@ -30,6 +44,8 @@ def _check_params(confounds_raw, params):
             raise ValueError(
                 f"The parameter {par} cannot be found in the available confounds. You may want to use a different denoising strategy'"
             )
+
+    return None
 
 
 def _find_confounds(confounds_raw, keywords):
@@ -83,28 +99,24 @@ def _load_motion(confounds_raw, motion, pca_motion):
     return confounds_motion
 
 
-def _pca_motion(motion, n_components):
+def _pca_motion(confounds_motion, pca_motion):
     """Reduce the motion paramaters using PCA."""
-    motion = motion.dropna()
-    pca = PCA(n_components=n_components)
-    motion_pca = pd.DataFrame(pca.fit_transform(motion.values))
+    confounds_motion = confounds_motion.dropna()
+    pca = PCA(n_components=pca_motion)
+    motion_pca = pd.DataFrame(pca.fit_transform(confounds_motion.values))
     motion_pca.columns = ["motion_pca_" + str(col + 1) for col in motion_pca.columns]
     return motion_pca
 
 
 def _sanitize_strategy(strategy):
     """Defines the supported denoising strategies."""
-    init_strategy = {
-        "minimal": ["motion", "high_pass", "wm_csf"],
-        "minimal_glob": ["motion", "high_pass", "wm_csf", "global"],
-    }
+
     if isinstance(strategy, str):
         # check that the specified strategy is implemented
         if strategy not in init_strategy.keys():
             raise ValueError(f"strategy {strategy} is not supported")
         strategy = init_strategy[strategy]
     elif isinstance(strategy, list):
-        all_confounds = ["motion", "high_pass", "wm_csf", "global"]
         for conf in strategy:
             if not conf in all_confounds:
                 raise ValueError(f"{conf} is not a supported type of confounds.")
