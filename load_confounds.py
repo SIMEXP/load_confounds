@@ -11,6 +11,7 @@ from sklearn.decomposition import PCA
 init_strategy = {
     "minimal": ["motion", "high_pass", "wm_csf"],
     "minimal_glob": ["motion", "high_pass", "wm_csf", "global"],
+    "compcor": ["high_pass", "motion", "compcor"],
 }
 
 all_confounds = list(
@@ -85,6 +86,20 @@ def _load_high_pass(confounds_raw):
     return confounds_raw[high_pass_params]
 
 
+def _load_compcor(confounds_raw, compcor):
+    """Load the high pass filter regressors."""
+    if compcor == "anat":
+        compcor_cols = _find_confounds(confounds_raw, ["a_comp_cor"])
+
+    if compcor == "temp":
+        compcor_cols = _find_confounds(confounds_raw, ["t_comp_cor"])
+
+    if compcor == "full":
+        compcor_cols = _find_confounds(confounds_raw, ["comp_cor"])
+
+    return confounds_raw[compcor_cols]
+
+
 def _load_motion(confounds_raw, motion, pca_motion):
     """Load the motion regressors."""
     motion_params = _add_suffix(
@@ -153,7 +168,7 @@ def _sanitize_confounds(confounds_raw):
 
 
 def _load_confounds_single(
-    confounds_raw, strategy, motion, pca_motion, wm_csf, global_signal
+    confounds_raw, strategy, motion, pca_motion, wm_csf, global_signal,compcor
 ):
     """Load a single confounds file from fmriprep."""
     # Convert tsv file to pandas dataframe
@@ -178,6 +193,10 @@ def _load_confounds_single(
         confounds_global_signal = _load_global(confounds_raw, global_signal)
         confounds = pd.concat([confounds, confounds_global_signal], axis=1)
 
+    if "compcor" in strategy:
+        confounds_compcor = _load_compcor(confounds_raw, compcor)
+        confounds = pd.concat([confounds, confounds_compcor], axis=1)
+
     return confounds
 
 
@@ -188,6 +207,7 @@ def load_confounds(
     pca_motion=1,
     wm_csf="basic",
     global_signal="basic",
+    compcor="anat"
 ):
     """
     Load confounds from fmriprep
@@ -235,6 +255,9 @@ def load_confounds(
         "derivatives" global signal and derivative (2 parameters)
         "full" global signal + derivatives + quadratic terms + power2d derivatives (4 parameters)
 
+    compcor : string,optional
+    	
+
     Returns
     -------
     confounds:  pandas DataFrame or list of pandas DataFrame
@@ -251,6 +274,7 @@ def load_confounds(
                 pca_motion=pca_motion,
                 wm_csf=wm_csf,
                 global_signal=global_signal,
+                compcor=compcor
             )
         )
 
