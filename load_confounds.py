@@ -111,7 +111,6 @@ def _pca_motion(confounds_motion, n_components):
 
 def _sanitize_strategy(strategy):
     """Defines the supported denoising strategies."""
-
     if isinstance(strategy, str):
         # check that the specified strategy is implemented
         if strategy not in init_strategy.keys():
