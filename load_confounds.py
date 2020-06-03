@@ -92,10 +92,10 @@ def _ncompcor(confounds_raw, compcor_suffix, n_compcor):
     for nn in range(n_compcor + 1):
         nn_str = str(nn).zfill(2)
         compcor_col = compcor_suffix + "_comp_cor_" + nn_str
-        if(compcor_col not in confounds_raw.columns):
-        	warnings.warn(f"could not find any confound with the key {compcor_col}")
+        if compcor_col not in confounds_raw.columns:
+            warnings.warn(f"could not find any confound with the key {compcor_col}")
         else:
-        	compcor_cols.append(compcor_col)
+            compcor_cols.append(compcor_col)
 
     return compcor_cols
 
@@ -281,13 +281,13 @@ def load_confounds(
         "full" global signal + derivatives + quadratic terms + power2d derivatives (4 parameters)
 
     compcor : string,optional
-    	Type of confounds extracted from a component based noise correction method
-    	"anat" noise components calculated using anatomical compcor
-    	"temp" noise components calculated using temporal compcor
-    	"full" noise components calculated using both temporal and anatomical
+        Type of confounds extracted from a component based noise correction method
+        "anat" noise components calculated using anatomical compcor
+        "temp" noise components calculated using temporal compcor
+        "full" noise components calculated using both temporal and anatomical
 
-   	n_compcor : int, optional
-   		The number of noise components to be extracted.
+    n_compcor : int, optional
+        The number of noise components to be extracted.
 
     Returns
     -------
