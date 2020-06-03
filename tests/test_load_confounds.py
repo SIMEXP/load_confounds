@@ -77,10 +77,9 @@ def test_motion():
 
 def test_comp_cor():
     file_confounds = _load_test_data()
-    #    params = ["a_comp_cor_","t_comp_cor_","comp_cor"]
 
     conf_compcor_anat = lc.load_confounds(
-        file_confounds, strategy="compcor", compcor="anat"
+        file_confounds, strategy="compcor", compcor="anat", n_compcor=-1
     )
     compcor_col_str_anat = "".join(conf_compcor_anat.columns)
     assert "a_comp_cor_" in compcor_col_str_anat
@@ -99,3 +98,39 @@ def test_comp_cor():
     compcor_col_str_full = "".join(conf_compcor_full.columns)
     assert "t_comp_cor_" in compcor_col_str_full
     assert "a_comp_cor_" in compcor_col_str_full
+
+
+def test_ncompcor():
+
+    file_confounds = _load_test_data()
+
+    conf_compcor_0 = lc.load_confounds(
+        file_confounds, strategy="compcor", compcor="anat", n_compcor=0
+    )
+    compcor_col_str_0 = "".join(conf_compcor_0.columns)
+    assert "comp_cor_00" in compcor_col_str_0
+    assert "comp_cor_01" not in compcor_col_str_0
+
+    conf_compcor_10 = lc.load_confounds(
+        file_confounds, strategy="compcor", compcor="anat", n_compcor=10
+    )
+    compcor_col_str_10 = "".join(conf_compcor_10.columns)
+    assert "comp_cor_10" in compcor_col_str_10
+    assert "comp_cor_100" not in compcor_col_str_10
+
+    conf_compcor_101 = lc.load_confounds(
+        file_confounds, strategy="compcor", compcor="anat", n_compcor=101
+    )
+    compcor_col_str_101 = "".join(conf_compcor_101.columns)
+    assert "comp_cor_101" in compcor_col_str_101
+    assert "comp_cor_102" not in compcor_col_str_101
+
+    conf_compcor_all = lc.load_confounds(
+        file_confounds, strategy="compcor", compcor="temp", n_compcor=-1
+    )
+    compcor_col_str_all = "".join(conf_compcor_all.columns)
+    assert "comp_cor_00" in compcor_col_str_all
+    assert "comp_cor_01" in compcor_col_str_all
+    assert "comp_cor_02" in compcor_col_str_all
+    assert "comp_cor_03" in compcor_col_str_all
+    assert "comp_cor_04" not in compcor_col_str_all
