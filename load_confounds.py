@@ -87,7 +87,7 @@ def _load_high_pass(confounds_raw):
 
 
 def _ncompcor(confounds_raw, compcor_suffix, n_compcor):
-    """Builds list for the number of compcor components"""
+    """Builds list for the number of compcor components."""
     if n_compcor == -1:
         compcor_cols = _find_confounds(confounds_raw, [compcor_suffix + "_comp_cor"])
     else:
