@@ -6,7 +6,7 @@ Authors: Dr. Pierre Bellec, Francois Paugam, Hanad Sharmarke
 import itertools
 import pandas as pd
 from sklearn.decomposition import PCA
-
+import warnings
 
 init_strategy = {
     "minimal": ["motion", "high_pass", "wm_csf"],
@@ -88,13 +88,14 @@ def _load_high_pass(confounds_raw):
 
 def _ncompcor(confounds_raw, compcor_suffix, n_compcor):
     """Builds list for the number of compcor components."""
-    if n_compcor == -1:
-        compcor_cols = _find_confounds(confounds_raw, [compcor_suffix + "_comp_cor"])
-    else:
-        compcor_cols = []
-        for nn in range(n_compcor + 1):
-            nn_str = str(nn).zfill(2)
-            compcor_cols.append(compcor_suffix + "_comp_cor_" + nn_str)
+    compcor_cols = []
+    for nn in range(n_compcor + 1):
+        nn_str = str(nn).zfill(2)
+        compcor_col = compcor_suffix + "_comp_cor_" + nn_str
+        if(compcor_col not in confounds_raw.columns):
+        	warnings.warn(f"could not find any confound with the key {compcor_col}")
+        else:
+        	compcor_cols.append(compcor_col)
 
     return compcor_cols
 
@@ -231,7 +232,7 @@ def load_confounds(
     wm_csf="basic",
     global_signal="basic",
     compcor="anat",
-    n_compcor=-1,
+    n_compcor=6,
 ):
     """
     Load confounds from fmriprep
@@ -286,7 +287,7 @@ def load_confounds(
     	"full" noise components calculated using both temporal and anatomical
 
    	n_compcor : int, optional
-   		The number of noise components to be extracted. If -1 all noise components are used.
+   		The number of noise components to be extracted.
 
     Returns
     -------

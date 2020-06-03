@@ -1,7 +1,8 @@
 import os
 import load_confounds as lc
 import pandas as pd
-
+import pytest
+import warnings
 
 def _load_test_data():
     path_data = os.path.join(os.path.dirname(lc.__file__), "data")
@@ -79,21 +80,21 @@ def test_comp_cor():
     file_confounds = _load_test_data()
 
     conf_compcor_anat = lc.load_confounds(
-        file_confounds, strategy="compcor", compcor="anat", n_compcor=-1
+        file_confounds, strategy="compcor", compcor="anat"
     )
     compcor_col_str_anat = "".join(conf_compcor_anat.columns)
     assert "a_comp_cor_" in compcor_col_str_anat
     assert "t_comp_cor_" not in compcor_col_str_anat
 
     conf_compcor_temp = lc.load_confounds(
-        file_confounds, strategy="compcor", compcor="temp"
+        file_confounds, strategy="compcor", compcor="temp",n_compcor=3
     )
     compcor_col_str_temp = "".join(conf_compcor_temp.columns)
     assert "t_comp_cor_" in compcor_col_str_temp
     assert "a_comp_cor_" not in compcor_col_str_temp
 
     conf_compcor_full = lc.load_confounds(
-        file_confounds, strategy="compcor", compcor="full"
+        file_confounds, strategy="compcor", compcor="full",n_compcor=3
     )
     compcor_col_str_full = "".join(conf_compcor_full.columns)
     assert "t_comp_cor_" in compcor_col_str_full
@@ -125,12 +126,17 @@ def test_ncompcor():
     assert "comp_cor_101" in compcor_col_str_101
     assert "comp_cor_102" not in compcor_col_str_101
 
-    conf_compcor_all = lc.load_confounds(
-        file_confounds, strategy="compcor", compcor="temp", n_compcor=-1
-    )
-    compcor_col_str_all = "".join(conf_compcor_all.columns)
-    assert "comp_cor_00" in compcor_col_str_all
-    assert "comp_cor_01" in compcor_col_str_all
-    assert "comp_cor_02" in compcor_col_str_all
-    assert "comp_cor_03" in compcor_col_str_all
-    assert "comp_cor_04" not in compcor_col_str_all
+
+def test_warning():
+    file_confounds = _load_test_data()
+    with pytest.warns(UserWarning):
+        conf_compcor_all = lc.load_confounds(
+            file_confounds, strategy="compcor", compcor="temp", n_compcor=4
+        )
+
+        compcor_col_str_all = "".join(conf_compcor_all.columns)
+        assert "comp_cor_00" in compcor_col_str_all
+        assert "comp_cor_01" in compcor_col_str_all
+        assert "comp_cor_02" in compcor_col_str_all
+        assert "comp_cor_03" in compcor_col_str_all
+        assert "comp_cor_04" not in compcor_col_str_all
