@@ -86,17 +86,35 @@ def _load_high_pass(confounds_raw):
     return confounds_raw[high_pass_params]
 
 
-def _load_compcor(confounds_raw, compcor):
-    """Load the high pass filter regressors."""
+def _ncompcor(confounds_raw, compcor_suffix, n_compcor):
+    """Builds list for the number of compcor components"""
+
+    if n_compcor == -1:
+        compcor_cols = _find_confounds(confounds_raw, [compcor_suffix + "_comp_cor"])
+    else:
+        compcor_cols = []
+        for nn in range(n_compcor + 1):
+            nn_str = str(nn).zfill(2)
+            compcor_cols.append(compcor_suffix + "_comp_cor_" + nn_str)
+
+    return compcor_cols
+
+
+def _load_compcor(confounds_raw, compcor, n_compcor):
+    """Load compcor regressors."""
+
     if compcor == "anat":
-        compcor_cols = _find_confounds(confounds_raw, ["a_comp_cor"])
+        compcor_cols = _ncompcor(confounds_raw, "a", n_compcor)
 
     if compcor == "temp":
-        compcor_cols = _find_confounds(confounds_raw, ["t_comp_cor"])
+        compcor_cols = _ncompcor(confounds_raw, "t", n_compcor)
 
     if compcor == "full":
-        compcor_cols = _find_confounds(confounds_raw, ["comp_cor"])
+        compcor_cols = _ncompcor(confounds_raw, "a", n_compcor)
+        compcor_cols.extend(_ncompcor(confounds_raw, "t", n_compcor))
 
+    compcor_cols.sort()
+    _check_params(confounds_raw, compcor_cols)
     return confounds_raw[compcor_cols]
 
 
@@ -168,7 +186,14 @@ def _sanitize_confounds(confounds_raw):
 
 
 def _load_confounds_single(
-    confounds_raw, strategy, motion, pca_motion, wm_csf, global_signal,compcor
+    confounds_raw,
+    strategy,
+    motion,
+    pca_motion,
+    wm_csf,
+    global_signal,
+    compcor,
+    n_compcor,
 ):
     """Load a single confounds file from fmriprep."""
     # Convert tsv file to pandas dataframe
@@ -194,7 +219,7 @@ def _load_confounds_single(
         confounds = pd.concat([confounds, confounds_global_signal], axis=1)
 
     if "compcor" in strategy:
-        confounds_compcor = _load_compcor(confounds_raw, compcor)
+        confounds_compcor = _load_compcor(confounds_raw, compcor, n_compcor)
         confounds = pd.concat([confounds, confounds_compcor], axis=1)
 
     return confounds
@@ -207,7 +232,8 @@ def load_confounds(
     pca_motion=1,
     wm_csf="basic",
     global_signal="basic",
-    compcor="anat"
+    compcor="anat",
+    n_compcor=-1,
 ):
     """
     Load confounds from fmriprep
@@ -256,7 +282,13 @@ def load_confounds(
         "full" global signal + derivatives + quadratic terms + power2d derivatives (4 parameters)
 
     compcor : string,optional
-    	
+    	Type of confounds extracted from a component based noise correction method
+    	"anat" noise components calculated using anatomical compcor
+    	"temp" noise components calculated using temporal compcor
+    	"full" noise components calculated using both temporal and anatomical
+
+   	n_compcor : int, optional
+   		The number of noise components to be extracted. If -1 all noise components are used.
 
     Returns
     -------
@@ -274,7 +306,8 @@ def load_confounds(
                 pca_motion=pca_motion,
                 wm_csf=wm_csf,
                 global_signal=global_signal,
-                compcor=compcor
+                compcor=compcor,
+                n_compcor=n_compcor,
             )
         )
 
