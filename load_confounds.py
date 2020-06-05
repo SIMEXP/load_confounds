@@ -261,10 +261,12 @@ def load_confounds(
         "derivatives" translation/rotation + derivatives (12 parameters)
         "full" translation/rotation + derivatives + quadratic terms + power2d derivatives (24 parameters)
 
-    n_motion : float 0 <= . <= 1
+    n_motion : float 
+        Number of pca components to keep from head motion estimates. 
         If the parameters is strictly comprised between 0 and 1, a principal component
         analysis is applied to the motion parameters, and the number of extracted
         components is set to exceed `n_motion` percent of the parameters variance.
+        If the n_components = 0, then no PCA is performed.
 
     wm_csf : string, optional
         Type of confounds extracted from masks of white matter and cerebrospinal fluids.
