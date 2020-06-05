@@ -6,6 +6,7 @@ Authors: Dr. Pierre Bellec, Francois Paugam, Hanad Sharmarke
 import itertools
 import pandas as pd
 from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
 import warnings
 
 init_strategy = {
@@ -135,8 +136,10 @@ def _load_motion(confounds_raw, motion, n_motion):
 def _n_motion(confounds_motion, n_components):
     """Reduce the motion paramaters using PCA."""
     confounds_motion = confounds_motion.dropna()
+    scaler = StandardScaler(with_mean=True, with_std=True)
+    confounds_motion_std = scaler.fit_transform(confounds_motion)
     pca = PCA(n_components=n_components)
-    motion_pca = pd.DataFrame(pca.fit_transform(confounds_motion.values))
+    motion_pca = pd.DataFrame(pca.fit_transform(confounds_motion_std))
     motion_pca.columns = ["motion_pca_" + str(col + 1) for col in motion_pca.columns]
     return motion_pca
 
@@ -261,8 +264,8 @@ def load_confounds(
         "derivatives" translation/rotation + derivatives (12 parameters)
         "full" translation/rotation + derivatives + quadratic terms + power2d derivatives (24 parameters)
 
-    n_motion : float 
-        Number of pca components to keep from head motion estimates. 
+    n_motion : float
+        Number of pca components to keep from head motion estimates.
         If the parameters is strictly comprised between 0 and 1, a principal component
         analysis is applied to the motion parameters, and the number of extracted
         components is set to exceed `n_motion` percent of the parameters variance.
