@@ -131,7 +131,7 @@ def test_warning():
     file_confounds = _load_test_data()
     with pytest.warns(UserWarning):
         conf_compcor_all = lc.load_confounds(
-            file_confounds, strategy="compcor", compcor="temp", n_compcor=4
+            file_confounds, strategy="compcor", compcor="temp", n_compcor=18
         )
 
         compcor_col_str_all = "".join(conf_compcor_all.columns)
@@ -139,4 +139,52 @@ def test_warning():
         assert "comp_cor_01" in compcor_col_str_all
         assert "comp_cor_02" in compcor_col_str_all
         assert "comp_cor_03" in compcor_col_str_all
-        assert "comp_cor_04" not in compcor_col_str_all
+        assert "comp_cor_19" not in compcor_col_str_all
+
+
+def test_n_motion():
+    file_confounds = _load_test_data()
+
+    conf_compcor_fifth = lc.load_confounds(file_confounds, motion="full", n_motion=0.2)
+    conf_compcor_fifth = "".join(conf_compcor_fifth.columns)
+    assert "motion_pca_1" in conf_compcor_fifth
+    assert "motion_pca_2" not in conf_compcor_fifth
+
+    conf_compcor_95 = lc.load_confounds(file_confounds, motion="full", n_motion=0.95)
+    conf_compcor_95 = "".join(conf_compcor_95.columns)
+    assert "motion_pca_1" in conf_compcor_95
+    assert "motion_pca_2" in conf_compcor_95
+
+    conf_compcor_one = lc.load_confounds(file_confounds, motion="full", n_motion=1)
+    conf_compcor_one = "".join(conf_compcor_one.columns)
+    assert "motion_pca_1" in conf_compcor_one
+    assert "motion_pca_2" not in conf_compcor_one
+
+    conf_compcor_two = lc.load_confounds(file_confounds, motion="full", n_motion=2)
+    conf_compcor_two = "".join(conf_compcor_two.columns)
+    assert "motion_pca_1" in conf_compcor_two
+    assert "motion_pca_2" in conf_compcor_two
+
+    conf_compcor_twentyfour = lc.load_confounds(
+        file_confounds, motion="full", n_motion=24
+    )
+    conf_compcor_twentyfour = "".join(conf_compcor_twentyfour.columns)
+    assert "motion_pca_1" in conf_compcor_twentyfour
+    assert "motion_pca_25" not in conf_compcor_twentyfour
+
+    conf_compcor_twelve = lc.load_confounds(file_confounds, motion="full", n_motion=12)
+    conf_compcor_twelve = "".join(conf_compcor_twelve.columns)
+    assert "motion_pca_1" in conf_compcor_twelve
+    assert "motion_pca_13" not in conf_compcor_twelve
+
+    conf_compcor_zero = lc.load_confounds(file_confounds, motion="full", n_motion=0)
+    conf_compcor_zero = "".join(conf_compcor_zero.columns)
+    assert "motion_pca_1" not in conf_compcor_zero
+    assert "motion_pca_2" not in conf_compcor_zero
+
+
+    with pytest.raises(ValueError):
+        conf_compcor_error = lc.load_confounds(file_confounds, motion="full", n_motion=50)
+        conf_compcor_error = "".join(conf_compcor_error.columns)
+        assert "motion_pca_1" not in conf_compcor_error
+        assert "motion_pca_2" not in conf_compcor_error
