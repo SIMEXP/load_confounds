@@ -182,9 +182,29 @@ def test_n_motion():
     assert "motion_pca_1" not in conf_compcor_zero
     assert "motion_pca_2" not in conf_compcor_zero
 
-
     with pytest.raises(ValueError):
-        conf_compcor_error = lc.load_confounds(file_confounds, motion="full", n_motion=50)
+        conf_compcor_error = lc.load_confounds(
+            file_confounds, motion="full", n_motion=50
+        )
         conf_compcor_error = "".join(conf_compcor_error.columns)
         assert "motion_pca_1" not in conf_compcor_error
         assert "motion_pca_2" not in conf_compcor_error
+
+
+def test_load_global():
+    file_confounds = _load_test_data()
+    conf_compcor_global = lc.load_confounds(file_confounds, strategy=["global"])
+    assert "global_signal" in conf_compcor_global.columns.values
+
+
+# def test_find_confounds():
+#     file_confounds = _load_test_data()
+
+#     with pytest.raises(ValueError):
+#         conf_compcor = lc._find_confounds(file_confounds,"throwserror")
+
+
+def test_load_high_pass():
+    file_confounds = _load_test_data()
+    conf_compcor_high_pass = lc.load_confounds(file_confounds, strategy=["high_pass"])
+    assert "cosine" in conf_compcor_high_pass.columns[0]
