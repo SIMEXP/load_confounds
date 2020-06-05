@@ -117,7 +117,7 @@ def _load_compcor(confounds_raw, compcor, n_compcor):
     return confounds_raw[compcor_cols]
 
 
-def _load_motion(confounds_raw, motion, pca_motion):
+def _load_motion(confounds_raw, motion, n_motion):
     """Load the motion regressors."""
     motion_params = _add_suffix(
         ["trans_x", "trans_y", "trans_z", "rot_x", "rot_y", "rot_z"], motion
@@ -126,13 +126,13 @@ def _load_motion(confounds_raw, motion, pca_motion):
     confounds_motion = confounds_raw[motion_params]
 
     # Optionally apply PCA reduction
-    if (pca_motion > 0) and (pca_motion < 1):
-        confounds_motion = _pca_motion(confounds_motion, n_components=pca_motion)
+    if n_motion > 0:
+        confounds_motion = _n_motion(confounds_motion, n_components=n_motion)
 
     return confounds_motion
 
 
-def _pca_motion(confounds_motion, n_components):
+def _n_motion(confounds_motion, n_components):
     """Reduce the motion paramaters using PCA."""
     confounds_motion = confounds_motion.dropna()
     pca = PCA(n_components=n_components)
@@ -188,7 +188,7 @@ def _load_confounds_single(
     confounds_raw,
     strategy,
     motion,
-    pca_motion,
+    n_motion,
     wm_csf,
     global_signal,
     compcor,
@@ -202,7 +202,7 @@ def _load_confounds_single(
     confounds = pd.DataFrame()
 
     if "motion" in strategy:
-        confounds_motion = _load_motion(confounds_raw, motion, pca_motion)
+        confounds_motion = _load_motion(confounds_raw, motion, n_motion)
         confounds = pd.concat([confounds, confounds_motion], axis=1)
 
     if "high_pass" in strategy:
@@ -228,7 +228,7 @@ def load_confounds(
     confounds_raw,
     strategy="minimal",
     motion="full",
-    pca_motion=1,
+    n_motion=0,
     wm_csf="basic",
     global_signal="basic",
     compcor="anat",
@@ -261,10 +261,10 @@ def load_confounds(
         "derivatives" translation/rotation + derivatives (12 parameters)
         "full" translation/rotation + derivatives + quadratic terms + power2d derivatives (24 parameters)
 
-    pca_motion : float 0 <= . <= 1
+    n_motion : float 0 <= . <= 1
         If the parameters is strictly comprised between 0 and 1, a principal component
         analysis is applied to the motion parameters, and the number of extracted
-        components is set to exceed `pca_motion` percent of the parameters variance.
+        components is set to exceed `n_motion` percent of the parameters variance.
 
     wm_csf : string, optional
         Type of confounds extracted from masks of white matter and cerebrospinal fluids.
@@ -302,7 +302,7 @@ def load_confounds(
                 file,
                 strategy=strategy,
                 motion=motion,
-                pca_motion=pca_motion,
+                n_motion=n_motion,
                 wm_csf=wm_csf,
                 global_signal=global_signal,
                 compcor=compcor,
