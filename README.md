@@ -30,13 +30,13 @@ Currently the following noise categories are supported:
  * `motion` the motion parameters including 6 translation/rotation, and optionally derivatives, squares, and squared derivatives. Motion parameters can also be reduced through a PCA. Default: no PCA, and 24 motion model.
  * `high_pass` basis of discrete cosines covering slow time drift frequency band. 
  * `wm_csf` the average signal of white matter and cerebrospinal fluid masks, and optionally derivatives, squares, and squared derivatives. Default: simple average, without squares or derivatives.
- * `comp_cor` the results of a PCA applied on a mask based on either anatomy, temporal variance, or both. The number of components can be adjusted. Default: anat compcor with 6 components.
+ * `compcor` the results of a PCA applied on a mask based on either anatomy, temporal variance, or both. The number of components can be adjusted. Default: anat compcor with 6 components.
  * ` global`  the global signal, and optionally derivatives, squares, and squared derivatives. Default: simple average without squares or derivatives.
  
  The predefined strategies currently implemented include: 
   * `minimal` this corresponds to `['motion', 'high_pass', 'wm_csf`]..
   * `minimal_glob` this corresponds to `['motion', 'high_pass', 'wm_csf', 'global']`.
-  * `comp_cor` this corresponds to `['motion', 'high_pass', 'comp_cor`]`.
+  * `compcor` this corresponds to `['motion', 'high_pass', 'compcor`]`.
 
 Note that the choice of a strategy only defines the types of noise components included in the model, but not how this component is implemented. This is controlled through additional parameters. See the inline documentation of `load_confounds` for a detailed list of options.  
  
