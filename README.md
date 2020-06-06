@@ -22,9 +22,9 @@ It is also possible to specify a subset of noise variables:
 confounds = load_confounds('path/to/file/sub-01_ses-001.tsv', strategy=['high_pass', 'motion', 'global'])
 ``` 
 
-Each type of noise variables can be further tweaked with dedicated arguments. The following example is using only the 6 basic moton parameters (translation, rotation), as well as both the averge and squared average of the white matter and cerebrospinal fluid masks:
+Each type of noise variables can be further tweaked with dedicated arguments. The following example is using only the 6 basic moton parameters (translation, rotation) and their derivatives, instead of the default 24 parameters model:
 ```python 
-confounds = load_confounds('path/to/file/sub-01_ses-001.tsv', strategy='minimal', motion='basic', 'wm_csf'='power2')
+confounds = load_confounds('path/to/file/sub-01_ses-001.tsv', strategy='minimal', motion='derivatives')
 ``` 
 Currently the following noise categories are supported:
  * `motion` the motion parameters including 6 translation/rotation, and optionally derivatives, squares, and squared derivatives. Motion parameters can also be reduced through a PCA. Default: no PCA, and 24 motion moodel.
