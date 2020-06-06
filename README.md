@@ -2,7 +2,7 @@
 
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/1da186ba5c44489b8af6d96a9c50d3c7)](https://app.codacy.com/gh/SIMEXP/fmriprep_load_confounds?utm_source=github.com&utm_medium=referral&utm_content=SIMEXP/fmriprep_load_confounds&utm_campaign=Badge_Grade_Dashboard) [![CircleCI](https://circleci.com/gh/SIMEXP/load_confounds.svg?style=svg)](https://circleci.com/gh/SIMEXP/load_confounds) [![codecov](https://codecov.io/gh/SIMEXP/load_confounds/branch/master/graph/badge.svg)](https://codecov.io/gh/SIMEXP/load_confounds)
 
-This package is used to easily load a sensible subset of variables from [FMRIPREP](https://fmriprep.readthedocs.io/en/stable/) bold confounds in a python environment. The resulting pandas DataFrame can notably be used using the `confounds`argument of [nilearn](https://nilearn.github.io/)'s masker functions. 
+This package is used to easily load a sensible subset of variables from [FMRIPREP](https://fmriprep.readthedocs.io/en/stable/) bold confounds in a python environment. The resulting pandas DataFrame can notably be used as `confounds`argument for [nilearn](https://nilearn.github.io/)'s masker functions. 
 
 In order to use `load_confounds` it needs to be installed as a python environment (Python >=3.5) using:
 ```bash 
