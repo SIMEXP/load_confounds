@@ -27,7 +27,7 @@ Each type of noise variables can be further tweaked with dedicated arguments. Th
 confounds = load_confounds('path/to/file/sub-01_ses-001.tsv', strategy='minimal', motion='derivatives')
 ``` 
 Currently the following noise categories are supported:
- * `motion` the motion parameters including 6 translation/rotation, and optionally derivatives, squares, and squared derivatives. Motion parameters can also be reduced through a PCA. Default: no PCA, and 24 motion moodel.
+ * `motion` the motion parameters including 6 translation/rotation, and optionally derivatives, squares, and squared derivatives. Motion parameters can also be reduced through a PCA. Default: no PCA, and 24 motion model.
  * `high_pass` basis of discrete cosines covering slow time drift frequency band. 
  * `wm_csf` the average signal of white matter and cerebrospinal fluid masks, and optionally derivatives, squares, and squared derivatives. Default: simple average, without squares or derivatives.
  * `comp_cor` the results of a PCA applied on a mask based on either anatomy, temporal variance, or both. The number of components can be adjusted. Default: anat compcor with 6 components.
