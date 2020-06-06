@@ -14,17 +14,17 @@ from load_confounds import load_confounds
 ```
 It is first possible to import confounds with a predefined preprocessing strategy:
 ```python 
-confounds_out = load_confounds( path/to/file/sub-01_ses-001.tsv , strategy='minimal')
+confounds_out = load_confounds('path/to/file/sub-01_ses-001.tsv', strategy='minimal')
 ``` 
 
 It is also possible to specify a subset of noise variables:
 ```python 
-confounds_out = load_confounds( path/to/file/sub-01_ses-001.tsv , strategy=['high_pass', 'motion', 'global'])
+confounds_out = load_confounds('path/to/file/sub-01_ses-001.tsv', strategy=['high_pass', 'motion', 'global'])
 ``` 
 
 Each type of noise variables can be further tweaked with dedicated arguments. The following example is using only the 6 basic moton parameters (translation, rotation), as well as both the averge and squared average of the white matter and cerebrospinal fluid masks:
 ```python 
-confounds_out = load_confounds( path/to/file/sub-01_ses-001.tsv , strategy='minimal', motion='basic', 'wm_csf'='power2')
+confounds_out = load_confounds('path/to/file/sub-01_ses-001.tsv', strategy='minimal', motion='basic', 'wm_csf'='power2')
 ``` 
 Currently the following noise categories are supported:
  * `motion` the motion parameters including 6 translation/rotation, and optionally derivatives, squares, and squared derivatives. Motion parameters can also be reduced through a PCA. Default: no PCA, and 24 motion moodel.
