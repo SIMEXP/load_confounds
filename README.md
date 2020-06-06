@@ -2,7 +2,7 @@
 
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/1da186ba5c44489b8af6d96a9c50d3c7)](https://app.codacy.com/gh/SIMEXP/fmriprep_load_confounds?utm_source=github.com&utm_medium=referral&utm_content=SIMEXP/fmriprep_load_confounds&utm_campaign=Badge_Grade_Dashboard) [![CircleCI](https://circleci.com/gh/SIMEXP/load_confounds.svg?style=svg)](https://circleci.com/gh/SIMEXP/load_confounds) [![codecov](https://codecov.io/gh/SIMEXP/load_confounds/branch/master/graph/badge.svg)](https://codecov.io/gh/SIMEXP/load_confounds)
 
-This package is used to easily load a sensible subset of variables from [FMRIPREP](https://fmriprep.readthedocs.io/en/stable/) bold confounds. Users have the option of implementing several common denoising strategies, or fine-tune exactly which categories of confounds to include.
+This package is used to easily load a sensible subset of variables from [FMRIPREP](https://fmriprep.readthedocs.io/en/stable/) bold confounds in a python environment. The resulting pandas DataFrame can notably be used using the `confounds`argument of [nilearn](https://nilearn.github.io/)'s masker functions. 
 
 In order to use `load_confounds` it needs to be installed as a python environment (Python >=3.5) using:
 ```bash 
@@ -14,17 +14,17 @@ from load_confounds import load_confounds
 ```
 It is first possible to import confounds with a predefined preprocessing strategy:
 ```python 
-confounds_out = load_confounds('path/to/file/sub-01_ses-001.tsv', strategy='minimal')
+confounds = load_confounds('path/to/file/sub-01_ses-001.tsv', strategy='minimal')
 ``` 
 
 It is also possible to specify a subset of noise variables:
 ```python 
-confounds_out = load_confounds('path/to/file/sub-01_ses-001.tsv', strategy=['high_pass', 'motion', 'global'])
+confounds = load_confounds('path/to/file/sub-01_ses-001.tsv', strategy=['high_pass', 'motion', 'global'])
 ``` 
 
 Each type of noise variables can be further tweaked with dedicated arguments. The following example is using only the 6 basic moton parameters (translation, rotation), as well as both the averge and squared average of the white matter and cerebrospinal fluid masks:
 ```python 
-confounds_out = load_confounds('path/to/file/sub-01_ses-001.tsv', strategy='minimal', motion='basic', 'wm_csf'='power2')
+confounds = load_confounds('path/to/file/sub-01_ses-001.tsv', strategy='minimal', motion='basic', 'wm_csf'='power2')
 ``` 
 Currently the following noise categories are supported:
  * `motion` the motion parameters including 6 translation/rotation, and optionally derivatives, squares, and squared derivatives. Motion parameters can also be reduced through a PCA. Default: no PCA, and 24 motion moodel.
