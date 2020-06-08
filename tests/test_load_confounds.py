@@ -197,11 +197,18 @@ def test_load_global():
     assert "global_signal" in conf_compcor_global.columns.values
 
 
-# def test_find_confounds():
-#     file_confounds = _load_test_data()
+def test_find_confounds():
+    file_confounds = _load_test_data()
+    df = pd.read_csv(file_confounds, sep="\t")
 
-#     with pytest.raises(ValueError):
-#         conf_compcor = lc._find_confounds(file_confounds,"throwserror")
+    # remove the discrete cosines from the confounds
+    for label in df.columns:
+        if "cosine" in label:
+            df = df.drop(label, axis=1)
+
+    # requesting confounds that are absent should throw in an error
+    with pytest.raises(ValueError):
+        conf_compcor = lc.load_confounds(df)
 
 
 def test_load_high_pass():
