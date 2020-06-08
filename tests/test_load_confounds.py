@@ -236,3 +236,6 @@ def test_sanitize_strategy():
 
     with pytest.raises(ValueError, match="string or a list of strings"):
         lc.load_confounds(file_confounds, strategy=0)
+
+    with pytest.raises(ValueError, match="is not a supported type of confound"):
+        lc.load_confounds(file_confounds, strategy="error")
