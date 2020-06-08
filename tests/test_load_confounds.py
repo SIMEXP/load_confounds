@@ -211,9 +211,6 @@ def test_n_motion():
         conf_compcor_error = lc.load_confounds(
             file_confounds, motion="full", n_motion=50
         )
-        conf_compcor_error = "".join(conf_compcor_error.columns)
-        assert "motion_pca_1" not in conf_compcor_error
-        assert "motion_pca_2" not in conf_compcor_error
 
 
 def test_load_global():
