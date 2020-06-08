@@ -208,9 +208,7 @@ def test_n_motion():
     assert "motion_pca_2" not in conf_compcor_zero
 
     with pytest.raises(ValueError, match="must be between"):
-        conf_compcor_error = lc.load_confounds(
-            file_confounds, motion="full", n_motion=50
-        )
+        lc.load_confounds(file_confounds, motion="full", n_motion=50)
 
 
 def test_load_global():
