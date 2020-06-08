@@ -53,8 +53,6 @@ def _check_params(confounds_raw, params):
 
 def _find_confounds(confounds_raw, keywords):
     """Find confounds that contain certain keywords."""
-    if not isinstance(keywords, list):
-        raise ValueError("keywords should be a list")
     list_confounds = []
     for key in keywords:
         key_found = False
