@@ -4,13 +4,42 @@ import pandas as pd
 import pytest
 
 
-def _load_test_data():
-    path_data = os.path.join(os.path.dirname(lc.__file__), "data")
-    return os.path.join(path_data, "confounds.tsv")
+path_data = os.path.join(os.path.dirname(lc.__file__), "data")
+file_confounds = os.path.join(path_data, "test_desc-confounds_regressors.tsv")
+
+
+def test_read_file():
+
+    with pytest.raises(FileNotFoundError, match="such file or directory"):
+        lc.load_confounds(" ")
+
+    with pytest.raises(ValueError, match="found in the available confounds"):
+        df = pd.read_csv(file_confounds, sep="\t")
+        df = df.drop("trans_x", axis=1)
+        lc.load_confounds(df)
+
+
+def test_confounds2df():
+    file_confounds_nii = os.path.join(
+        path_data, "test_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz"
+    )
+    conf_nii = lc.load_confounds(file_confounds_nii)
+    assert "trans_x" in conf_nii.columns
+
+
+def test_sanitize_strategy():
+
+    with pytest.raises(ValueError, match="is not supported"):
+        lc.load_confounds(file_confounds, strategy="error")
+
+    with pytest.raises(ValueError, match="string or a list of strings"):
+        lc.load_confounds(file_confounds, strategy=0)
+
+    with pytest.raises(ValueError, match="is not a supported type of confound"):
+        lc.load_confounds(file_confounds, strategy=["error"])
 
 
 def test_minimal():
-    file_confounds = _load_test_data()
 
     # Try to load the confounds, whithout PCA reduction
     conf = lc.load_confounds(file_confounds, strategy="minimal")
@@ -41,7 +70,7 @@ def test_minimal():
 
 
 def test_motion():
-    file_confounds = _load_test_data()
+
     conf_basic = lc.load_confounds(file_confounds, strategy="minimal", motion="basic")
     conf_derivatives = lc.load_confounds(
         file_confounds, strategy="minimal", motion="derivatives"
@@ -77,7 +106,6 @@ def test_motion():
 
 
 def test_comp_cor():
-    file_confounds = _load_test_data()
 
     conf_compcor_anat = lc.load_confounds(
         file_confounds, strategy="compcor", compcor="anat"
@@ -103,8 +131,6 @@ def test_comp_cor():
 
 def test_ncompcor():
 
-    file_confounds = _load_test_data()
-
     conf_compcor_0 = lc.load_confounds(
         file_confounds, strategy="compcor", compcor="anat", n_compcor=0
     )
@@ -127,8 +153,8 @@ def test_ncompcor():
     assert "comp_cor_102" not in compcor_col_str_101
 
 
-def test_warning():
-    file_confounds = _load_test_data()
+def test_warning_compcor():
+
     with pytest.warns(UserWarning):
         conf_compcor_all = lc.load_confounds(
             file_confounds, strategy="compcor", compcor="temp", n_compcor=18
@@ -143,7 +169,6 @@ def test_warning():
 
 
 def test_n_motion():
-    file_confounds = _load_test_data()
 
     conf_compcor_fifth = lc.load_confounds(file_confounds, motion="full", n_motion=0.2)
     conf_compcor_fifth = "".join(conf_compcor_fifth.columns)
@@ -192,13 +217,13 @@ def test_n_motion():
 
 
 def test_load_global():
-    file_confounds = _load_test_data()
+
     conf_global = lc.load_confounds(file_confounds, strategy=["global"])
     assert "global_signal" in conf_global.columns.values
 
 
 def test_find_confounds():
-    file_confounds = _load_test_data()
+
     df = pd.read_csv(file_confounds, sep="\t")
 
     # remove the discrete cosines from the confounds
@@ -213,29 +238,6 @@ def test_find_confounds():
 
 
 def test_load_high_pass():
-    file_confounds = _load_test_data()
+
     conf_high_pass = lc.load_confounds(file_confounds, strategy=["high_pass"])
     assert "cosine" in conf_high_pass.columns[0]
-
-
-def test_read_file():
-    file_confounds = _load_test_data()
-    with pytest.raises(FileNotFoundError, match="such file or directory"):
-        lc.load_confounds(" ")
-
-    with pytest.raises(ValueError, match="found in the available confounds"):
-        df = pd.read_csv(file_confounds, sep="\t")
-        df = df.drop("trans_x", axis=1)
-        lc.load_confounds(df)
-
-
-def test_sanitize_strategy():
-    file_confounds = _load_test_data()
-    with pytest.raises(ValueError, match="is not supported"):
-        lc.load_confounds(file_confounds, strategy="error")
-
-    with pytest.raises(ValueError, match="string or a list of strings"):
-        lc.load_confounds(file_confounds, strategy=0)
-
-    with pytest.raises(ValueError, match="is not a supported type of confound"):
-        lc.load_confounds(file_confounds, strategy="error")
