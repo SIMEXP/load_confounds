@@ -182,7 +182,7 @@ def test_n_motion():
     assert "motion_pca_1" not in conf_compcor_zero
     assert "motion_pca_2" not in conf_compcor_zero
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="must be between"):
         conf_compcor_error = lc.load_confounds(
             file_confounds, motion="full", n_motion=50
         )
@@ -193,8 +193,8 @@ def test_n_motion():
 
 def test_load_global():
     file_confounds = _load_test_data()
-    conf_compcor_global = lc.load_confounds(file_confounds, strategy=["global"])
-    assert "global_signal" in conf_compcor_global.columns.values
+    conf_global = lc.load_confounds(file_confounds, strategy=["global"])
+    assert "global_signal" in conf_global.columns.values
 
 
 def test_find_confounds():
@@ -207,12 +207,33 @@ def test_find_confounds():
             df = df.drop(label, axis=1)
 
     # load_confounds should throw in an error
-    # because it cannot find variables for high_pass 
-    with pytest.raises(ValueError):
-        conf_compcor = lc.load_confounds(df)
+    # because it cannot find variables for high_pass
+    with pytest.raises(ValueError, match="could not find any confound with the key"):
+        lc.load_confounds(df)
 
 
 def test_load_high_pass():
     file_confounds = _load_test_data()
-    conf_compcor_high_pass = lc.load_confounds(file_confounds, strategy=["high_pass"])
-    assert "cosine" in conf_compcor_high_pass.columns[0]
+    conf_high_pass = lc.load_confounds(file_confounds, strategy=["high_pass"])
+    assert "cosine" in conf_high_pass.columns[0]
+
+
+def test_read_file():
+    file_confounds = _load_test_data()
+    with pytest.raises(FileNotFoundError, match="such file or directory"):
+        conf_no_file = lc.load_confounds(" ")
+
+    with pytest.raises(ValueError, match="found in the available confounds"):
+        df = pd.read_csv(file_confounds, sep="\t")
+        df = df.drop("trans_x", axis=1)
+        lc.load_confounds(df)
+    
+
+
+def test_sanitize_strategy():
+    file_confounds = _load_test_data()
+    with pytest.raises(ValueError, match="is not supported"):
+        lc.load_confounds(file_confounds, strategy="error")
+
+    with pytest.raises(ValueError, match="string or a list of strings"):
+        lc.load_confounds(file_confounds, strategy=0)
