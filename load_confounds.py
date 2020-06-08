@@ -182,8 +182,6 @@ def _sanitize_confounds(confounds_raw):
     if flag_single:
         confounds_raw = [confounds_raw]
 
-    if not isinstance(confounds_raw, list):
-        raise ValueError("Invalid input type")
     return confounds_raw, flag_single
 
 
