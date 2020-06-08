@@ -206,7 +206,8 @@ def test_find_confounds():
         if "cosine" in label:
             df = df.drop(label, axis=1)
 
-    # requesting confounds that are absent should throw in an error
+    # load_confounds should throw in an error
+    # because it cannot find variables for high_pass 
     with pytest.raises(ValueError):
         conf_compcor = lc.load_confounds(df)
 
