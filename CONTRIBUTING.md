@@ -1,4 +1,4 @@
-The SIMEXP lab openly invites anybody to contribute to this repository. Most conversations take place on open [issues](https://github.com/SIMEXP/fmriprep_load_confounds/issues). We aim to create a welcoming environment where everybodies viewpoints are respected and aknowledged.
+The SIMEXP lab openly invites anybody to contribute to this repository. Most conversations take place on open [issues](https://github.com/SIMEXP/fmriprep_load_confounds/issues). We aim to create a welcoming environment where everybody's viewpoints are respected and aknowledged.
 
 If you are interested in making changes we encourage you to do it as follows:
 
