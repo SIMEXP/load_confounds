@@ -4,13 +4,42 @@ import pandas as pd
 import pytest
 
 
-def _load_test_data():
-    path_data = os.path.join(os.path.dirname(lc.__file__), "data")
-    return os.path.join(path_data, "confounds.tsv")
+path_data = os.path.join(os.path.dirname(lc.__file__), "data")
+file_confounds = os.path.join(path_data, "test_desc-confounds_regressors.tsv")
+
+
+def test_read_file():
+
+    with pytest.raises(FileNotFoundError):
+        lc.load_confounds(" ")
+
+    with pytest.raises(ValueError):
+        df = pd.read_csv(file_confounds, sep="\t")
+        df = df.drop("trans_x", axis=1)
+        lc.load_confounds(df)
+
+
+def test_confounds2df():
+    file_confounds_nii = os.path.join(
+        path_data, "test_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz"
+    )
+    conf_nii = lc.load_confounds(file_confounds_nii)
+    assert "trans_x" in conf_nii.columns
+
+
+def test_sanitize_strategy():
+
+    with pytest.raises(ValueError, match="is not supported"):
+        lc.load_confounds(file_confounds, strategy="error")
+
+    with pytest.raises(ValueError, match="string or a list of strings"):
+        lc.load_confounds(file_confounds, strategy=0)
+
+    with pytest.raises(ValueError, match="is not a supported type of confound"):
+        lc.load_confounds(file_confounds, strategy=["error"])
 
 
 def test_minimal():
-    file_confounds = _load_test_data()
 
     # Try to load the confounds, whithout PCA reduction
     conf = lc.load_confounds(file_confounds, strategy="minimal")
@@ -41,7 +70,7 @@ def test_minimal():
 
 
 def test_motion():
-    file_confounds = _load_test_data()
+
     conf_basic = lc.load_confounds(file_confounds, strategy="minimal", motion="basic")
     conf_derivatives = lc.load_confounds(
         file_confounds, strategy="minimal", motion="derivatives"
@@ -77,7 +106,6 @@ def test_motion():
 
 
 def test_comp_cor():
-    file_confounds = _load_test_data()
 
     conf_compcor_anat = lc.load_confounds(
         file_confounds, strategy="compcor", compcor="anat"
@@ -103,8 +131,6 @@ def test_comp_cor():
 
 def test_ncompcor():
 
-    file_confounds = _load_test_data()
-
     conf_compcor_0 = lc.load_confounds(
         file_confounds, strategy="compcor", compcor="anat", n_compcor=0
     )
@@ -127,11 +153,11 @@ def test_ncompcor():
     assert "comp_cor_102" not in compcor_col_str_101
 
 
-def test_warning():
-    file_confounds = _load_test_data()
+def test_warning_compcor():
+
     with pytest.warns(UserWarning):
         conf_compcor_all = lc.load_confounds(
-            file_confounds, strategy="compcor", compcor="temp", n_compcor=4
+            file_confounds, strategy="compcor", compcor="temp", n_compcor=18
         )
 
         compcor_col_str_all = "".join(conf_compcor_all.columns)
@@ -139,4 +165,74 @@ def test_warning():
         assert "comp_cor_01" in compcor_col_str_all
         assert "comp_cor_02" in compcor_col_str_all
         assert "comp_cor_03" in compcor_col_str_all
-        assert "comp_cor_04" not in compcor_col_str_all
+        assert "comp_cor_19" not in compcor_col_str_all
+
+
+def test_n_motion():
+
+    conf_compcor_fifth = lc.load_confounds(file_confounds, motion="full", n_motion=0.2)
+    conf_compcor_fifth = "".join(conf_compcor_fifth.columns)
+    assert "motion_pca_1" in conf_compcor_fifth
+    assert "motion_pca_2" not in conf_compcor_fifth
+
+    conf_compcor_95 = lc.load_confounds(file_confounds, motion="full", n_motion=0.95)
+    conf_compcor_95 = "".join(conf_compcor_95.columns)
+    assert "motion_pca_1" in conf_compcor_95
+    assert "motion_pca_2" in conf_compcor_95
+
+    conf_compcor_one = lc.load_confounds(file_confounds, motion="full", n_motion=1)
+    conf_compcor_one = "".join(conf_compcor_one.columns)
+    assert "motion_pca_1" in conf_compcor_one
+    assert "motion_pca_2" not in conf_compcor_one
+
+    conf_compcor_two = lc.load_confounds(file_confounds, motion="full", n_motion=2)
+    conf_compcor_two = "".join(conf_compcor_two.columns)
+    assert "motion_pca_1" in conf_compcor_two
+    assert "motion_pca_2" in conf_compcor_two
+
+    conf_compcor_twentyfour = lc.load_confounds(
+        file_confounds, motion="full", n_motion=24
+    )
+    conf_compcor_twentyfour = "".join(conf_compcor_twentyfour.columns)
+    assert "motion_pca_1" in conf_compcor_twentyfour
+    assert "motion_pca_25" not in conf_compcor_twentyfour
+
+    conf_compcor_twelve = lc.load_confounds(file_confounds, motion="full", n_motion=12)
+    conf_compcor_twelve = "".join(conf_compcor_twelve.columns)
+    assert "motion_pca_1" in conf_compcor_twelve
+    assert "motion_pca_13" not in conf_compcor_twelve
+
+    conf_compcor_zero = lc.load_confounds(file_confounds, motion="full", n_motion=0)
+    conf_compcor_zero = "".join(conf_compcor_zero.columns)
+    assert "motion_pca_1" not in conf_compcor_zero
+    assert "motion_pca_2" not in conf_compcor_zero
+
+    with pytest.raises(ValueError, match="must be between"):
+        lc.load_confounds(file_confounds, motion="full", n_motion=50)
+
+
+def test_load_global():
+
+    conf_global = lc.load_confounds(file_confounds, strategy=["global"])
+    assert "global_signal" in conf_global.columns.values
+
+
+def test_find_confounds():
+
+    df = pd.read_csv(file_confounds, sep="\t")
+
+    # remove the discrete cosines from the confounds
+    for label in df.columns:
+        if "cosine" in label:
+            df = df.drop(label, axis=1)
+
+    # load_confounds should throw in an error
+    # because it cannot find variables for high_pass
+    with pytest.raises(ValueError, match="could not find any confound with the key"):
+        lc.load_confounds(df)
+
+
+def test_load_high_pass():
+
+    conf_high_pass = lc.load_confounds(file_confounds, strategy=["high_pass"])
+    assert "cosine" in conf_high_pass.columns[0]

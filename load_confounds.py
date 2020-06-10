@@ -6,6 +6,7 @@ Authors: Dr. Pierre Bellec, Francois Paugam, Hanad Sharmarke
 import itertools
 import pandas as pd
 from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
 import warnings
 
 init_strategy = {
@@ -52,8 +53,6 @@ def _check_params(confounds_raw, params):
 
 def _find_confounds(confounds_raw, keywords):
     """Find confounds that contain certain keywords."""
-    if not isinstance(keywords, list):
-        raise ValueError("keywords should be a list")
     list_confounds = []
     for key in keywords:
         key_found = False
@@ -86,7 +85,7 @@ def _load_high_pass(confounds_raw):
     return confounds_raw[high_pass_params]
 
 
-def _ncompcor(confounds_raw, compcor_suffix, n_compcor):
+def _label_compcor(confounds_raw, compcor_suffix, n_compcor):
     """Builds list for the number of compcor components."""
     compcor_cols = []
     for nn in range(n_compcor + 1):
@@ -103,21 +102,21 @@ def _ncompcor(confounds_raw, compcor_suffix, n_compcor):
 def _load_compcor(confounds_raw, compcor, n_compcor):
     """Load compcor regressors."""
     if compcor == "anat":
-        compcor_cols = _ncompcor(confounds_raw, "a", n_compcor)
+        compcor_cols = _label_compcor(confounds_raw, "a", n_compcor)
 
     if compcor == "temp":
-        compcor_cols = _ncompcor(confounds_raw, "t", n_compcor)
+        compcor_cols = _label_compcor(confounds_raw, "t", n_compcor)
 
     if compcor == "full":
-        compcor_cols = _ncompcor(confounds_raw, "a", n_compcor)
-        compcor_cols.extend(_ncompcor(confounds_raw, "t", n_compcor))
+        compcor_cols = _label_compcor(confounds_raw, "a", n_compcor)
+        compcor_cols.extend(_label_compcor(confounds_raw, "t", n_compcor))
 
     compcor_cols.sort()
     _check_params(confounds_raw, compcor_cols)
     return confounds_raw[compcor_cols]
 
 
-def _load_motion(confounds_raw, motion, pca_motion):
+def _load_motion(confounds_raw, motion, n_motion):
     """Load the motion regressors."""
     motion_params = _add_suffix(
         ["trans_x", "trans_y", "trans_z", "rot_x", "rot_y", "rot_z"], motion
@@ -126,8 +125,8 @@ def _load_motion(confounds_raw, motion, pca_motion):
     confounds_motion = confounds_raw[motion_params]
 
     # Optionally apply PCA reduction
-    if (pca_motion > 0) and (pca_motion < 1):
-        confounds_motion = _pca_motion(confounds_motion, n_components=pca_motion)
+    if n_motion > 0:
+        confounds_motion = _pca_motion(confounds_motion, n_components=n_motion)
 
     return confounds_motion
 
@@ -135,8 +134,10 @@ def _load_motion(confounds_raw, motion, pca_motion):
 def _pca_motion(confounds_motion, n_components):
     """Reduce the motion paramaters using PCA."""
     confounds_motion = confounds_motion.dropna()
+    scaler = StandardScaler(with_mean=True, with_std=True)
+    confounds_motion_std = scaler.fit_transform(confounds_motion)
     pca = PCA(n_components=n_components)
-    motion_pca = pd.DataFrame(pca.fit_transform(confounds_motion.values))
+    motion_pca = pd.DataFrame(pca.fit_transform(confounds_motion_std))
     motion_pca.columns = ["motion_pca_" + str(col + 1) for col in motion_pca.columns]
     return motion_pca
 
@@ -179,8 +180,6 @@ def _sanitize_confounds(confounds_raw):
     if flag_single:
         confounds_raw = [confounds_raw]
 
-    if not isinstance(confounds_raw, list):
-        raise ValueError("Invalid input type")
     return confounds_raw, flag_single
 
 
@@ -188,7 +187,7 @@ def _load_confounds_single(
     confounds_raw,
     strategy,
     motion,
-    pca_motion,
+    n_motion,
     wm_csf,
     global_signal,
     compcor,
@@ -202,7 +201,7 @@ def _load_confounds_single(
     confounds = pd.DataFrame()
 
     if "motion" in strategy:
-        confounds_motion = _load_motion(confounds_raw, motion, pca_motion)
+        confounds_motion = _load_motion(confounds_raw, motion, n_motion)
         confounds = pd.concat([confounds, confounds_motion], axis=1)
 
     if "high_pass" in strategy:
@@ -228,7 +227,7 @@ def load_confounds(
     confounds_raw,
     strategy="minimal",
     motion="full",
-    pca_motion=1,
+    n_motion=0,
     wm_csf="basic",
     global_signal="basic",
     compcor="anat",
@@ -261,10 +260,12 @@ def load_confounds(
         "derivatives" translation/rotation + derivatives (12 parameters)
         "full" translation/rotation + derivatives + quadratic terms + power2d derivatives (24 parameters)
 
-    pca_motion : float 0 <= . <= 1
+    n_motion : float
+        Number of pca components to keep from head motion estimates.
         If the parameters is strictly comprised between 0 and 1, a principal component
         analysis is applied to the motion parameters, and the number of extracted
-        components is set to exceed `pca_motion` percent of the parameters variance.
+        components is set to exceed `n_motion` percent of the parameters variance.
+        If the n_components = 0, then no PCA is performed.
 
     wm_csf : string, optional
         Type of confounds extracted from masks of white matter and cerebrospinal fluids.
@@ -302,7 +303,7 @@ def load_confounds(
                 file,
                 strategy=strategy,
                 motion=motion,
-                pca_motion=pca_motion,
+                n_motion=n_motion,
                 wm_csf=wm_csf,
                 global_signal=global_signal,
                 compcor=compcor,
