@@ -85,7 +85,7 @@ def _load_high_pass(confounds_raw):
     return confounds_raw[high_pass_params]
 
 
-def _ncompcor(confounds_raw, compcor_suffix, n_compcor):
+def _label_compcor(confounds_raw, compcor_suffix, n_compcor):
     """Builds list for the number of compcor components."""
     compcor_cols = []
     for nn in range(n_compcor + 1):
@@ -102,14 +102,14 @@ def _ncompcor(confounds_raw, compcor_suffix, n_compcor):
 def _load_compcor(confounds_raw, compcor, n_compcor):
     """Load compcor regressors."""
     if compcor == "anat":
-        compcor_cols = _ncompcor(confounds_raw, "a", n_compcor)
+        compcor_cols = _label_compcor(confounds_raw, "a", n_compcor)
 
     if compcor == "temp":
-        compcor_cols = _ncompcor(confounds_raw, "t", n_compcor)
+        compcor_cols = _label_compcor(confounds_raw, "t", n_compcor)
 
     if compcor == "full":
-        compcor_cols = _ncompcor(confounds_raw, "a", n_compcor)
-        compcor_cols.extend(_ncompcor(confounds_raw, "t", n_compcor))
+        compcor_cols = _label_compcor(confounds_raw, "a", n_compcor)
+        compcor_cols.extend(_label_compcor(confounds_raw, "t", n_compcor))
 
     compcor_cols.sort()
     _check_params(confounds_raw, compcor_cols)
@@ -126,12 +126,12 @@ def _load_motion(confounds_raw, motion, n_motion):
 
     # Optionally apply PCA reduction
     if n_motion > 0:
-        confounds_motion = _n_motion(confounds_motion, n_components=n_motion)
+        confounds_motion = _pca_motion(confounds_motion, n_components=n_motion)
 
     return confounds_motion
 
 
-def _n_motion(confounds_motion, n_components):
+def _pca_motion(confounds_motion, n_components):
     """Reduce the motion paramaters using PCA."""
     confounds_motion = confounds_motion.dropna()
     scaler = StandardScaler(with_mean=True, with_std=True)

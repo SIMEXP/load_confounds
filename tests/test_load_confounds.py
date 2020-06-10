@@ -10,10 +10,10 @@ file_confounds = os.path.join(path_data, "test_desc-confounds_regressors.tsv")
 
 def test_read_file():
 
-    with pytest.raises(FileNotFoundError, match="such file or directory"):
+    with pytest.raises(FileNotFoundError):
         lc.load_confounds(" ")
 
-    with pytest.raises(ValueError, match="found in the available confounds"):
+    with pytest.raises(ValueError):
         df = pd.read_csv(file_confounds, sep="\t")
         df = df.drop("trans_x", axis=1)
         lc.load_confounds(df)
