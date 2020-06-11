@@ -9,19 +9,7 @@ from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 import warnings
 
-init_strategy = {
-    "minimal": ["motion", "high_pass", "wm_csf"],
-    "minimal_glob": ["motion", "high_pass", "wm_csf", "global"],
-    "compcor": ["high_pass", "motion", "compcor"],
-}
-
-all_confounds = list(
-    set(
-        itertools.chain.from_iterable(
-            [init_strategy[strat] for strat in init_strategy.keys()]
-        )
-    )
-)
+all_confounds = ["motion", "high_pass", "wm_csf", "global", "compcor"]
 
 
 def _add_suffix(params, model):
@@ -144,17 +132,12 @@ def _pca_motion(confounds_motion, n_components):
 
 def _sanitize_strategy(strategy):
     """Defines the supported denoising strategies."""
-    if isinstance(strategy, str):
-        # check that the specified strategy is implemented
-        if strategy not in init_strategy.keys():
-            raise ValueError(f"strategy {strategy} is not supported")
-        strategy = init_strategy[strategy]
-    elif isinstance(strategy, list):
+    if isinstance(strategy, list):
         for conf in strategy:
             if not conf in all_confounds:
                 raise ValueError(f"{conf} is not a supported type of confounds.")
     else:
-        raise ValueError("strategy needs to be a string or a list of strings")
+        raise ValueError("strategy needs to be a list of strings")
     return strategy
 
 
@@ -183,71 +166,14 @@ def _sanitize_confounds(confounds_raw):
     return confounds_raw, flag_single
 
 
-def _load_confounds_single(
-    confounds_raw,
-    strategy,
-    motion,
-    n_motion,
-    wm_csf,
-    global_signal,
-    compcor,
-    n_compcor,
-):
-    """Load a single confounds file from fmriprep."""
-    # Convert tsv file to pandas dataframe
-    confounds_raw = _confounds2df(confounds_raw)
-    strategy = _sanitize_strategy(strategy)
-
-    confounds = pd.DataFrame()
-
-    if "motion" in strategy:
-        confounds_motion = _load_motion(confounds_raw, motion, n_motion)
-        confounds = pd.concat([confounds, confounds_motion], axis=1)
-
-    if "high_pass" in strategy:
-        confounds_high_pass = _load_high_pass(confounds_raw)
-        confounds = pd.concat([confounds, confounds_high_pass], axis=1)
-
-    if "wm_csf" in strategy:
-        confounds_wm_csf = _load_wm_csf(confounds_raw, wm_csf)
-        confounds = pd.concat([confounds, confounds_wm_csf], axis=1)
-
-    if "global" in strategy:
-        confounds_global_signal = _load_global(confounds_raw, global_signal)
-        confounds = pd.concat([confounds, confounds_global_signal], axis=1)
-
-    if "compcor" in strategy:
-        confounds_compcor = _load_compcor(confounds_raw, compcor, n_compcor)
-        confounds = pd.concat([confounds, confounds_compcor], axis=1)
-
-    return confounds
-
-
-def load_confounds(
-    confounds_raw,
-    strategy="minimal",
-    motion="full",
-    n_motion=0,
-    wm_csf="basic",
-    global_signal="basic",
-    compcor="anat",
-    n_compcor=6,
-):
+class Confounds:
     """
-    Load confounds from fmriprep
+    Confounds from fmriprep
 
     Parameters
     ----------
-    confounds_raw : Pandas Dataframe or path to tsv file(s), optionally as a list.
-        Raw confounds from fmriprep
-
-    strategy : string or list of strings
-        The strategy used to select a subset of the confounds from fmriprep.
-        Available strategies:
-        "minimal": ["motion", "high_pass", "wm_csf"]
-        "minimal_glob": ["motion", "high_pass", "wm_csf", "global"]
-        It is also possible to pass a list of strings, e.g. ["motion", "high_pass"]
-        Available confound types:
+    strategy : list of strings
+        The type of noise confounds to include.
         "motion" head motion estimates.
         "high_pass" discrete cosines covering low frequencies.
         "wm_csf" confounds derived from white matter and cerebrospinal fluid.
@@ -290,30 +216,110 @@ def load_confounds(
     n_compcor : int, optional
         The number of noise components to be extracted.
 
-    Returns
-    -------
-    confounds:  pandas DataFrame or list of pandas DataFrame
-        A reduced version of fMRIprep confounds based on selected strategy and flags.
+    Attributes
+    ----------
+    `confounds_` : pandas DataFrame
+        The confounds loaded using the specified model
+
+    Notes
+    -----
+    The predefined strategies implemented in this class are from
+    adapted from (Ciric et al. 2017). Band-pass filter is replaced
+    by high-pass filter, as high frequencies have been shown to carry
+    meaningful signal for connectivity analysis.
+
+    References
+    ----------
+    Ciric et al., 2017 "Benchmarking of participant-level confound regression
+    strategies for the control of motion artifact in studies of functional
+    connectivity" Neuroimage 154: 174-87
+    https://doi.org/10.1016/j.neuroimage.2017.03.020
     """
-    confounds_raw, flag_single = _sanitize_confounds(confounds_raw)
-    confounds_out = []
-    for file in confounds_raw:
-        confounds_out.append(
-            _load_confounds_single(
-                file,
-                strategy=strategy,
-                motion=motion,
-                n_motion=n_motion,
-                wm_csf=wm_csf,
-                global_signal=global_signal,
-                compcor=compcor,
-                n_compcor=n_compcor,
+
+    def __init__(
+        self,
+        strategy=["motion", "high_pass", "wm_csf"],
+        motion="full",
+        n_motion=0,
+        wm_csf="basic",
+        global_signal="basic",
+        compcor="anat",
+        n_compcor=6,
+    ):
+        self.strategy = _sanitize_strategy(strategy)
+        self.motion = motion
+        self.n_motion = n_motion
+        self.wm_csf = wm_csf
+        self.global_signal = global_signal
+        self.compcor = compcor
+        self.n_compcor = n_compcor
+
+    def load(self, confounds_raw):
+        """
+        Load fMRIprep confounds
+
+        Parameters
+        ----------
+        confounds_raw : Pandas Dataframe or path to tsv file(s), optionally as a list.
+            Raw confounds from fmriprep
+
+        Returns
+        -------
+        confounds :  pandas DataFrame or list of pandas DataFrame
+            A reduced version of fMRIprep confounds based on selected strategy and flags.
+        """
+        confounds_raw, flag_single = _sanitize_confounds(confounds_raw)
+        confounds_out = []
+        for file in confounds_raw:
+            confounds_out.append(self._load_single(file))
+
+        # If a single input was provided,
+        # send back a single output instead of a list
+        if flag_single:
+            confounds_out = confounds_out[0]
+
+        self.confounds_ = confounds_out
+        return confounds_out
+
+    def _load_single(self, confounds_raw):
+        """Load a single confounds file from fmriprep."""
+        # Convert tsv file to pandas dataframe
+        confounds_raw = _confounds2df(confounds_raw)
+
+        confounds = pd.DataFrame()
+
+        if "motion" in self.strategy:
+            confounds_motion = _load_motion(confounds_raw, self.motion, self.n_motion)
+            confounds = pd.concat([confounds, confounds_motion], axis=1)
+
+        if "high_pass" in self.strategy:
+            confounds_high_pass = _load_high_pass(confounds_raw)
+            confounds = pd.concat([confounds, confounds_high_pass], axis=1)
+
+        if "wm_csf" in self.strategy:
+            confounds_wm_csf = _load_wm_csf(confounds_raw, self.wm_csf)
+            confounds = pd.concat([confounds, confounds_wm_csf], axis=1)
+
+        if "global" in self.strategy:
+            confounds_global_signal = _load_global(confounds_raw, self.global_signal)
+            confounds = pd.concat([confounds, confounds_global_signal], axis=1)
+
+        if "compcor" in self.strategy:
+            confounds_compcor = _load_compcor(
+                confounds_raw, self.compcor, self.n_compcor
             )
+            confounds = pd.concat([confounds, confounds_compcor], axis=1)
+
+        return confounds
+
+    def p2(self, confounds_raw):
+        """Load confounds using the 2P strategy from Ciric et al. 2017."""
+        confounds = self.load(
+            confounds_raw, strategy=["high_pass", "wm_csf"], wm_csf="basic"
         )
 
-    # If a single input was provided,
-    # send back a single output instead of a list
-    if flag_single:
-        confounds_out = confounds_out[0]
-
-    return confounds_out
+    def p6(self, confounds_raw):
+        """Load confounds using the 6P strategy from Ciric et al. 2017."""
+        confounds = self.load(
+            confounds_raw, strategy=["high_pass", "motion"], motion="basic"
+        )
