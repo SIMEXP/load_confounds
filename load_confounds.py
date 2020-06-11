@@ -312,9 +312,11 @@ class Confounds:
 
         return confounds
 
+
 class P2(Confounds):
     """
     Load confounds using the 2P strategy from Ciric et al. 2017.
+    Mean white matter and CSF signals, with high-pass filter.
 
     Parameters
     ----------
@@ -324,7 +326,7 @@ class P2(Confounds):
     Returns
     -------
     conf :  a Confounds object
-        conf.confounds is a reduced version of fMRIprep confounds.
+        conf.confounds_ is a reduced version of fMRIprep confounds.
 
     """
 
@@ -332,9 +334,11 @@ class P2(Confounds):
         self.strategy = ["high_pass", "wm_csf"]
         self.wm_csf = "basic"
 
+
 class P6(Confounds):
     """
     Load confounds using the 6P strategy from Ciric et al. 2017.
+    Basic motion parameters with high pass filter.
 
     Parameters
     ----------
@@ -344,7 +348,7 @@ class P6(Confounds):
     Returns
     -------
     conf :  a Confounds object
-        conf.confounds is a reduced version of fMRIprep confounds.
+        conf.confounds_ is a reduced version of fMRIprep confounds.
 
     """
 
@@ -352,3 +356,79 @@ class P6(Confounds):
         self.strategy = ["high_pass", "motion"]
         self.motion = "basic"
         self.n_motion = 0
+
+
+class P9(Confounds):
+    """
+    Load confounds using the 9P strategy from Ciric et al. 2017.
+    Basic motion parameters, WM/CSF signals, global signal and high pass filter.
+
+    Parameters
+    ----------
+    confounds_raw : Pandas Dataframe or path to tsv file(s), optionally as a list.
+        Raw confounds from fmriprep
+
+    Returns
+    -------
+    conf :  a Confounds object
+        conf.confounds_ is a reduced version of fMRIprep confounds.
+
+    """
+
+    def __init__(self):
+        self.strategy = ["high_pass", "motion", "wm_csf", "global"]
+        self.motion = "basic"
+        self.n_motion = 0
+        self.wm_csf = "basic"
+        self.global_signal = "basic"
+
+
+class P24(Confounds):
+    """
+    Load confounds using the 24P strategy from Ciric et al. 2017.
+    Full motion parameters (derivatives, squares and squared derivatives),
+    with high pass filter.
+
+    Parameters
+    ----------
+    confounds_raw : Pandas Dataframe or path to tsv file(s), optionally as a list.
+        Raw confounds from fmriprep
+
+    Returns
+    -------
+    conf :  a Confounds object
+        conf.confounds_ is a reduced version of fMRIprep confounds.
+
+    """
+
+    def __init__(self):
+        self.strategy = ["high_pass", "motion"]
+        self.motion = "full"
+        self.n_motion = 0
+
+
+class P36(Confounds):
+    """
+    Load confounds using the 36P strategy from Ciric et al. 2017.
+    Motion parameters, WM/CSF signals, global signal, high pass filter.
+    All noise components are fully expanded (derivatives, squares and squared
+    derivatives).
+
+    Parameters
+    ----------
+    confounds_raw : Pandas Dataframe or path to tsv file(s), optionally as a list.
+        Raw confounds from fmriprep
+
+    Returns
+    -------
+    conf :  a Confounds object
+        conf.confounds_ is a reduced version of fMRIprep confounds.
+
+    """
+
+    def __init__(self):
+        self.strategy = ["high_pass", "motion", "wm_csf", "global"]
+        self.motion = "full"
+        self.n_motion = 0
+        self.wm_csf = "full"
+        self.global_signal = "full"
