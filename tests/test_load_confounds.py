@@ -1,5 +1,6 @@
 import os
 import load_confounds as lc
+from load_confounds import Confounds
 import pandas as pd
 import pytest
 
@@ -9,43 +10,44 @@ file_confounds = os.path.join(path_data, "test_desc-confounds_regressors.tsv")
 
 
 def test_read_file():
-
+    conf = Confounds()
     with pytest.raises(FileNotFoundError):
-        lc.load_confounds(" ")
+        conf.load(" ")
 
     with pytest.raises(ValueError):
         df = pd.read_csv(file_confounds, sep="\t")
         df = df.drop("trans_x", axis=1)
-        lc.load_confounds(df)
+        conf.load(df)
 
 
 def test_confounds2df():
+    conf = Confounds()
     file_confounds_nii = os.path.join(
         path_data, "test_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz"
     )
-    conf_nii = lc.load_confounds(file_confounds_nii)
+    conf_nii = conf.load(file_confounds_nii)
     assert "trans_x" in conf_nii.columns
 
 
 def test_sanitize_strategy():
+    with pytest.raises(ValueError):
+        conf = Confounds(strategy="string")
 
-    with pytest.raises(ValueError, match="is not supported"):
-        lc.load_confounds(file_confounds, strategy="error")
+    with pytest.raises(ValueError):
+        conf = Confounds(strategy=["error"])
 
-    with pytest.raises(ValueError, match="string or a list of strings"):
-        lc.load_confounds(file_confounds, strategy=0)
-
-    with pytest.raises(ValueError, match="is not a supported type of confound"):
-        lc.load_confounds(file_confounds, strategy=["error"])
+    with pytest.raises(ValueError):
+        conf = Confounds(strategy=[0])
 
 
-def test_minimal():
+def test_p6():
 
     # Try to load the confounds, whithout PCA reduction
-    conf = lc.load_confounds(file_confounds, strategy="minimal")
+    conf = Confounds()
+    conf.p6(file_confounds)
 
     # Check that the confonds is a data frame
-    assert isinstance(conf, pd.DataFrame)
+    assert isinstance(conf.confounds_, pd.DataFrame)
 
     # Check that all model categories have been successfully loaded
     list_check = [
@@ -60,13 +62,13 @@ def test_minimal():
         "white_matter",
     ]
     for check in list_check:
-        assert check in conf.columns
+        assert check in conf.confounds_.columns
 
     # Load the confounds in a list
-    conf = lc.load_confounds([file_confounds, file_confounds], strategy="minimal")
-    assert isinstance(conf, list)
-    assert isinstance(conf[0], pd.DataFrame)
-    assert len(conf) == 2
+    conf.p6([file_confounds, file_confounds])
+    assert isinstance(conf.confounds, list)
+    assert isinstance(conf.confounds[0], pd.DataFrame)
+    assert len(conf.confounds) == 2
 
 
 def test_motion():
