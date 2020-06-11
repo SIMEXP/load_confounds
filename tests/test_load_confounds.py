@@ -40,7 +40,7 @@ def test_sanitize_strategy():
         conf = Confounds(strategy=[0])
 
 
-def test_p6():
+def test_P6():
 
     # Try to load the confounds, whithout PCA reduction
     conf = P6()
