@@ -1,6 +1,6 @@
 import os
 import load_confounds as lc
-from load_confounds import Confounds
+from load_confounds import Confounds, P6
 import pandas as pd
 import pytest
 
@@ -43,8 +43,8 @@ def test_sanitize_strategy():
 def test_p6():
 
     # Try to load the confounds, whithout PCA reduction
-    conf = Confounds()
-    conf.p6(file_confounds)
+    conf = P6()
+    conf.load(file_confounds)
 
     # Check that the confonds is a data frame
     assert isinstance(conf.confounds_, pd.DataFrame)
@@ -58,17 +58,15 @@ def test_p6():
         "rot_y",
         "rot_z",
         "cosine00",
-        "csf",
-        "white_matter",
     ]
     for check in list_check:
         assert check in conf.confounds_.columns
 
     # Load the confounds in a list
-    conf.p6([file_confounds, file_confounds])
-    assert isinstance(conf.confounds, list)
-    assert isinstance(conf.confounds[0], pd.DataFrame)
-    assert len(conf.confounds) == 2
+    conf.load([file_confounds, file_confounds])
+    assert isinstance(conf.confounds_, list)
+    assert isinstance(conf.confounds_[0], pd.DataFrame)
+    assert len(conf.confounds_) == 2
 
 
 def test_motion():
