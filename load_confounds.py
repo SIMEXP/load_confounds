@@ -312,14 +312,43 @@ class Confounds:
 
         return confounds
 
-    def p2(self, confounds_raw):
-        """Load confounds using the 2P strategy from Ciric et al. 2017."""
-        confounds = self.load(
-            confounds_raw, strategy=["high_pass", "wm_csf"], wm_csf="basic"
-        )
+class P2(Confounds):
+    """
+    Load confounds using the 2P strategy from Ciric et al. 2017.
 
-    def p6(self, confounds_raw):
-        """Load confounds using the 6P strategy from Ciric et al. 2017."""
-        confounds = self.load(
-            confounds_raw, strategy=["high_pass", "motion"], motion="basic"
-        )
+    Parameters
+    ----------
+    confounds_raw : Pandas Dataframe or path to tsv file(s), optionally as a list.
+        Raw confounds from fmriprep
+
+    Returns
+    -------
+    conf :  a Confounds object
+        conf.confounds is a reduced version of fMRIprep confounds.
+
+    """
+
+    def __init__(self):
+        self.strategy = ["high_pass", "wm_csf"]
+        self.wm_csf = "basic"
+
+class P6(Confounds):
+    """
+    Load confounds using the 6P strategy from Ciric et al. 2017.
+
+    Parameters
+    ----------
+    confounds_raw : Pandas Dataframe or path to tsv file(s), optionally as a list.
+        Raw confounds from fmriprep
+
+    Returns
+    -------
+    conf :  a Confounds object
+        conf.confounds is a reduced version of fMRIprep confounds.
+
+    """
+
+    def __init__(self):
+        self.strategy = ["high_pass", "motion"]
+        self.motion = "basic"
+        self.n_motion = 0
