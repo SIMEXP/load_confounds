@@ -246,7 +246,7 @@ class Confounds:
         compcor="anat",
         n_compcor=10,
     ):
-        self.strategy = _sanitize_strategy(strategy)
+        self.strategy = strategy
         self.motion = motion
         self.n_motion = n_motion
         self.wm_csf = wm_csf
