@@ -1,11 +1,47 @@
 import os
 import load_confounds as lc
 import pandas as pd
+import numpy as np
+from sklearn.preprocessing import scaler
 import pytest
 
 
 path_data = os.path.join(os.path.dirname(lc.__file__), "data")
 file_confounds = os.path.join(path_data, "test_desc-confounds_regressors.tsv")
+
+
+def _simu_img():
+    # set the size of the image matrix
+    nx = 5
+    ny = 5
+    # the actual number of slices will actually be double of that
+    # as we will stack slices with confounds on top of slices with noise
+    nz = 2
+    # Load a simple 6 parameters motion models as confounds
+    conf = lc.Confounds()
+    X = conf.load(file_confounds, ['motion'], motion="basic")
+    # the number of time points is based on the example confound file
+    nt = X.shape[0]
+    # initialize an empty 4D volume
+    vol = np.zeros([nx, ny, nz, ])
+
+    # create a random mixture of confounds
+    # standardized to zero mean and unit variance
+    beta = np.random.rand(nx * ny * nz, X.shape[1])
+    tseries_conf = scaler(beta * X.transpose())
+    # fill the first half of the 4D data with the mixture
+    vol[:, :, 0:nz, :] = tseries_conf
+
+    # create random noise in the second half of the 4D data
+    vol[:, :, nz:2*nz, :] = scaler(np.random.randn(nx * ny * nz, nt))
+
+    # Shift the mean to non-zero
+    vol = vol + 1000
+
+    # create an nifti image with the data, and corresponding mask
+    img = Nifti1Image(vol, np.eye(4))
+    mask = Nifti1Image(np.ones(vol.shape), np.eye(4))
+    return img, mask
 
 
 def test_read_file():
