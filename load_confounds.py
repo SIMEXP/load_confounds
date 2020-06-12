@@ -6,7 +6,7 @@ Authors: Hanad Sharmarke, Dr. Pierre Bellec, Francois Paugam
 import itertools
 import pandas as pd
 from sklearn.decomposition import PCA
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import scale
 import warnings
 
 # Global variables listing the admissible types of noise components
@@ -123,8 +123,7 @@ def _load_motion(confounds_raw, motion, n_motion):
 def _pca_motion(confounds_motion, n_components):
     """Reduce the motion paramaters using PCA."""
     confounds_motion = confounds_motion.dropna()
-    scaler = StandardScaler(with_mean=True, with_std=True)
-    confounds_motion_std = scaler.fit_transform(confounds_motion)
+    confounds_motion_std = scale(confounds_motion, axis=0)
     pca = PCA(n_components=n_components)
     motion_pca = pd.DataFrame(pca.fit_transform(confounds_motion_std))
     motion_pca.columns = ["motion_pca_" + str(col + 1) for col in motion_pca.columns]
