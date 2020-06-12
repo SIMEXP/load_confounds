@@ -245,7 +245,7 @@ class Confounds:
         wm_csf="basic",
         global_signal="basic",
         compcor="anat",
-        n_compcor=6,
+        n_compcor=10,
     ):
         self.strategy = _sanitize_strategy(strategy)
         self.motion = motion
@@ -433,3 +433,57 @@ class Params36(Confounds):
         self.n_motion = 0
         self.wm_csf = "full"
         self.global_signal = "full"
+
+
+class AnatCompCor(Confounds):
+    """
+    Load confounds using the aCOMPCOR strategy from Ciric et al. 2017.
+    Motion parameters (fully expanded), high pass filter, and acompcor.
+
+    Parameters
+    ----------
+    confounds_raw : Pandas Dataframe or path to tsv file(s), optionally as a list.
+        Raw confounds from fmriprep
+
+    n_compcor : int, optional
+        The number of noise components to be extracted.
+
+    Returns
+    -------
+    conf :  a Confounds object
+        conf.confounds_ is a reduced version of fMRIprep confounds.
+
+    """
+
+    def __init__(self, n_compcor=10):
+        self.strategy = ["high_pass", "motion", "compcor"]
+        self.motion = "full"
+        self.n_motion = 0
+        self.compcor = "anat"
+        self.n_compcor = n_compcor
+
+
+class TempCompCor(Confounds):
+    """
+    Load confounds using the tCOMPCOR strategy from Ciric et al. 2017.
+    Motion parameters (fully expanded), high pass filter, and acompcor.
+
+    Parameters
+    ----------
+    confounds_raw : Pandas Dataframe or path to tsv file(s), optionally as a list.
+        Raw confounds from fmriprep
+
+    n_compcor : int, optional
+        The number of noise components to be extracted.
+
+    Returns
+    -------
+    conf :  a Confounds object
+        conf.confounds_ is a reduced version of fMRIprep confounds.
+
+    """
+
+    def __init__(self, n_compcor=6):
+        self.strategy = ["high_pass", "compcor"]
+        self.compcor = "temp"
+        self.n_compcor = n_compcor
