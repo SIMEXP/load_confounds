@@ -1,6 +1,5 @@
 import os
 import load_confounds as lc
-from load_confounds import Confounds, P6
 import pandas as pd
 import pytest
 
@@ -10,7 +9,7 @@ file_confounds = os.path.join(path_data, "test_desc-confounds_regressors.tsv")
 
 
 def test_read_file():
-    conf = Confounds()
+    conf = lc.Confounds()
     with pytest.raises(FileNotFoundError):
         conf.load(" ")
 
@@ -21,7 +20,7 @@ def test_read_file():
 
 
 def test_confounds2df():
-    conf = Confounds()
+    conf = lc.Confounds()
     file_confounds_nii = os.path.join(
         path_data, "test_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz"
     )
@@ -31,19 +30,19 @@ def test_confounds2df():
 
 def test_sanitize_strategy():
     with pytest.raises(ValueError):
-        conf = Confounds(strategy="string")
+        conf = lc.Confounds(strategy="string")
 
     with pytest.raises(ValueError):
-        conf = Confounds(strategy=["error"])
+        conf = lc.Confounds(strategy=["error"])
 
     with pytest.raises(ValueError):
-        conf = Confounds(strategy=[0])
+        conf = lc.Confounds(strategy=[0])
 
 
-def test_P6():
+def test_Params6():
 
     # Try to load the confounds, whithout PCA reduction
-    conf = P6()
+    conf = lc.Params6()
     conf.load(file_confounds)
 
     # Check that the confonds is a data frame
