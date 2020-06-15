@@ -260,7 +260,7 @@ class Confounds:
         n_compcor=10,
         demean=True,
     ):
-    """Default parameters."""
+        """Default parameters."""
         self.strategy = _sanitize_strategy(strategy)
         self.motion = motion
         self.n_motion = n_motion
