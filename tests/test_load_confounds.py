@@ -21,7 +21,6 @@ def _simu_img(demean=True):
     # as we will stack slices with confounds on top of slices with noise
     nz = 2
     # Load a simple 6 parameters motion models as confounds
-    conf = lc.Confounds(strategy=["motion"], motion="basic", demean=demean)
     X = lc.Confounds(strategy=["motion"], motion="basic", demean=demean).load(
         file_confounds
     )
