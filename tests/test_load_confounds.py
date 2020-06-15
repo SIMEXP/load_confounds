@@ -22,7 +22,9 @@ def _simu_img(demean=True):
     nz = 2
     # Load a simple 6 parameters motion models as confounds
     conf = lc.Confounds(strategy=["motion"], motion="basic", demean=demean)
-    X = conf.load(file_confounds)
+    X = lc.Confounds(strategy=["motion"], motion="basic", demean=demean).load(
+        file_confounds
+    )
 
     # the number of time points is based on the example confound file
     nt = X.shape[0]
