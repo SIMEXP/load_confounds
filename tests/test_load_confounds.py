@@ -34,7 +34,7 @@ def _simu_img(demean=True):
     # create a random mixture of confounds
     # standardized to zero mean and unit variance
     beta = np.random.rand(nx * ny * nz, X.shape[1])
-    tseries_conf = scale(np.matmul(beta,X.transpose()), axis=1)
+    tseries_conf = scale(np.matmul(beta, X.transpose()), axis=1)
     # fill the first half of the 4D data with the mixture
     vol[:, :, 0:nz, :] = tseries_conf.reshape(nx, ny, nz, nt)
     vol_conf[:, :, 0:nz] = 1
@@ -409,3 +409,57 @@ def test_TempCompCor():
 
     compcor_col_str_anat = "".join(conf.columns_)
     assert "a_comp_cor_" not in compcor_col_str_anat
+
+
+def test_motion():
+
+    conf_basic = lc.Confounds(strategy=["motion"], motion="basic")
+    conf_basic.load(file_confounds)
+    conf_derivatives = lc.Confounds(strategy=["motion"], motion="derivatives")
+    conf_derivatives.load(file_confounds)
+    conf_power2 = lc.Confounds(strategy=["motion"], motion="power2")
+    conf_power2.load(file_confounds)
+    conf_full = lc.Confounds(strategy=["motion"], motion="full")
+    conf_full.load(file_confounds)
+
+    params = ["trans_x", "trans_y", "trans_z", "rot_x", "rot_y", "rot_z"]
+    for param in params:
+        # Basic 6 params motion model
+        assert f"{param}" in conf_basic.columns_
+        assert f"{param}_derivative1" not in conf_basic.columns_
+        assert f"{param}_power2" not in conf_basic.columns_
+        assert f"{param}_derivative1_power2" not in conf_basic.columns_
+
+        # Use a 6 params + derivatives motion model
+        assert f"{param}" in conf_derivatives.columns_
+        assert f"{param}_derivative1" in conf_derivatives.columns_
+        assert f"{param}_power2" not in conf_derivatives.columns_
+        assert f"{param}_derivative1_power2" not in conf_derivatives.columns_
+
+        # Use a 6 params + power2 motion model
+        assert f"{param}" in conf_power2.columns_
+        assert f"{param}_derivative1" not in conf_power2.columns_
+        assert f"{param}_power2" in conf_power2.columns_
+        assert f"{param}_derivative1_power2" not in conf_power2.columns_
+
+        # Use a 6 params + derivatives + power2 + power2d derivatives motion model
+        assert f"{param}" in conf_full.columns_
+        assert f"{param}_derivative1" in conf_full.columns_
+        assert f"{param}_power2" in conf_full.columns_
+        assert f"{param}_derivative1_power2" in conf_full.columns_
+
+
+def test_n_motion():
+
+    conf = lc.Confounds(strategy=["motion"], motion="full", n_motion=0.2)
+    conf.load(file_confounds)
+    assert "motion_pca_1" in conf.columns_
+    assert "motion_pca_2" not in conf.columns_
+
+    conf = lc.Confounds(strategy=["motion"], motion="full", n_motion=0.95)
+    conf.load(file_confounds)
+    assert "motion_pca_6" in conf.columns_
+
+    with pytest.raises(ValueError):
+        conf = lc.Confounds(strategy=["motion"], motion="full", n_motion=50)
+        conf.load(file_confounds)
