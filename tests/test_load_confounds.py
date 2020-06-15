@@ -12,7 +12,8 @@ path_data = os.path.join(os.path.dirname(lc.__file__), "data")
 file_confounds = os.path.join(path_data, "test_desc-confounds_regressors.tsv")
 
 
-def _simu_img():
+def _simu_img(demean=True):
+    """Simulate an nifti image with some parts confounds and some parts noise."""
     # set the size of the image matrix
     nx = 5
     ny = 5
@@ -20,8 +21,9 @@ def _simu_img():
     # as we will stack slices with confounds on top of slices with noise
     nz = 2
     # Load a simple 6 parameters motion models as confounds
-    conf = lc.Confounds(strategy=["motion"], motion="basic")
+    conf = lc.Confounds(strategy=["motion"], motion="basic", demean=demean)
     X = conf.load(file_confounds)
+
     # the number of time points is based on the example confound file
     nt = X.shape[0]
     # initialize an empty 4D volume
@@ -32,7 +34,7 @@ def _simu_img():
     # create a random mixture of confounds
     # standardized to zero mean and unit variance
     beta = np.random.rand(nx * ny * nz, X.shape[1])
-    tseries_conf = scale(np.matmul(beta,X.values.transpose()), axis=1)
+    tseries_conf = scale(np.matmul(beta,X.transpose()), axis=1)
     # fill the first half of the 4D data with the mixture
     vol[:, :, 0:nz, :] = tseries_conf.reshape(nx, ny, nz, nt)
     vol_conf[:, :, 0:nz] = 1
@@ -50,58 +52,96 @@ def _simu_img():
     mask_conf = Nifti1Image(vol_conf, np.eye(4))
     mask_rand = Nifti1Image(vol_rand, np.eye(4))
 
-    return img, mask_conf, mask_rand
+    return img, mask_conf, mask_rand, X
 
 
-def test_denoise_nilearn():
-    img, mask_conf, mask_rand = _simu_img()
-    conf = lc.Confounds(strategy=["motion"], motion="basic")
-    X = conf.load(file_confounds)
+def _tseries_std(img, mask_img, confounds, standardize):
+    """Get the std of time series in a mask."""
+    masker = NiftiMasker(mask_img=mask_img, standardize=standardize)
+    tseries = masker.fit_transform(img, confounds=confounds)
+    return tseries.std(axis=0)
 
-    # We first mask the voxel where there are only confounds
-    masker = NiftiMasker(mask_img=mask_conf, standardize=False)
-    tseries = masker.fit_transform(img, confounds=conf.confounds_.values)
-    tseries_std = tseries.std(axis=0)
-    # First half of time series should have close to zero variance
-    # as they were composed of pure confounds
-    for val in tseries_std:
-        assert val < 0.01
 
-    # We now mask the voxel where there is signal uncorrelated to confounds
-    masker = NiftiMasker(mask_img=mask_rand, standardize=False)
-    tseries = masker.fit_transform(img, confounds=conf.confounds_.values)
-    tseries_std = tseries.std(axis=0)
-    # The variance should be at least 0.5, as the confounds are uncorrelated
-    # with the signal
-    for val in tseries_std:
-        assert val >0.5
-
-    # We now load the time series with zscore standardization
-    # with vs without confounds
-    # in voxels where there are only confounds
-    masker = NiftiMasker(mask_img=mask_conf, standardize="zscore")
+def _denoise(img, mask_img, confounds, standardize):
+    """Extract time series with and without confounds."""
+    masker = NiftiMasker(mask_img=mask_img, standardize=standardize)
     tseries_raw = masker.fit_transform(img)
-    tseries_clean = masker.fit_transform(img, confounds=conf.confounds_.values)
+    tseries_clean = masker.fit_transform(img, confounds=confounds)
+    return tseries_raw, tseries_clean
+
+
+def _corr_tseries(tseries1, tseries2):
+    """Compute the correlation between two sets of time series."""
+    corr = np.zeros(tseries1.shape[1])
+    for ind in range(tseries1.shape[1]):
+        corr[ind], _ = pearsonr(tseries1[:, ind], tseries2[:, ind])
+    return corr
+
+
+def test_nilearn_standardize_false():
+    """Test removing confounds in nilearn with no standardization."""
+    # Simulate data
+    img, mask_conf, mask_rand, X = _simu_img(demean=True)
+
+    # Check that most variance is removed
+    # in voxels composed of pure confounds
+    tseries_std = _tseries_std(img, mask_conf, X, False)
+    assert np.mean(tseries_std < 0.0001)
+
+    # Check that most variance is preserved
+    # in voxels composed of random noise
+    tseries_std = _tseries_std(img, mask_rand, X, False)
+    assert np.mean(tseries_std > 0.9)
+
+
+def test_nilearn_standardize_zscore():
+    """Test removing confounds in nilearn with zscore standardization."""
+    # Simulate data
+    img, mask_conf, mask_rand, X = _simu_img(demean=True)
+
+    # We now load the time series with vs without confounds
+    # in voxels composed of pure confounds
     # the correlation before and after denoising should be very low
     # as most of the variance is removed by denoising
-    for ind in range(tseries_raw.shape[1]):
-        corr, _ = pearsonr(tseries_raw[:, ind], tseries_clean[:, ind])
-        assert corr < 0.5
+    tseries_raw, tseries_clean = _denoise(img, mask_conf, X, "zscore")
+    corr = _corr_tseries(tseries_raw, tseries_clean)
+    assert corr.mean() < 0.2
 
     # We now load the time series with zscore standardization
     # with vs without confounds
     # in voxels where the signal is uncorrelated with confounds
-    masker = NiftiMasker(mask_img=mask_rand, standardize="zscore")
-    tseries_raw = masker.fit_transform(img)
-    tseries_clean = masker.fit_transform(img, confounds=conf.confounds_.values)
     # the correlation before and after denoising should be very low
     # as most of the variance is removed by denoising
-    for ind in range(tseries_raw.shape[1]):
-        corr, _ = pearsonr(tseries_raw[:, ind], tseries_clean[:, ind])
-        assert corr > 0.5
+    tseries_raw, tseries_clean = _denoise(img, mask_rand, X, "zscore")
+    corr = _corr_tseries(tseries_raw, tseries_clean)
+    assert corr.mean() > 0.8
+
+
+def test_nilearn_standardize_psc():
+    """Test removing confounds in nilearn with psc standardization."""
+    # Simulate data
+    img, mask_conf, mask_rand, X = _simu_img(demean=False)
+
+    # We now load the time series with vs without confounds
+    # in voxels composed of pure confounds
+    # the correlation before and after denoising should be very low
+    # as most of the variance is removed by denoising
+    tseries_raw, tseries_clean = _denoise(img, mask_conf, X, "psc")
+    corr = _corr_tseries(tseries_raw, tseries_clean)
+    assert corr.mean() < 0.2
+
+    # We now load the time series with zscore standardization
+    # with vs without confounds
+    # in voxels where the signal is uncorrelated with confounds
+    # the correlation before and after denoising should be very low
+    # as most of the variance is removed by denoising
+    tseries_raw, tseries_clean = _denoise(img, mask_rand, X, "psc")
+    corr = _corr_tseries(tseries_raw, tseries_clean)
+    assert corr.mean() > 0.8
 
 
 def test_read_file():
+    """Check that loading missing or incomplete files produce error messages."""
     conf = lc.Confounds()
     with pytest.raises(FileNotFoundError):
         conf.load(" ")
@@ -113,15 +153,17 @@ def test_read_file():
 
 
 def test_confounds2df():
+    """Check auto-detect of confonds from an fMRI nii image."""
     conf = lc.Confounds()
     file_confounds_nii = os.path.join(
         path_data, "test_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz"
     )
-    conf_nii = conf.load(file_confounds_nii)
-    assert "trans_x" in conf_nii.columns
+    conf.load(file_confounds_nii)
+    assert "trans_x" in conf.columns_
 
 
 def test_sanitize_strategy():
+    """Check that flawed strategy options generate meaningful error messages."""
     with pytest.raises(ValueError):
         conf = lc.Confounds(strategy="string")
 
@@ -132,43 +174,15 @@ def test_sanitize_strategy():
         conf = lc.Confounds(strategy=[0])
 
 
-def test_Params6():
-
-    # Try to load the confounds, whithout PCA reduction
-    conf = lc.Params6()
-    conf.load(file_confounds)
-
-    # Check that the confonds is a data frame
-    assert isinstance(conf.confounds_, pd.DataFrame)
-
-    # Check that all model categories have been successfully loaded
-    list_check = [
-        "trans_x",
-        "trans_y",
-        "trans_z",
-        "rot_x",
-        "rot_y",
-        "rot_z",
-        "cosine00",
-    ]
-    for check in list_check:
-        assert check in conf.confounds_.columns
-
-    # Load the confounds in a list
-    conf.load([file_confounds, file_confounds])
-    assert isinstance(conf.confounds_, list)
-    assert isinstance(conf.confounds_[0], pd.DataFrame)
-    assert len(conf.confounds_) == 2
-
-
 def test_Params2():
+    """Test the Params2 strategy."""
 
     # Try to load the confounds, whithout PCA reduction
     conf = lc.Params2()
     conf.load(file_confounds)
 
     # Check that the confonds is a data frame
-    assert isinstance(conf.confounds_, pd.DataFrame)
+    assert isinstance(conf.confounds_, np.ndarray)
 
     # Check that all model categories have been successfully loaded
     list_check = [
@@ -184,17 +198,47 @@ def test_Params2():
         "white_matter",
     ]
     for check in list_check:
-        assert check in conf.confounds_.columns
+        assert check in conf.columns_
+
+
+def test_Params6():
+    """Test the Params6 strategy."""
+    # Try to load the confounds, whithout PCA reduction
+    conf = lc.Params6()
+    conf.load(file_confounds)
+
+    # Check that the confonds is a data frame
+    assert isinstance(conf.confounds_, np.ndarray)
+
+    # Check that all model categories have been successfully loaded
+    list_check = [
+        "trans_x",
+        "trans_y",
+        "trans_z",
+        "rot_x",
+        "rot_y",
+        "rot_z",
+        "cosine00",
+    ]
+    for check in list_check:
+        assert check in conf.columns_
+
+    # Load the confounds in a list
+    conf.load([file_confounds, file_confounds])
+    assert isinstance(conf.confounds_, list)
+    assert isinstance(conf.confounds_[0], np.ndarray)
+    assert len(conf.confounds_) == 2
 
 
 def test_Params9():
+    """Test the Params9 strategy."""
 
     # Try to load the confounds, whithout PCA reduction
     conf = lc.Params9()
     conf.load(file_confounds)
 
     # Check that the confonds is a data frame
-    assert isinstance(conf.confounds_, pd.DataFrame)
+    assert isinstance(conf.confounds_, np.ndarray)
 
     # Check that all model categories have been successfully loaded
     list_check = [
@@ -209,17 +253,18 @@ def test_Params9():
         "global_signal",
     ]
     for check in list_check:
-        assert check in conf.confounds_.columns
+        assert check in conf.columns_
 
 
 def test_Params24():
+    """Test the Params24 strategy."""
 
     # Try to load the confounds, whithout PCA reduction
     conf = lc.Params24()
     conf.load(file_confounds)
 
     # Check that the confonds is a data frame
-    assert isinstance(conf.confounds_, pd.DataFrame)
+    assert isinstance(conf.confounds_, np.ndarray)
 
     # Check that all model categories have been successfully loaded
     list_check = [
@@ -241,17 +286,18 @@ def test_Params24():
         "cosine06",
     ]
     for check in list_check:
-        assert check in conf.confounds_.columns
+        assert check in conf.columns_
 
 
 def test_Params36():
+    """Test the Params36 strategy."""
 
     # Try to load the confounds, whithout PCA reduction
     conf = lc.Params36()
     conf.load(file_confounds)
 
     # Check that the confonds is a data frame
-    assert isinstance(conf.confounds_, pd.DataFrame)
+    assert isinstance(conf.confounds_, np.ndarray)
 
     # Check that all model categories have been successfully loaded
     list_check = [
@@ -286,16 +332,18 @@ def test_Params36():
     ]
 
     for check in list_check:
-        assert check in conf.confounds_.columns
+        assert check in conf.columns_
 
 
 def test_AnatCompCor():
+    """Test the AnatCompCor strategy."""
+
     # Try to load the confounds, whithout PCA reduction
     conf = lc.AnatCompCor()
     conf.load(file_confounds)
 
     # Check that the confonds is a data frame
-    assert isinstance(conf.confounds_, pd.DataFrame)
+    assert isinstance(conf.confounds_, np.ndarray)
 
     list_check = [
         "trans_x",
@@ -323,19 +371,21 @@ def test_AnatCompCor():
     ]
 
     for check in list_check:
-        assert check in conf.confounds_.columns
+        assert check in conf.columns_
 
-    compcor_col_str_anat = "".join(conf.confounds_.columns)
+    compcor_col_str_anat = "".join(conf.columns_)
     assert "t_comp_cor_" not in compcor_col_str_anat
 
 
 def test_TempCompCor():
+    """Test the TempCompCor strategy."""
+
     # Try to load the confounds, whithout PCA reduction
     conf = lc.TempCompCor()
     conf.load(file_confounds)
 
     # Check that the confonds is a data frame
-    assert isinstance(conf.confounds_, pd.DataFrame)
+    assert isinstance(conf.confounds_, np.ndarray)
 
     list_check = [
         "cosine00",
@@ -355,7 +405,7 @@ def test_TempCompCor():
         "t_comp_cor_06",
     ]
     for check in list_check:
-        assert check in conf.confounds_.columns
+        assert check in conf.columns_
 
-    compcor_col_str_anat = "".join(conf.confounds_.columns)
+    compcor_col_str_anat = "".join(conf.columns_)
     assert "a_comp_cor_" not in compcor_col_str_anat
