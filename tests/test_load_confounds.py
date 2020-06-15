@@ -176,7 +176,6 @@ def test_sanitize_strategy():
 
 def test_Params2():
     """Test the Params2 strategy."""
-
     # Try to load the confounds, whithout PCA reduction
     conf = lc.Params2()
     conf.load(file_confounds)
@@ -232,7 +231,6 @@ def test_Params6():
 
 def test_Params9():
     """Test the Params9 strategy."""
-
     # Try to load the confounds, whithout PCA reduction
     conf = lc.Params9()
     conf.load(file_confounds)
@@ -258,7 +256,6 @@ def test_Params9():
 
 def test_Params24():
     """Test the Params24 strategy."""
-
     # Try to load the confounds, whithout PCA reduction
     conf = lc.Params24()
     conf.load(file_confounds)
@@ -291,7 +288,6 @@ def test_Params24():
 
 def test_Params36():
     """Test the Params36 strategy."""
-
     # Try to load the confounds, whithout PCA reduction
     conf = lc.Params36()
     conf.load(file_confounds)
@@ -337,7 +333,6 @@ def test_Params36():
 
 def test_AnatCompCor():
     """Test the AnatCompCor strategy."""
-
     # Try to load the confounds, whithout PCA reduction
     conf = lc.AnatCompCor()
     conf.load(file_confounds)
@@ -379,7 +374,6 @@ def test_AnatCompCor():
 
 def test_TempCompCor():
     """Test the TempCompCor strategy."""
-
     # Try to load the confounds, whithout PCA reduction
     conf = lc.TempCompCor()
     conf.load(file_confounds)
