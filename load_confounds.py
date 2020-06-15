@@ -216,6 +216,11 @@ class Confounds:
     n_compcor : int, optional
         The number of noise components to be extracted.
 
+    demean : boolean, optional
+        If True, the confounds are standardized to a zero mean (over time).
+        This step is critical if the confounds are regressed out of time series
+        using nilearn.
+
     Attributes
     ----------
     `confounds_` : pandas DataFrame
@@ -245,6 +250,7 @@ class Confounds:
         global_signal="basic",
         compcor="anat",
         n_compcor=10,
+        demean=True,
     ):
         self.strategy = _sanitize_strategy(strategy)
         self.motion = motion
@@ -253,6 +259,7 @@ class Confounds:
         self.global_signal = global_signal
         self.compcor = compcor
         self.n_compcor = n_compcor
+        self.demean = demean
 
     def load(self, confounds_raw):
         """
@@ -310,9 +317,11 @@ class Confounds:
             )
             confounds = pd.concat([confounds, confounds_compcor], axis=1)
 
-        labels = confounds.columns
-        confounds = pd.DataFrame(scale(confounds, axis=0, with_std=False))
-        confounds.columns = labels
+        if self.demean:
+            labels = confounds.columns
+            confounds = pd.DataFrame(scale(confounds, axis=0, with_std=False))
+            confounds.columns = labels
+
         return confounds
 
 
@@ -336,6 +345,7 @@ class Params2(Confounds):
     def __init__(self):
         self.strategy = ["high_pass", "wm_csf"]
         self.wm_csf = "basic"
+        self.demean = True
 
 
 class Params6(Confounds):
@@ -359,6 +369,7 @@ class Params6(Confounds):
         self.strategy = ["high_pass", "motion"]
         self.motion = "basic"
         self.n_motion = 0
+        self.demean = True
 
 
 class Params9(Confounds):
@@ -384,6 +395,7 @@ class Params9(Confounds):
         self.n_motion = 0
         self.wm_csf = "basic"
         self.global_signal = "basic"
+        self.demean = True
 
 
 class Params24(Confounds):
@@ -408,6 +420,7 @@ class Params24(Confounds):
         self.strategy = ["high_pass", "motion"]
         self.motion = "full"
         self.n_motion = 0
+        self.demean = True
 
 
 class Params36(Confounds):
@@ -435,6 +448,7 @@ class Params36(Confounds):
         self.n_motion = 0
         self.wm_csf = "full"
         self.global_signal = "full"
+        self.demean = True
 
 
 class AnatCompCor(Confounds):
@@ -463,6 +477,7 @@ class AnatCompCor(Confounds):
         self.n_motion = 0
         self.compcor = "anat"
         self.n_compcor = n_compcor
+        self.demean = True
 
 
 class TempCompCor(Confounds):
@@ -489,3 +504,4 @@ class TempCompCor(Confounds):
         self.strategy = ["high_pass", "compcor"]
         self.compcor = "temp"
         self.n_compcor = n_compcor
+        self.demean = True
