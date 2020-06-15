@@ -310,6 +310,9 @@ class Confounds:
             )
             confounds = pd.concat([confounds, confounds_compcor], axis=1)
 
+        labels = confounds.columns
+        confounds = pd.DataFrame(scale(confounds, axis=0, with_std=False))
+        confounds.columns = labels
         return confounds
 
 
