@@ -2,8 +2,11 @@ import os
 import load_confounds as lc
 import pandas as pd
 import numpy as np
+from scipy.stats import pearsonr
 from sklearn.preprocessing import scale
 import pytest
+from nibabel import Nifti1Image
+from nilearn.input_data import NiftiMasker
 
 path_data = os.path.join(os.path.dirname(lc.__file__), "data")
 file_confounds = os.path.join(path_data, "test_desc-confounds_regressors.tsv")
@@ -17,30 +20,85 @@ def _simu_img():
     # as we will stack slices with confounds on top of slices with noise
     nz = 2
     # Load a simple 6 parameters motion models as confounds
-    conf = lc.Confounds()
-    X = conf.load(file_confounds, ["motion"], motion="basic")
+    conf = lc.Confounds(strategy=["motion"], motion="basic")
+    X = conf.load(file_confounds)
     # the number of time points is based on the example confound file
     nt = X.shape[0]
     # initialize an empty 4D volume
-    vol = np.zeros([nx, ny, nz,])
+    vol = np.zeros([nx, ny, 2 * nz, nt])
+    vol_conf = np.zeros([nx, ny, 2 * nz])
+    vol_rand = np.zeros([nx, ny, 2 * nz])
 
     # create a random mixture of confounds
     # standardized to zero mean and unit variance
     beta = np.random.rand(nx * ny * nz, X.shape[1])
-    tseries_conf = scaler(beta * X.transpose())
+    tseries_conf = scale(np.matmul(beta,X.values.transpose()), axis=1)
     # fill the first half of the 4D data with the mixture
-    vol[:, :, 0:nz, :] = tseries_conf
+    vol[:, :, 0:nz, :] = tseries_conf.reshape(nx, ny, nz, nt)
+    vol_conf[:, :, 0:nz] = 1
 
     # create random noise in the second half of the 4D data
-    vol[:, :, nz : 2 * nz, :] = scaler(np.random.randn(nx * ny * nz, nt))
+    tseries_rand = scale(np.random.randn(nx * ny * nz, nt), axis=1)
+    vol[:, :, range(nz, 2 * nz), :] = tseries_rand.reshape(nx, ny, nz, nt)
+    vol_rand[:, :, range(nz, 2 * nz)] = 1
 
     # Shift the mean to non-zero
-    vol = vol + 1000
+    vol = vol + 100
 
     # create an nifti image with the data, and corresponding mask
     img = Nifti1Image(vol, np.eye(4))
-    mask = Nifti1Image(np.ones(vol.shape), np.eye(4))
-    return img, mask
+    mask_conf = Nifti1Image(vol_conf, np.eye(4))
+    mask_rand = Nifti1Image(vol_rand, np.eye(4))
+
+    return img, mask_conf, mask_rand
+
+
+def test_denoise_nilearn():
+    img, mask_conf, mask_rand = _simu_img()
+    conf = lc.Confounds(strategy=["motion"], motion="basic")
+    X = conf.load(file_confounds)
+
+    # We first mask the voxel where there are only confounds
+    masker = NiftiMasker(mask_img=mask_conf, standardize=False)
+    tseries = masker.fit_transform(img, confounds=conf.confounds_.values)
+    tseries_std = tseries.std(axis=0)
+    # First half of time series should have close to zero variance
+    # as they were composed of pure confounds
+    for val in tseries_std:
+        assert val < 0.01
+
+    # We now mask the voxel where there is signal uncorrelated to confounds
+    masker = NiftiMasker(mask_img=mask_rand, standardize=False)
+    tseries = masker.fit_transform(img, confounds=conf.confounds_.values)
+    tseries_std = tseries.std(axis=0)
+    # The variance should be at least 0.5, as the confounds are uncorrelated
+    # with the signal
+    for val in tseries_std:
+        assert val >0.5
+
+    # We now load the time series with zscore standardization
+    # with vs without confounds
+    # in voxels where there are only confounds
+    masker = NiftiMasker(mask_img=mask_conf, standardize="zscore")
+    tseries_raw = masker.fit_transform(img)
+    tseries_clean = masker.fit_transform(img, confounds=conf.confounds_.values)
+    # the correlation before and after denoising should be very low
+    # as most of the variance is removed by denoising
+    for ind in range(tseries_raw.shape[1]):
+        corr, _ = pearsonr(tseries_raw[:, ind], tseries_clean[:, ind])
+        assert corr < 0.5
+
+    # We now load the time series with zscore standardization
+    # with vs without confounds
+    # in voxels where the signal is uncorrelated with confounds
+    masker = NiftiMasker(mask_img=mask_rand, standardize="zscore")
+    tseries_raw = masker.fit_transform(img)
+    tseries_clean = masker.fit_transform(img, confounds=conf.confounds_.values)
+    # the correlation before and after denoising should be very low
+    # as most of the variance is removed by denoising
+    for ind in range(tseries_raw.shape[1]):
+        corr, _ = pearsonr(tseries_raw[:, ind], tseries_clean[:, ind])
+        assert corr > 0.5
 
 
 def test_read_file():
