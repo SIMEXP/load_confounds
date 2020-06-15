@@ -123,8 +123,13 @@ def _load_motion(confounds_raw, motion, n_motion):
 
 def _pca_motion(confounds_motion, n_components):
     """Reduce the motion paramaters using PCA."""
+    n_available = confounds_motion.shape[1]
+    if n_components > n_available:
+        raise ValueError(
+            f"User requested n_motion={n_components} motion components, but found only {n_available}."
+        )
     confounds_motion = confounds_motion.dropna()
-    confounds_motion_std = scale(confounds_motion, axis=0)
+    confounds_motion_std = scale(confounds_motion, axis=0, with_mean=True, with_std=True)
     pca = PCA(n_components=n_components)
     motion_pca = pd.DataFrame(pca.fit_transform(confounds_motion_std))
     motion_pca.columns = ["motion_pca_" + str(col + 1) for col in motion_pca.columns]
@@ -304,7 +309,6 @@ class Confounds:
         # Convert tsv file to pandas dataframe
         confounds_raw = _confounds2df(confounds_raw)
 
-        #confounds = pd.DataFrame(np.ones(confounds_raw.shape[0]), columns=['intercept'])
         confounds = pd.DataFrame()
 
         if "motion" in self.strategy:
@@ -366,6 +370,7 @@ class Params2(Confounds):
         self.wm_csf = "basic"
         self.demean = demean
 
+
 class Params6(Confounds):
     """
     Load confounds using the 6P strategy from Ciric et al. 2017.
@@ -394,6 +399,7 @@ class Params6(Confounds):
         self.motion = "basic"
         self.n_motion = 0
         self.demean = demean
+
 
 class Params9(Confounds):
     """
@@ -426,6 +432,7 @@ class Params9(Confounds):
         self.global_signal = "basic"
         self.demean = demean
 
+
 class Params24(Confounds):
     """
     Load confounds using the 24P strategy from Ciric et al. 2017.
@@ -455,6 +462,7 @@ class Params24(Confounds):
         self.motion = "full"
         self.n_motion = 0
         self.demean = demean
+
 
 class Params36(Confounds):
     """
