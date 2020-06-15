@@ -541,7 +541,7 @@ class AnatCompCor(Confounds):
 class TempCompCor(Confounds):
     """
     Load confounds using the tCOMPCOR strategy from Ciric et al. 2017.
-    Motion parameters (fully expanded), high pass filter, and acompcor.
+    High pass filter, and tcompcor.
 
     Parameters
     ----------
