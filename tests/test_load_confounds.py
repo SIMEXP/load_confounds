@@ -109,10 +109,9 @@ def test_nilearn_standardize_zscore():
     assert corr.mean() < 0.2
 
     # We now load the time series with zscore standardization
-    # with vs without confounds
-    # in voxels where the signal is uncorrelated with confounds
-    # the correlation before and after denoising should be very low
-    # as most of the variance is removed by denoising
+    # with vs without confounds in voxels where the signal is uncorrelated
+    # with confounds. The correlation before and after denoising should be very
+    # high as very little of the variance is removed by denoising
     tseries_raw, tseries_clean = _denoise(img, mask_rand, X, "zscore")
     corr = _corr_tseries(tseries_raw, tseries_clean)
     assert corr.mean() > 0.8
@@ -120,22 +119,16 @@ def test_nilearn_standardize_zscore():
 
 def test_nilearn_standardize_psc():
     """Test removing confounds in nilearn with psc standardization."""
+    # Similar test to test_nilearn_standardize_zscore, but with psc 
     # Simulate data
     img, mask_conf, mask_rand, X = _simu_img(demean=False)
 
-    # We now load the time series with vs without confounds
-    # in voxels composed of pure confounds
-    # the correlation before and after denoising should be very low
-    # as most of the variance is removed by denoising
+    # Areas with
     tseries_raw, tseries_clean = _denoise(img, mask_conf, X, "psc")
     corr = _corr_tseries(tseries_raw, tseries_clean)
     assert corr.mean() < 0.2
 
-    # We now load the time series with zscore standardization
-    # with vs without confounds
-    # in voxels where the signal is uncorrelated with confounds
-    # the correlation before and after denoising should be very low
-    # as most of the variance is removed by denoising
+    # Areas with random noise
     tseries_raw, tseries_clean = _denoise(img, mask_rand, X, "psc")
     corr = _corr_tseries(tseries_raw, tseries_clean)
     assert corr.mean() > 0.8
