@@ -21,7 +21,6 @@ setup(
     maintainer="Pierre Bellec",
     maintainer_email="pierre.bellec@gmail.com",
     packages=find_packages(),
-    author_email="arnaud.bore@gmail.com",
     install_requires=[
         "numpy>=1.17.4",
         "pandas>=0.25.3",
