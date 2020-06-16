@@ -32,13 +32,13 @@ confounds = conf.load('path/to/file/sub-01_ses-001.tsv')
 ```
 
 The predefined strategies are all adapted from Ciric et al. 2017, and currently include:
-* `Params2` : Mean white matter and CSF signals, with high-pass filter.
-* `Params6` : Basic motion parameters with high pass filter.
-* `Params9` : Basic motion parameters, WM/CSF signals, global signal and high pass filter.
-* `Params24` : Full motion parameters (derivatives, squares and squared derivatives), with high pass filter.
-* `Params36` : Motion parameters, WM/CSF signals, global signal, high pass filter. All noise components are fully expanded (derivatives, squares and squared derivatives).
-* `AnatCompCor` : Motion parameters (fully expanded), high pass filter, and acompcor.
-* `TempCompCor` : High pass filter, and tcompcor.
+ * `Params2` : Mean white matter and CSF signals, with high-pass filter.
+ * `Params6` : Basic motion parameters with high pass filter.
+ * `Params9` : Basic motion parameters, WM/CSF signals, global signal and high pass filter.
+ * `Params24` : Full motion parameters (derivatives, squares and squared derivatives), with high pass filter.
+ * `Params36` : Motion parameters, WM/CSF signals, global signal, high pass filter. All noise components are fully expanded (derivatives, squares and squared derivatives).
+ * `AnatCompCor` : Motion parameters (fully expanded), high pass filter, and acompcor.
+ * `TempCompCor` : High pass filter, and tcompcor.
 
 ## Flexible denoising strategy
 It is also possible to fine-tune a subset of noise variables, and the type of these variables:
