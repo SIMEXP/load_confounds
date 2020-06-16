@@ -119,7 +119,7 @@ def test_nilearn_standardize_zscore():
 
 def test_nilearn_standardize_psc():
     """Test removing confounds in nilearn with psc standardization."""
-    # Similar test to test_nilearn_standardize_zscore, but with psc 
+    # Similar test to test_nilearn_standardize_zscore, but with psc
     # Simulate data
     img, mask_conf, mask_rand, X = _simu_img(demean=False)
 
