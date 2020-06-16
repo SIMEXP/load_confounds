@@ -251,7 +251,7 @@ class Confounds:
 
     def __init__(
         self,
-        strategy=["motion", "high_pass", "wm_csf"],
+        strategy=None,
         motion="full",
         n_motion=0,
         wm_csf="basic",
@@ -261,7 +261,7 @@ class Confounds:
         demean=True,
     ):
         """Default parameters."""
-        self.strategy = _sanitize_strategy(strategy)
+        self.strategy = _sanitize_strategy(["motion", "high_pass", "wm_csf"])
         self.motion = motion
         self.n_motion = n_motion
         self.wm_csf = wm_csf
