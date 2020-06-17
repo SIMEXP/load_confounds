@@ -1,5 +1,5 @@
 import os
-import load_confounds as lc
+import load_confounds.parser as lc
 import pandas as pd
 import numpy as np
 from scipy.stats import pearsonr

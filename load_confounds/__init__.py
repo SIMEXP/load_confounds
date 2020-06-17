@@ -1,7 +1,7 @@
 """
 loading fMRIprep confounds into python
 """
-from .load_confounds import (
+from load_confounds.parser import (
     Confounds,
     Params2,
     Params6,

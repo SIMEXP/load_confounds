@@ -2,7 +2,7 @@
 
 [![Pipy Badge](https://img.shields.io/pypi/v/load_confounds)](https://pypi.org/project/load-confounds/) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/1da186ba5c44489b8af6d96a9c50d3c7)](https://app.codacy.com/gh/SIMEXP/fmriprep_load_confounds?utm_source=github.com&utm_medium=referral&utm_content=SIMEXP/fmriprep_load_confounds&utm_campaign=Badge_Grade_Dashboard) [![Maintainability](https://api.codeclimate.com/v1/badges/ce6f2bf20aa87accaaa4/maintainability)](https://codeclimate.com/github/SIMEXP/load_confounds/maintainability) [![CircleCI](https://circleci.com/gh/SIMEXP/load_confounds.svg?style=svg)](https://circleci.com/gh/SIMEXP/load_confounds) [![codecov](https://codecov.io/gh/SIMEXP/load_confounds/branch/master/graph/badge.svg)](https://codecov.io/gh/SIMEXP/load_confounds)
 
-*Warning*: This package is still at an alpha stage of development. The API may still be subject to changes, and the library has not yet received much feedback from users. 
+*Warning*: This package is still at an alpha stage of development. The API may still be subject to changes, and the library has not yet received much feedback from users.
 
 ## Quickstart
 
@@ -23,18 +23,8 @@ In order to use `load_confounds` it needs to be installed as a python environmen
 ```bash
 pip install load_confounds
 ```
-This module can then be imported:
-```python
-import load_confounds as lc
-```
 
 ## Predefined strategies
-It is first possible to import confounds with some predefined preprocessing strategy. Here we use the `Params6` strategy:
-```python
-conf = lc.Params6()
-confounds = conf.load('path/to/file/sub-01_ses-001.tsv')
-```
-
 The predefined strategies are all adapted from Ciric et al. 2017, and currently include:
  * `Params2` : Mean white matter and CSF signals, with high-pass filter.
  * `Params6` : Basic motion parameters with high pass filter.
@@ -47,7 +37,8 @@ The predefined strategies are all adapted from Ciric et al. 2017, and currently 
 ## Flexible denoising strategy
 It is also possible to fine-tune a subset of noise variables, and the type of these variables:
 ```python
-conf = lc.Confounds(strategy=['high_pass', 'motion', 'global'], motion="derivatives")
+from load_confounds import Confounds
+conf = Confounds(strategy=['high_pass', 'motion', 'global'], motion="derivatives")
 confounds = conf.load('path/to/file/sub-01_ses-001.tsv')
 ```
 
@@ -66,7 +57,8 @@ Note that if a `.nii.gz` file is specified, `load_confounds` will automatically 
 ## A note on demeaning confounds
 Unless you use the `detrend` or `high_pass` options of nilearn maskers, it may be important to demean the confounds. This is done by default by `load_confounds`, and is required to properly regress out confounds using nilearn with the `standardize=False`, `standardize=True` or `standardize="zscore"` options. If you want to use `standardize="psc"`, you will need to turn off the demeaning in `load_confounds`, which can be achieved using, e.g.:
 ```python
-conf = lc.Params6(demean=False)
+from load_confounds import Params6
+conf = Params6(demean=False)
 ```
 
 ## Reference
