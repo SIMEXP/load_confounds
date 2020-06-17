@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 from os import path
 
 here = path.abspath(path.dirname(__file__))
@@ -22,9 +22,8 @@ setup(
     },
     maintainer="Pierre Bellec",
     maintainer_email="pierre.bellec@gmail.com",
-    packages=["load_confounds", "tests"],
-    package_data={"data": ["*.nii.gz", "*.tsv"]},
-    package_dir={'load_confounds': ''},
+    packages=find_packages(),
+    package_data={"load_confounds.data": ["*.nii.gz", "*.tsv"]},
     install_requires=[
         "numpy>=1.17.4",
         "pandas>=0.25.3",
