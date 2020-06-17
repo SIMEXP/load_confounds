@@ -1,4 +1,4 @@
-from setuptools import setup, find_packages
+from setuptools import setup
 from os import path
 
 here = path.abspath(path.dirname(__file__))
@@ -9,8 +9,10 @@ with open(path.join(here, "README.md"), encoding="utf-8") as f:
 
 setup(
     name="load_confounds",
-    version="0.6",
+    version="0.6.1",
     description="load fMRIprep confounds in python",
+    license="MIT",
+    url="https://github.com/simexp/load_confounds",
     long_description=long_description,
     long_description_content_type="text/markdown",  # Optional (see note above)
     project_urls={  # Optional
@@ -20,7 +22,9 @@ setup(
     },
     maintainer="Pierre Bellec",
     maintainer_email="pierre.bellec@gmail.com",
-    packages=find_packages(),
+    packages=["load_confounds", "tests"],
+    package_data={"data": ["*.nii.gz", "*.tsv"]},
+    package_dir={'load_confounds': ''},
     install_requires=[
         "numpy>=1.17.4",
         "pandas>=0.25.3",
