@@ -82,7 +82,7 @@ def _corr_tseries(tseries1, tseries2):
 def _regression(confounds):
     """Simple regression with nilearn."""
     # Simulate data
-    img, mask_conf, mask_rand, X = _simu_img(demean=True)
+    img, mask_conf, _, _ = _simu_img(demean=True)
     # Do the regression
     masker = NiftiMasker(mask_img=mask_conf, standardize=True)
     tseries_clean = masker.fit_transform(img, confounds=confounds)
@@ -90,7 +90,6 @@ def _regression(confounds):
 
 def test_nilearn_regress():
     """Try regressing out all motion types in nilearn."""
-
     # Regress full motion
     confounds = lc.Confounds(strategy=["motion"], motion="full").load(file_confounds)
     _regression(confounds)
