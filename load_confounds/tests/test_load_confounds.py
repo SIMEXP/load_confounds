@@ -79,6 +79,42 @@ def _corr_tseries(tseries1, tseries2):
     return corr
 
 
+def _regression(confounds):
+    """Simple regression with nilearn."""
+    # Simulate data
+    img, mask_conf, _, _ = _simu_img(demean=True)
+    # Do the regression
+    masker = NiftiMasker(mask_img=mask_conf, standardize=True)
+    tseries_clean = masker.fit_transform(img, confounds=confounds)
+    assert tseries_clean.shape[0] == confounds.shape[0]
+
+def test_nilearn_regress():
+    """Try regressing out all motion types in nilearn."""
+    # Regress full motion
+    confounds = lc.Confounds(strategy=["motion"], motion="full").load(file_confounds)
+    _regression(confounds)
+
+    # Regress high_pass
+    confounds = lc.Confounds(strategy=["high_pass"]).load(file_confounds)
+    _regression(confounds)
+
+    # Regress wm_csf
+    confounds = lc.Confounds(strategy=["wm_csf"], wm_csf="full").load(file_confounds)
+    _regression(confounds)
+
+    # Regress global
+    confounds = lc.Confounds(strategy=["global"], global_signal="full").load(file_confounds)
+    _regression(confounds)
+
+    # Regress AnatCompCor
+    confounds = lc.Confounds(strategy=["compcor"], compcor="anat").load(file_confounds)
+    _regression(confounds)
+
+    # Regress TempCompCor
+    confounds = lc.Confounds(strategy=["compcor"], compcor="temp").load(file_confounds)
+    _regression(confounds)
+
+
 def test_nilearn_standardize_false():
     """Test removing confounds in nilearn with no standardization."""
     # Simulate data
