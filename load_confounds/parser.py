@@ -339,9 +339,11 @@ class Confounds:
         labels = confounds.columns
         confounds = confounds.values
 
-        # Derivatives have NaN
-        # Replace them by zeros, otherwise nilearn will not regress them out.
-        confounds[np.isnan(confounds)] = 0
+        # Derivatives have NaN on the first row
+        # Replace them by estimates at second time point,
+        # otherwise nilearn will crash.
+        mask_nan = np.isnan(confounds[0,:])
+        confounds[0, mask_nan] = confounds[1, mask_nan]
 
         # Optionally demean confounds
         if self.demean:
