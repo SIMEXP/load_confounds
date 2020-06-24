@@ -13,7 +13,7 @@ pip install load_confounds
 This example loads confounds using the `Params36`, i.e. the 36P denoising strategy of Ciric et al. 2017:
 ```python
 from load_confounds import Params36
-# load_confounds auto-detects the companion .tsv file
+# load_confounds auto-detects the companion .tsv file (which needs to be in the same directory)
 file = "path/to/file/sub-01_ses-001_bold.nii.gz"
 confounds = Params36().load(file)
 ```
