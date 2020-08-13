@@ -151,7 +151,7 @@ def _sanitize_strategy(strategy):
     return strategy
 
 
-def _confounds2df(confounds_raw):
+def _confounds_to_df(confounds_raw):
     """Load raw confounds as a pandas DataFrame."""
     if not isinstance(confounds_raw, pd.DataFrame):
         if "nii" in confounds_raw[-6:]:
@@ -174,6 +174,25 @@ def _sanitize_confounds(confounds_raw):
         confounds_raw = [confounds_raw]
 
     return confounds_raw, flag_single
+
+
+def _confounds_to_ndarray(confounds, demean):
+    """Convert confounds from a pandas dataframe to a numpy array."""
+    # Convert from DataFrame to numpy ndarray
+    labels = confounds.columns
+    confounds = confounds.values
+
+    # Derivatives have NaN on the first row
+    # Replace them by estimates at second time point,
+    # otherwise nilearn will crash.
+    mask_nan = np.isnan(confounds[0, :])
+    confounds[0, mask_nan] = confounds[1, mask_nan]
+
+    # Optionally demean confounds
+    if demean:
+        confounds = scale(confounds, axis=0, with_std=False)
+
+    return confounds, labels
 
 
 class Confounds:
@@ -312,7 +331,7 @@ class Confounds:
     def _load_single(self, confounds_raw):
         """Load a single confounds file from fmriprep."""
         # Convert tsv file to pandas dataframe
-        confounds_raw = _confounds2df(confounds_raw)
+        confounds_raw = _confounds_to_df(confounds_raw)
 
         confounds = pd.DataFrame()
 
@@ -338,18 +357,6 @@ class Confounds:
             )
             confounds = pd.concat([confounds, confounds_compcor], axis=1)
 
-        # Convert from DataFrame to numpy ndarray
-        labels = confounds.columns
-        confounds = confounds.values
-
-        # Derivatives have NaN on the first row
-        # Replace them by estimates at second time point,
-        # otherwise nilearn will crash.
-        mask_nan = np.isnan(confounds[0, :])
-        confounds[0, mask_nan] = confounds[1, mask_nan]
-
-        # Optionally demean confounds
-        if self.demean:
-            confounds = scale(confounds, axis=0, with_std=False)
+        confounds, labels = _confounds_to_ndarray(confounds, self.demean)
 
         return confounds, labels
