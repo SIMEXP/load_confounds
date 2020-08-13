@@ -5,6 +5,7 @@ Authors: Hanad Sharmarke, Dr. Pierre Bellec, Francois Paugam
 """
 from .parser import Confounds
 
+
 class Params2(Confounds):
     """
     Load confounds using the 2P strategy from Ciric et al. 2017.
