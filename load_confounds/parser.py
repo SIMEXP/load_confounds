@@ -20,13 +20,15 @@ def _add_suffix(params, model):
     Suffixes includes derivatives, power2 and full
     """
     params_full = params.copy()
+    suffix = {
+        "basic": {},
+        "derivatives": {"derivative1"},
+        "power2": {"power2"},
+        "full": {"derivative1", "power2", "derivative1_power2"},
+    }
     for par in params:
-        if (model == "derivatives") or (model == "full"):
-            params_full.append(f"{par}_derivative1")
-        if (model == "power2") or (model == "full"):
-            params_full.append(f"{par}_power2")
-        if model == "full":
-            params_full.append(f"{par}_derivative1_power2")
+        for suff in suffix[model]:
+            params_full.append(f"{par}_{suff}")
     return params_full
 
 
