@@ -1,6 +1,4 @@
-"""
-Predefined denoising strategies.
-
+"""Predefined denoising strategies.
 Authors: Hanad Sharmarke, Dr. Pierre Bellec, Francois Paugam
 """
 from .parser import Confounds

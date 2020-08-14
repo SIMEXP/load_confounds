@@ -198,13 +198,13 @@ def test_confounds2df():
 def test_sanitize_strategy():
     """Check that flawed strategy options generate meaningful error messages."""
     with pytest.raises(ValueError):
-        conf = lc.Confounds(strategy="string")
+        lc.Confounds(strategy="string")
 
     with pytest.raises(ValueError):
-        conf = lc.Confounds(strategy=["error"])
+        lc.Confounds(strategy=["error"])
 
     with pytest.raises(ValueError):
-        conf = lc.Confounds(strategy=[0])
+        lc.Confounds(strategy=[0])
 
 
 def test_motion():

@@ -1,6 +1,4 @@
-"""
-Test predefined denoising strategies.
-"""
+"""Test predefined denoising strategies."""
 import os
 import load_confounds.strategies as lc
 import numpy as np
