@@ -1,6 +1,4 @@
-"""
-loading fMRIprep confounds into python
-"""
+"""loading fMRIprep confounds into python."""
 from load_confounds.parser import Confounds
 from load_confounds.strategies import (
     Params2,
