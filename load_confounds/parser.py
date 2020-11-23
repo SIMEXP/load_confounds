@@ -157,7 +157,7 @@ def _confounds_to_df(confounds_raw):
         if "nii" in confounds_raw[-6:]:
             suffix = "_space-" + confounds_raw.split("space-")[1]
             confounds_raw = confounds_raw.replace(
-                suffix, "_desc-confounds_regressors.tsv",
+                suffix, "_desc-confounds_timeseries.tsv",
             )
         confounds_raw = pd.read_csv(confounds_raw, delimiter="\t", encoding="utf-8")
     return confounds_raw
