@@ -7,6 +7,7 @@ import pandas as pd
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import scale
 import warnings
+import os
 
 
 # Global variables listing the admissible types of noise components
@@ -156,8 +157,16 @@ def _confounds_to_df(confounds_raw):
         if "nii" in confounds_raw[-6:]:
             suffix = "_space-" + confounds_raw.split("space-")[1]
             confounds_raw = confounds_raw.replace(
-                suffix, "_desc-confounds_regressors.tsv",
+                suffix, "_desc-confounds_timeseries.tsv",
             )
+            # fmriprep has changed the file suffix between v20.1.1 and v20.2.0 with respect to BEP 012.
+            # cf. https://neurostars.org/t/naming-change-confounds-regressors-to-confounds-timeseries/17637
+            # Check file with new naming scheme exists or replace, for backward compatibility.
+            if not os.path.exists(confounds_raw):
+                confounds_raw = confounds_raw.replace(
+                    "_desc-confounds_timeseries.tsv", "_desc-confounds_regressors.tsv",
+                )
+
         confounds_raw = pd.read_csv(confounds_raw, delimiter="\t", encoding="utf-8")
     return confounds_raw
 
