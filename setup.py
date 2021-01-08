@@ -9,7 +9,7 @@ with open(path.join(here, "README.md"), encoding="utf-8") as f:
 
 setup(
     name="load_confounds",
-    version="0.6.4",
+    version="0.6.5",
     description="load fMRIprep confounds in python",
     license="MIT",
     url="https://github.com/simexp/load_confounds",
