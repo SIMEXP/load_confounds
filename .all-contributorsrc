@@ -63,6 +63,15 @@
         "maintenance",
         "projectManagement"
       ]
+    },
+    {
+      "login": "smeisler",
+      "name": "Steven Meisler",
+      "avatar_url": "https://avatars.githubusercontent.com/u/27028726?v=4",
+      "profile": "https://scholar.harvard.edu/steven-meisler",
+      "contributions": [
+        "bug"
+      ]
     }
   ],
   "contributorsPerLine": 7,
