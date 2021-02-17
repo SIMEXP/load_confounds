@@ -1,6 +1,6 @@
 # load_confounds
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-8-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-9-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 [![Pipy Badge](https://img.shields.io/pypi/v/load_confounds)](https://pypi.org/project/load-confounds/) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/1da186ba5c44489b8af6d96a9c50d3c7)](https://app.codacy.com/gh/SIMEXP/load_confounds?utm_source=github.com&utm_medium=referral&utm_content=SIMEXP/load_confounds&utm_campaign=Badge_Grade_Dashboard) [![Maintainability](https://api.codeclimate.com/v1/badges/ce6f2bf20aa87accaaa4/maintainability)](https://codeclimate.com/github/SIMEXP/load_confounds/maintainability) [![CircleCI](https://circleci.com/gh/SIMEXP/load_confounds.svg?style=svg)](https://circleci.com/gh/SIMEXP/load_confounds) [![codecov](https://codecov.io/gh/SIMEXP/load_confounds/branch/master/graph/badge.svg)](https://codecov.io/gh/SIMEXP/load_confounds)
@@ -85,6 +85,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
   </tr>
   <tr>
     <td align="center"><a href="https://github.com/srastegarnia"><img src="https://avatars.githubusercontent.com/u/64853244?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Shima Rastegarnia</b></sub></a><br /><a href="https://github.com/SIMEXP/load_confounds/issues?q=author%3Asrastegarnia" title="Bug reports">🐛</a></td>
+    <td align="center"><a href="https://github.com/nuKs"><img src="https://avatars.githubusercontent.com/u/1691962?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Thibault PIRONT</b></sub></a><br /><a href="https://github.com/SIMEXP/load_confounds/commits?author=nuKs" title="Code">💻</a></td>
   </tr>
 </table>
 
