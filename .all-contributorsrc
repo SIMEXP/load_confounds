@@ -81,6 +81,15 @@
       "contributions": [
         "ideas"
       ]
+    },
+    {
+      "login": "srastegarnia",
+      "name": "Shima Rastegarnia",
+      "avatar_url": "https://avatars.githubusercontent.com/u/64853244?v=4",
+      "profile": "https://github.com/srastegarnia",
+      "contributions": [
+        "bug"
+      ]
     }
   ],
   "contributorsPerLine": 7,
