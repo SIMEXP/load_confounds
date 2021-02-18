@@ -355,7 +355,6 @@ class Confounds:
         """Load a single confounds file from fmriprep."""
         # Convert tsv file to pandas dataframe
         confounds_raw = _confounds_to_df(confounds_raw)
-
         confounds = pd.DataFrame()
         not_found_confounds = []
 
