@@ -9,8 +9,10 @@ import pytest
 from nibabel import Nifti1Image
 from nilearn.input_data import NiftiMasker
 
+
 path_data = os.path.join(os.path.dirname(lc.__file__), "data")
 file_confounds = os.path.join(path_data, "test_desc-confounds_regressors.tsv")
+file_confounds_ica = os.path.join(path_data, "test-ICAAROMA_desc-confounds_regressors.tsv")
 
 def _simu_img(file_confounds, demean=True):
     """Simulate an nifti image based on confound file with some parts confounds and some parts noise."""
@@ -78,12 +80,12 @@ def _corr_tseries(tseries1, tseries2):
         corr[ind], _ = pearsonr(tseries1[:, ind], tseries2[:, ind])
     return corr
 
-  
+
 def _regression(file_confounds, confounds):
     """Simple regression with nilearn."""
     # Simulate data
     img, mask_conf, _, _ = _simu_img(file_confounds, demean=True)
-    
+
     # Do the regression
     masker = NiftiMasker(mask_img=mask_conf, standardize=True)
     tseries_clean = masker.fit_transform(img, confounds=confounds)
@@ -121,7 +123,7 @@ def test_nilearn_regress():
     confounds = lc.Confounds(strategy=["ica_aroma"]).load(file_confounds_ica)
     _regression(file_confounds_ica, confounds)
 
-    
+
 def test_nilearn_standardize_false():
     """Test removing confounds in nilearn with no standardization."""
     # Simulate data
@@ -206,7 +208,7 @@ def test_confounds2df():
     conf.load(file_confounds_nii)
     assert "trans_x" in conf.columns_
 
-    
+
 def test_sanitize_strategy():
     """Check that flawed strategy options generate meaningful error messages."""
     with pytest.raises(ValueError):
@@ -255,7 +257,6 @@ def test_motion():
         assert f"{param}_derivative1" in conf_full.columns_
         assert f"{param}_power2" in conf_full.columns_
         assert f"{param}_derivative1_power2" in conf_full.columns_
-
 
 def test_n_motion():
 
