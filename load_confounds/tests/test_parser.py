@@ -1,4 +1,5 @@
 import os
+import re
 import load_confounds.parser as lc
 import pandas as pd
 import numpy as np
@@ -10,6 +11,7 @@ from nilearn.input_data import NiftiMasker
 
 path_data = os.path.join(os.path.dirname(lc.__file__), "data")
 file_confounds = os.path.join(path_data, "test_desc-confounds_regressors.tsv")
+file_confounds_ica = os.path.join(path_data, "test-ICAAROMA_desc-confounds_regressors.tsv")
 
 
 def _simu_img(demean=True):
@@ -117,6 +119,9 @@ def test_nilearn_regress():
     confounds = lc.Confounds(strategy=["compcor"], compcor="temp").load(file_confounds)
     _regression(confounds)
 
+    # Regress ICA-AROMA
+    confounds = lc.Confounds(strategy=["ica_aroma"]).load(file_confounds_ica)
+    _regression(confounds)
 
 def test_nilearn_standardize_false():
     """Test removing confounds in nilearn with no standardization."""
@@ -259,3 +264,10 @@ def test_n_motion():
     with pytest.raises(ValueError):
         conf = lc.Confounds(strategy=["motion"], motion="full", n_motion=50)
         conf.load(file_confounds)
+
+
+def test_ica_aroma():
+    conf = lc.Confounds(strategy=["ica_aroma"])
+    conf.load(file_confounds_ica)
+    for col_name in conf.columns_:
+        assert re.match('aroma_motion_+', col_name)

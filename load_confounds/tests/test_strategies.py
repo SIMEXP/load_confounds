@@ -1,11 +1,12 @@
 """Test predefined denoising strategies."""
 import os
+import re
 import load_confounds.strategies as lc
 import numpy as np
 
 path_data = os.path.join(os.path.dirname(lc.__file__), "data")
 file_confounds = os.path.join(path_data, "test_desc-confounds_regressors.tsv")
-
+file_confounds_ica = os.path.join(path_data, "test-ICAAROMA_desc-confounds_regressors.tsv")
 
 def test_Params2():
     """Test the Params2 strategy."""
@@ -236,3 +237,76 @@ def test_TempCompCor():
 
     compcor_col_str_anat = "".join(conf.columns_)
     assert "a_comp_cor_" not in compcor_col_str_anat
+
+def test_ICAAROMA():
+    """Test the (non-aggressive) ICA-AROMA strategy."""
+    conf = lc.ICAAROMA()
+    conf.load(file_confounds_ica)
+
+    # Check that the confonds is a data frame
+    assert isinstance(conf.confounds_, np.ndarray)
+
+    # Check that all fixed name model categories have been successfully loaded
+    list_check = [
+        "csf",
+        "white_matter",
+        "csf_derivative1",
+        "csf_power2",
+        "csf_derivative1_power2",
+        "white_matter_derivative1",
+    ]
+
+    for c in conf.columns_:
+        # Check that all fixed name model categories
+        fixed = c in list_check
+        cosines = re.match('cosine_+', c)
+        assert fixed or cosines
+
+def test_AROMAGSR():
+    """Test the (non-aggressive) AROMA-GSR strategy."""
+    conf = lc.AROMAGSR()
+    conf.load(file_confounds_ica)
+
+    # Check that all fixed name model categories have been successfully loaded
+    list_check = [
+        "csf",
+        "white_matter",
+        "csf_derivative1",
+        "csf_power2",
+        "csf_derivative1_power2",
+        "white_matter_derivative1",
+        "global_signal",
+        "global_signal_derivative1",
+        "global_signal_power2",
+        "global_signal_derivative1_power2",
+    ]
+    for c in conf.columns_:
+        # Check that all fixed name model categories
+        fixed = c in list_check
+        cosines = re.match('cosine_+', c)
+        assert fixed or cosines
+
+def test_AggrICAAROMA():
+    """Test the aggressive ICA-AROMA strategy."""
+    conf = lc.AggrICAAROMA()
+    conf.load(file_confounds_ica)
+
+    # Check that all fixed name model categories have been successfully loaded
+    list_check = [
+        "csf",
+        "white_matter",
+        "csf_derivative1",
+        "csf_power2",
+        "csf_derivative1_power2",
+        "white_matter_derivative1",
+        "global_signal",
+        "global_signal_derivative1",
+        "global_signal_power2",
+        "global_signal_derivative1_power2",
+    ]
+    for c in conf.columns_:
+        # Check that all fixed name model categories
+        fixed = c in list_check
+        cosines = re.match('cosine_+', c)
+        aroma = re.match('aroma_motion_+', c)
+        assert fixed or cosines or aroma
