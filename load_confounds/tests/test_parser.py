@@ -14,8 +14,8 @@ file_confounds = os.path.join(path_data, "test_desc-confounds_regressors.tsv")
 file_confounds_ica = os.path.join(path_data, "test-ICAAROMA_desc-confounds_regressors.tsv")
 
 
-def _simu_img(demean=True):
-    """Simulate an nifti image with some parts confounds and some parts noise."""
+def _simu_img(file_confounds, demean=True):
+    """Simulate an nifti image based on confound file with some parts confounds and some parts noise."""
     # set the size of the image matrix
     nx = 5
     ny = 5
@@ -81,10 +81,10 @@ def _corr_tseries(tseries1, tseries2):
     return corr
 
 
-def _regression(confounds):
+def _regression(file_confounds, confounds):
     """Simple regression with nilearn."""
     # Simulate data
-    img, mask_conf, _, _ = _simu_img(demean=True)
+    img, mask_conf, _, _ = _simu_img(file_confounds, demean=True)
     # Do the regression
     masker = NiftiMasker(mask_img=mask_conf, standardize=True)
     tseries_clean = masker.fit_transform(img, confounds=confounds)
@@ -95,38 +95,38 @@ def test_nilearn_regress():
     """Try regressing out all motion types in nilearn."""
     # Regress full motion
     confounds = lc.Confounds(strategy=["motion"], motion="full").load(file_confounds)
-    _regression(confounds)
+    _regression(file_confounds, confounds)
 
     # Regress high_pass
     confounds = lc.Confounds(strategy=["high_pass"]).load(file_confounds)
-    _regression(confounds)
+    _regression(file_confounds, confounds)
 
     # Regress wm_csf
     confounds = lc.Confounds(strategy=["wm_csf"], wm_csf="full").load(file_confounds)
-    _regression(confounds)
+    _regression(file_confounds, confounds)
 
     # Regress global
     confounds = lc.Confounds(strategy=["global"], global_signal="full").load(
         file_confounds
     )
-    _regression(confounds)
+    _regression(file_confounds, confounds)
 
     # Regress AnatCompCor
     confounds = lc.Confounds(strategy=["compcor"], compcor="anat").load(file_confounds)
-    _regression(confounds)
+    _regression(file_confounds, confounds)
 
     # Regress TempCompCor
     confounds = lc.Confounds(strategy=["compcor"], compcor="temp").load(file_confounds)
-    _regression(confounds)
+    _regression(file_confounds, confounds)
 
     # Regress ICA-AROMA
     confounds = lc.Confounds(strategy=["ica_aroma"]).load(file_confounds_ica)
-    _regression(confounds)
+    _regression(file_confounds_ica, confounds)
 
 def test_nilearn_standardize_false():
     """Test removing confounds in nilearn with no standardization."""
     # Simulate data
-    img, mask_conf, mask_rand, X = _simu_img(demean=True)
+    img, mask_conf, mask_rand, X = _simu_img(file_confounds, demean=True)
 
     # Check that most variance is removed
     # in voxels composed of pure confounds
@@ -142,7 +142,7 @@ def test_nilearn_standardize_false():
 def test_nilearn_standardize_zscore():
     """Test removing confounds in nilearn with zscore standardization."""
     # Simulate data
-    img, mask_conf, mask_rand, X = _simu_img(demean=True)
+    img, mask_conf, mask_rand, X = _simu_img(file_confounds, demean=True)
 
     # We now load the time series with vs without confounds
     # in voxels composed of pure confounds
@@ -165,7 +165,7 @@ def test_nilearn_standardize_psc():
     """Test removing confounds in nilearn with psc standardization."""
     # Similar test to test_nilearn_standardize_zscore, but with psc
     # Simulate data
-    img, mask_conf, mask_rand, X = _simu_img(demean=False)
+    img, mask_conf, mask_rand, X = _simu_img(file_confounds, demean=False)
 
     # Areas with
     tseries_raw, tseries_clean = _denoise(img, mask_conf, X, "psc")
@@ -195,6 +195,12 @@ def test_confounds2df():
     conf = lc.Confounds()
     file_confounds_nii = os.path.join(
         path_data, "test_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz"
+    )
+    conf.load(file_confounds_nii)
+    assert "trans_x" in conf.columns_
+
+    file_confounds_nii = os.path.join(
+        path_data, "test-ICAAROMA_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz"
     )
     conf.load(file_confounds_nii)
     assert "trans_x" in conf.columns_

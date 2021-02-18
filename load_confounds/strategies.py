@@ -265,6 +265,7 @@ class ICAAROMA(Confounds):
         """Default parameters."""
         self.strategy = ["wm_csf", "high_pass"]
         self.demean = demean
+        self.wm_csf = "full"
 
 class AROMAGSR(Confounds):
     """
@@ -296,6 +297,7 @@ class AROMAGSR(Confounds):
         """Default parameters."""
         self.strategy = ["wm_csf", "high_pass", "global"]
         self.global_signal = "full"
+        self.wm_csf = "full"
         self.demean = demean
 
 class AggrICAAROMA(Confounds):
@@ -328,4 +330,5 @@ class AggrICAAROMA(Confounds):
         """Default parameters."""
         self.strategy = ["wm_csf", "high_pass", "global", "ica_aroma"]
         self.global_signal = "full"
+        self.wm_csf = "full"
         self.demean = demean

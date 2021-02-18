@@ -124,7 +124,7 @@ def _load_motion(confounds_raw, motion, n_motion):
 
 def _load_ica_aroma(confounds_raw):
     """Load the ICA-AROMA regressors."""
-    ica_aroma_params = _find_confounds(confounds_raw, ["cosine"])
+    ica_aroma_params = _find_confounds(confounds_raw, ["aroma"])
     return confounds_raw[ica_aroma_params]
 
 
