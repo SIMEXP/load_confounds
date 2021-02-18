@@ -250,16 +250,13 @@ def test_ICAAROMA():
     list_check = [
         "csf",
         "white_matter",
-        "csf_derivative1",
-        "csf_power2",
-        "csf_derivative1_power2",
-        "white_matter_derivative1",
+        "global_signal",
     ]
 
     for c in conf.columns_:
         # Check that all fixed name model categories
         fixed = c in list_check
-        cosines = re.match('cosine_+', c)
+        cosines = re.match('cosine+', c)
         assert fixed or cosines
 
 def test_AROMAGSR():
@@ -271,19 +268,12 @@ def test_AROMAGSR():
     list_check = [
         "csf",
         "white_matter",
-        "csf_derivative1",
-        "csf_power2",
-        "csf_derivative1_power2",
-        "white_matter_derivative1",
         "global_signal",
-        "global_signal_derivative1",
-        "global_signal_power2",
-        "global_signal_derivative1_power2",
     ]
     for c in conf.columns_:
         # Check that all fixed name model categories
         fixed = c in list_check
-        cosines = re.match('cosine_+', c)
+        cosines = re.match('cosine+', c)
         assert fixed or cosines
 
 def test_AggrICAAROMA():
@@ -295,18 +285,13 @@ def test_AggrICAAROMA():
     list_check = [
         "csf",
         "white_matter",
-        "csf_derivative1",
-        "csf_power2",
-        "csf_derivative1_power2",
-        "white_matter_derivative1",
         "global_signal",
-        "global_signal_derivative1",
-        "global_signal_power2",
-        "global_signal_derivative1_power2",
     ]
     for c in conf.columns_:
+        print(c)
         # Check that all fixed name model categories
         fixed = c in list_check
-        cosines = re.match('cosine_+', c)
+        cosines = re.match('cosine+', c)
         aroma = re.match('aroma_motion_+', c)
         assert fixed or cosines or aroma
+
