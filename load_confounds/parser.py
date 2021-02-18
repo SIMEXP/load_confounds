@@ -34,11 +34,12 @@ def _add_suffix(params, model):
 
 def _check_params(confounds_raw, params):
     """Check that specified parameters can be found in the confounds."""
+    not_found_params = []
     for par in params:
         if not par in confounds_raw.columns:
-            raise ValueError(
-                f"The parameter {par} cannot be found in the available confounds. You may want to use a different denoising strategy'"
-            )
+            not_found_params.append(par)
+    if not_found_params:
+        raise ConfoundNotFoundException(not_found_params)
 
     return None
 
@@ -46,6 +47,7 @@ def _check_params(confounds_raw, params):
 def _find_confounds(confounds_raw, keywords):
     """Find confounds that contain certain keywords."""
     list_confounds = []
+    not_found_keys = []
     for key in keywords:
         key_found = False
         for col in confounds_raw.columns:
@@ -53,7 +55,9 @@ def _find_confounds(confounds_raw, keywords):
                 list_confounds.append(col)
                 key_found = True
         if not key_found:
-            raise ValueError(f"could not find any confound with the key {key}")
+            not_found_keys.append(key)
+    if not_found_keys:
+        raise ConfoundNotFoundException(not_found_keys)
     return list_confounds
 
 
@@ -203,6 +207,17 @@ def _confounds_to_ndarray(confounds, demean):
     return confounds, labels
 
 
+class ConfoundNotFoundException(Exception):
+    """Exception raised when failing to find params in the confounds.
+
+    Parameters
+    ----------
+        params : list of not found params
+    """
+    def __init__(self, params):
+        self.params = params
+
+
 class Confounds:
     """
     Confounds from fmriprep
@@ -342,28 +357,50 @@ class Confounds:
         confounds_raw = _confounds_to_df(confounds_raw)
 
         confounds = pd.DataFrame()
+        not_found_confounds = []
 
         if "motion" in self.strategy:
-            confounds_motion = _load_motion(confounds_raw, self.motion, self.n_motion)
-            confounds = pd.concat([confounds, confounds_motion], axis=1)
+            try:
+                confounds_motion = _load_motion(confounds_raw, self.motion, self.n_motion)
+                confounds = pd.concat([confounds, confounds_motion], axis=1)
+            except ConfoundNotFoundException as exception:
+                not_found_confounds += exception.params
 
         if "high_pass" in self.strategy:
-            confounds_high_pass = _load_high_pass(confounds_raw)
-            confounds = pd.concat([confounds, confounds_high_pass], axis=1)
+            try:
+                confounds_high_pass = _load_high_pass(confounds_raw)
+                confounds = pd.concat([confounds, confounds_high_pass], axis=1)
+            except ConfoundNotFoundException as exception:
+                not_found_confounds += exception.params
 
         if "wm_csf" in self.strategy:
-            confounds_wm_csf = _load_wm_csf(confounds_raw, self.wm_csf)
-            confounds = pd.concat([confounds, confounds_wm_csf], axis=1)
+            try:
+                confounds_wm_csf = _load_wm_csf(confounds_raw, self.wm_csf)
+                confounds = pd.concat([confounds, confounds_wm_csf], axis=1)
+            except ConfoundNotFoundException as exception:
+                not_found_confounds += exception.params
 
         if "global" in self.strategy:
-            confounds_global_signal = _load_global(confounds_raw, self.global_signal)
-            confounds = pd.concat([confounds, confounds_global_signal], axis=1)
+            try:
+                confounds_global_signal = _load_global(confounds_raw, self.global_signal)
+                confounds = pd.concat([confounds, confounds_global_signal], axis=1)
+            except ConfoundNotFoundException as exception:
+                not_found_confounds += exception.params
 
         if "compcor" in self.strategy:
-            confounds_compcor = _load_compcor(
-                confounds_raw, self.compcor, self.n_compcor
+            try :
+                confounds_compcor = _load_compcor(
+                    confounds_raw, self.compcor, self.n_compcor
+                )
+                confounds = pd.concat([confounds, confounds_compcor], axis=1)
+            except ConfoundNotFoundException as exception:
+                not_found_confounds += exception.params
+
+        if not_found_confounds:
+            raise ValueError(
+                f"The parameters {not_found_confounds} cannot be found in the "
+                "available confounds. You may want to use a different denoising strategy."
             )
-            confounds = pd.concat([confounds, confounds_compcor], axis=1)
 
         confounds, labels = _confounds_to_ndarray(confounds, self.demean)
 
