@@ -235,6 +235,7 @@ class TempCompCor(Confounds):
         self.n_compcor = n_compcor
         self.demean = demean
 
+
 class ICAAROMA(Confounds):
     """
     Load confounds for post-non-aggresive ICA-AROMA strategy described in Prium et al. 2015 and Ciric et al. 2017.

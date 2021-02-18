@@ -11,8 +11,6 @@ from nilearn.input_data import NiftiMasker
 
 path_data = os.path.join(os.path.dirname(lc.__file__), "data")
 file_confounds = os.path.join(path_data, "test_desc-confounds_regressors.tsv")
-file_confounds_ica = os.path.join(path_data, "test-ICAAROMA_desc-confounds_regressors.tsv")
-
 
 def _simu_img(file_confounds, demean=True):
     """Simulate an nifti image based on confound file with some parts confounds and some parts noise."""
@@ -80,11 +78,12 @@ def _corr_tseries(tseries1, tseries2):
         corr[ind], _ = pearsonr(tseries1[:, ind], tseries2[:, ind])
     return corr
 
-
+  
 def _regression(file_confounds, confounds):
     """Simple regression with nilearn."""
     # Simulate data
     img, mask_conf, _, _ = _simu_img(file_confounds, demean=True)
+    
     # Do the regression
     masker = NiftiMasker(mask_img=mask_conf, standardize=True)
     tseries_clean = masker.fit_transform(img, confounds=confounds)
@@ -104,7 +103,6 @@ def test_nilearn_regress():
     # Regress wm_csf
     confounds = lc.Confounds(strategy=["wm_csf"], wm_csf="full").load(file_confounds)
     _regression(file_confounds, confounds)
-
     # Regress global
     confounds = lc.Confounds(strategy=["global"], global_signal="full").load(
         file_confounds
@@ -123,6 +121,7 @@ def test_nilearn_regress():
     confounds = lc.Confounds(strategy=["ica_aroma"]).load(file_confounds_ica)
     _regression(file_confounds_ica, confounds)
 
+    
 def test_nilearn_standardize_false():
     """Test removing confounds in nilearn with no standardization."""
     # Simulate data
@@ -142,6 +141,7 @@ def test_nilearn_standardize_false():
 def test_nilearn_standardize_zscore():
     """Test removing confounds in nilearn with zscore standardization."""
     # Simulate data
+
     img, mask_conf, mask_rand, X = _simu_img(file_confounds, demean=True)
 
     # We now load the time series with vs without confounds
@@ -165,6 +165,7 @@ def test_nilearn_standardize_psc():
     """Test removing confounds in nilearn with psc standardization."""
     # Similar test to test_nilearn_standardize_zscore, but with psc
     # Simulate data
+
     img, mask_conf, mask_rand, X = _simu_img(file_confounds, demean=False)
 
     # Areas with
@@ -205,7 +206,7 @@ def test_confounds2df():
     conf.load(file_confounds_nii)
     assert "trans_x" in conf.columns_
 
-
+    
 def test_sanitize_strategy():
     """Check that flawed strategy options generate meaningful error messages."""
     with pytest.raises(ValueError):
@@ -270,7 +271,6 @@ def test_n_motion():
     with pytest.raises(ValueError):
         conf = lc.Confounds(strategy=["motion"], motion="full", n_motion=50)
         conf.load(file_confounds)
-
 
 def test_ica_aroma():
     conf = lc.Confounds(strategy=["ica_aroma"])

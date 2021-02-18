@@ -8,6 +8,7 @@ path_data = os.path.join(os.path.dirname(lc.__file__), "data")
 file_confounds = os.path.join(path_data, "test_desc-confounds_regressors.tsv")
 file_confounds_ica = os.path.join(path_data, "test-ICAAROMA_desc-confounds_regressors.tsv")
 
+
 def test_Params2():
     """Test the Params2 strategy."""
     # Try to load the confounds, whithout PCA reduction
@@ -294,4 +295,3 @@ def test_AggrICAAROMA():
         cosines = re.match('cosine+', c)
         aroma = re.match('aroma_motion_+', c)
         assert fixed or cosines or aroma
-

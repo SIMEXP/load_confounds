@@ -11,6 +11,7 @@ import os
 
 
 # Global variables listing the admissible types of noise components
+
 all_confounds = ["motion", "high_pass", "wm_csf", "global", "compcor", "ica_aroma"]
 
 
@@ -126,7 +127,6 @@ def _load_ica_aroma(confounds_raw):
     """Load the ICA-AROMA regressors."""
     ica_aroma_params = _find_confounds(confounds_raw, ["aroma"])
     return confounds_raw[ica_aroma_params]
-
 
 def _pca_motion(confounds_motion, n_components):
     """Reduce the motion paramaters using PCA."""
