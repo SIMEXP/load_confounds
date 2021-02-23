@@ -6,7 +6,6 @@ import numpy as np
 
 path_data = os.path.join(os.path.dirname(lc.__file__), "data")
 file_confounds = os.path.join(path_data, "test_desc-confounds_regressors.tsv")
-file_confounds_ica = os.path.join(path_data, "test-ICAAROMA_desc-confounds_regressors.tsv")
 
 
 def test_Params2():
@@ -24,10 +23,6 @@ def test_Params2():
         "cosine01",
         "cosine02",
         "cosine03",
-        "cosine04",
-        "cosine05",
-        "cosine06",
-        "cosine07",
         "csf",
         "white_matter",
     ]
@@ -79,8 +74,6 @@ def test_Params9():
         "trans_z",
         "rot_z",
         "cosine00",
-        "cosine04",
-        "cosine05",
         "csf",
         "white_matter",
         "global_signal",
@@ -113,9 +106,6 @@ def test_Params24():
         "rot_y_derivative1_power2",
         "rot_z_derivative1",
         "cosine00",
-        "cosine04",
-        "cosine05",
-        "cosine06",
     ]
     for check in list_check:
         assert check in conf.columns_
@@ -148,8 +138,6 @@ def test_Params36():
         "rot_z_derivative1_power2",
         "cosine00",
         "cosine01",
-        "cosine06",
-        "cosine07",
         "csf",
         "white_matter",
         "csf_derivative1",
@@ -191,9 +179,6 @@ def test_AnatCompCor():
         "rot_z_derivative1_power2",
         "cosine00",
         "cosine01",
-        "cosine05",
-        "cosine06",
-        "cosine07",
         "a_comp_cor_00",
         "a_comp_cor_01",
         "a_comp_cor_02",
@@ -221,17 +206,10 @@ def test_TempCompCor():
         "cosine01",
         "cosine02",
         "cosine03",
-        "cosine04",
-        "cosine05",
-        "cosine06",
-        "cosine07",
         "t_comp_cor_00",
         "t_comp_cor_01",
         "t_comp_cor_02",
         "t_comp_cor_03",
-        "t_comp_cor_04",
-        "t_comp_cor_05",
-        "t_comp_cor_06",
     ]
     for check in list_check:
         assert check in conf.columns_
@@ -242,7 +220,7 @@ def test_TempCompCor():
 def test_ICAAROMA():
     """Test the (non-aggressive) ICA-AROMA strategy."""
     conf = lc.ICAAROMA()
-    conf.load(file_confounds_ica)
+    conf.load(file_confounds)
 
     # Check that the confonds is a data frame
     assert isinstance(conf.confounds_, np.ndarray)
@@ -263,7 +241,7 @@ def test_ICAAROMA():
 def test_AROMAGSR():
     """Test the (non-aggressive) AROMA-GSR strategy."""
     conf = lc.AROMAGSR()
-    conf.load(file_confounds_ica)
+    conf.load(file_confounds)
 
     # Check that all fixed name model categories have been successfully loaded
     list_check = [
@@ -280,7 +258,7 @@ def test_AROMAGSR():
 def test_AggrICAAROMA():
     """Test the aggressive ICA-AROMA strategy."""
     conf = lc.AggrICAAROMA()
-    conf.load(file_confounds_ica)
+    conf.load(file_confounds)
 
     # Check that all fixed name model categories have been successfully loaded
     list_check = [
