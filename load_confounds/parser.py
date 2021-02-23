@@ -81,7 +81,7 @@ def _load_high_pass(confounds_raw):
 def _label_compcor(confounds_raw, compcor_suffix, n_compcor):
     """Builds list for the number of compcor components."""
     compcor_cols = []
-    for nn in range(n_compcor + 1):
+    for nn in range(n_compcor):
         nn_str = str(nn).zfill(2)
         compcor_col = compcor_suffix + "_comp_cor_" + nn_str
         if compcor_col not in confounds_raw.columns:
@@ -296,7 +296,7 @@ class Confounds:
         wm_csf="basic",
         global_signal="basic",
         compcor="anat",
-        n_compcor=10,
+        n_compcor=6,
         demean=True,
     ):
         """Default parameters."""

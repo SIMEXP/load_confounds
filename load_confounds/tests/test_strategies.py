@@ -182,7 +182,6 @@ def test_AnatCompCor():
         "a_comp_cor_00",
         "a_comp_cor_01",
         "a_comp_cor_02",
-        "a_comp_cor_10",
     ]
 
     for check in list_check:
