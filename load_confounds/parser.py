@@ -8,6 +8,7 @@ from sklearn.decomposition import PCA
 from sklearn.preprocessing import scale
 import warnings
 import os
+import functools
 
 
 # Global variables listing the admissible types of noise components
@@ -39,8 +40,7 @@ def _check_params(confounds_raw, params):
         if not par in confounds_raw.columns:
             not_found_params.append(par)
     if not_found_params:
-        raise ConfoundNotFoundException(not_found_params)
-
+        raise ConfoundNotFoundException(params=not_found_params)
     return None
 
 
@@ -57,28 +57,8 @@ def _find_confounds(confounds_raw, keywords):
         if not key_found:
             not_found_keys.append(key)
     if not_found_keys:
-        raise ConfoundNotFoundException(not_found_keys)
+        raise ConfoundNotFoundException(keywords=not_found_keys)
     return list_confounds
-
-
-def _load_global(confounds_raw, global_signal):
-    """Load the regressors derived from the global signal."""
-    global_params = _add_suffix(["global_signal"], global_signal)
-    _check_params(confounds_raw, global_params)
-    return confounds_raw[global_params]
-
-
-def _load_wm_csf(confounds_raw, wm_csf):
-    """Load the regressors derived from the white matter and CSF masks."""
-    wm_csf_params = _add_suffix(["csf", "white_matter"], wm_csf)
-    _check_params(confounds_raw, wm_csf_params)
-    return confounds_raw[wm_csf_params]
-
-
-def _load_high_pass(confounds_raw):
-    """Load the high pass filter regressors."""
-    high_pass_params = _find_confounds(confounds_raw, ["cosine"])
-    return confounds_raw[high_pass_params]
 
 
 def _label_compcor(confounds_raw, compcor_suffix, n_compcor):
@@ -91,40 +71,7 @@ def _label_compcor(confounds_raw, compcor_suffix, n_compcor):
             warnings.warn(f"could not find any confound with the key {compcor_col}")
         else:
             compcor_cols.append(compcor_col)
-
     return compcor_cols
-
-
-def _load_compcor(confounds_raw, compcor, n_compcor):
-    """Load compcor regressors."""
-    if compcor == "anat":
-        compcor_cols = _label_compcor(confounds_raw, "a", n_compcor)
-
-    if compcor == "temp":
-        compcor_cols = _label_compcor(confounds_raw, "t", n_compcor)
-
-    if compcor == "full":
-        compcor_cols = _label_compcor(confounds_raw, "a", n_compcor)
-        compcor_cols.extend(_label_compcor(confounds_raw, "t", n_compcor))
-
-    compcor_cols.sort()
-    _check_params(confounds_raw, compcor_cols)
-    return confounds_raw[compcor_cols]
-
-
-def _load_motion(confounds_raw, motion, n_motion):
-    """Load the motion regressors."""
-    motion_params = _add_suffix(
-        ["trans_x", "trans_y", "trans_z", "rot_x", "rot_y", "rot_z"], motion
-    )
-    _check_params(confounds_raw, motion_params)
-    confounds_motion = confounds_raw[motion_params]
-
-    # Optionally apply PCA reduction
-    if n_motion > 0:
-        confounds_motion = _pca_motion(confounds_motion, n_components=n_motion)
-
-    return confounds_motion
 
 
 def _pca_motion(confounds_motion, n_components):
@@ -207,6 +154,16 @@ def _confounds_to_ndarray(confounds, demean):
     return confounds, labels
 
 
+def _raise_conf_not_found_error(not_found_conf, not_found_keys):
+    conf_str = f"parameters {not_found_conf} " if not_found_conf else ""
+    and_str = "and the " if not_found_conf and not_found_keys else ""
+    keys_str = f"keywords {not_found_keys} " if not_found_keys else ""
+    error_msg = "The " + conf_str + and_str + keys_str
+                + "cannot be found in the available confounds. You may "
+                + "want to use a different denoising strategy."
+    raise ValueError(error_msg)
+
+
 class ConfoundNotFoundException(Exception):
     """Exception raised when failing to find params in the confounds.
 
@@ -214,8 +171,9 @@ class ConfoundNotFoundException(Exception):
     ----------
         params : list of not found params
     """
-    def __init__(self, params):
+    def __init__(self, params=[], keywords=[]):
         self.params = params
+        self.keywords = keywords
 
 
 class Confounds:
@@ -356,51 +314,76 @@ class Confounds:
         # Convert tsv file to pandas dataframe
         confounds_raw = _confounds_to_df(confounds_raw)
         confounds = pd.DataFrame()
-        not_found_confounds = []
+        not_found_conf = []
+        not_found_keys = []
 
-        if "motion" in self.strategy:
-            try:
-                confounds_motion = _load_motion(confounds_raw, self.motion, self.n_motion)
-                confounds = pd.concat([confounds, confounds_motion], axis=1)
-            except ConfoundNotFoundException as exception:
-                not_found_confounds += exception.params
+        strategies = [
+            {"name": "motion", "lod_func": self._load_motion},
+            {"name": "high_pass", "lod_func": self._load_high_pass},
+            {"name": "wm_csf", "lod_func": self._load_wm_csf},
+            {"name": "global", "lod_func": self._load_global},
+            {"name": "compcor", "lod_func": self._load_compcor}
+        ]
 
-        if "high_pass" in self.strategy:
-            try:
-                confounds_high_pass = _load_high_pass(confounds_raw)
-                confounds = pd.concat([confounds, confounds_high_pass], axis=1)
-            except ConfoundNotFoundException as exception:
-                not_found_confounds += exception.params
+        for strategy in strategies:
+            if strategy["name"] in self.strategy:
+                try:
+                    loaded_confounds = strategy["load_func"](counfounds_raw)
+                    confounds = pd.concat([confounds, loaded_confounds], axis=1)
+                except ConfoundNotFoundException as exception:
+                    not_found_conf += exception.params
+                    not_found_keys += exception.keywords
 
-        if "wm_csf" in self.strategy:
-            try:
-                confounds_wm_csf = _load_wm_csf(confounds_raw, self.wm_csf)
-                confounds = pd.concat([confounds, confounds_wm_csf], axis=1)
-            except ConfoundNotFoundException as exception:
-                not_found_confounds += exception.params
-
-        if "global" in self.strategy:
-            try:
-                confounds_global_signal = _load_global(confounds_raw, self.global_signal)
-                confounds = pd.concat([confounds, confounds_global_signal], axis=1)
-            except ConfoundNotFoundException as exception:
-                not_found_confounds += exception.params
-
-        if "compcor" in self.strategy:
-            try :
-                confounds_compcor = _load_compcor(
-                    confounds_raw, self.compcor, self.n_compcor
-                )
-                confounds = pd.concat([confounds, confounds_compcor], axis=1)
-            except ConfoundNotFoundException as exception:
-                not_found_confounds += exception.params
-
-        if not_found_confounds:
-            raise ValueError(
-                f"The parameters {not_found_confounds} cannot be found in the "
-                "available confounds. You may want to use a different denoising strategy."
-            )
+        if not_found_conf or not_found_keys:
+            _raise_conf_not_found_error(not_found_conf, not_found_keys)
 
         confounds, labels = _confounds_to_ndarray(confounds, self.demean)
-
         return confounds, labels
+
+    def _load_compcor(self, confounds_raw):
+        """Load compcor regressors."""
+        if self.compcor == "anat":
+            compcor_cols = _label_compcor(confounds_raw, "a", self.n_compcor)
+
+        if self.compcor == "temp":
+            compcor_cols = _label_compcor(confounds_raw, "t", self.n_compcor)
+
+        if self.compcor == "full":
+            compcor_cols = _label_compcor(confounds_raw, "a", self.n_compcor)
+            compcor_cols.extend(_label_compcor(confounds_raw, "t", self.n_compcor))
+
+        compcor_cols.sort()
+        _check_params(confounds_raw, compcor_cols)
+        return confounds_raw[compcor_cols]
+
+    def _load_motion(self, confounds_raw):
+        """Load the motion regressors."""
+        motion_params = _add_suffix(
+            ["trans_x", "trans_y", "trans_z", "rot_x", "rot_y", "rot_z"],
+            self.motion
+        )
+        _check_params(confounds_raw, motion_params)
+        confounds_motion = confounds_raw[motion_params]
+
+        # Optionally apply PCA reduction
+        if n_motion > 0:
+            confounds_motion = _pca_motion(confounds_motion,
+                                           n_components=self.n_motion)
+        return confounds_motion
+
+    def _load_global(self, confounds_raw):
+        """Load the regressors derived from the global signal."""
+        global_params = _add_suffix(["global_signal"], self.global_signal)
+        _check_params(confounds_raw, global_params)
+        return confounds_raw[global_params]
+
+    def _load_wm_csf(self, confounds_raw):
+        """Load the regressors derived from the white matter and CSF masks."""
+        wm_csf_params = _add_suffix(["csf", "white_matter"], self.wm_csf)
+        _check_params(confounds_raw, wm_csf_params)
+        return confounds_raw[wm_csf_params]
+
+    def _load_high_pass(self, confounds_raw):
+        """Load the high pass filter regressors."""
+        high_pass_params = _find_confounds(confounds_raw, ["cosine"])
+        return confounds_raw[high_pass_params]
