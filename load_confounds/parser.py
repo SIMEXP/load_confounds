@@ -317,22 +317,21 @@ class Confounds:
         not_found_conf = []
         not_found_keys = []
 
-        strategies = [
-            {"name": "motion", "load_func": self._load_motion},
-            {"name": "high_pass", "load_func": self._load_high_pass},
-            {"name": "wm_csf", "load_func": self._load_wm_csf},
-            {"name": "global", "load_func": self._load_global},
-            {"name": "compcor", "load_func": self._load_compcor}
-        ]
+        load_functions = {
+            "motion": self._load_motion,
+            "high_pass": self._load_high_pass,
+            "wm_csf": self._load_wm_csf,
+            "global": self._load_global,
+            "compcor": self._load_compcor
+        }
 
-        for strategy in strategies:
-            if strategy["name"] in self.strategy:
-                try:
-                    loaded_confounds = strategy["load_func"](confounds_raw)
-                    confounds = pd.concat([confounds, loaded_confounds], axis=1)
-                except ConfoundNotFoundException as exception:
-                    not_found_conf += exception.params
-                    not_found_keys += exception.keywords
+        for strat_name in self.strategy:
+            try:
+                loaded_confounds = load_functions[strat_name](confounds_raw)
+                confounds = pd.concat([confounds, loaded_confounds], axis=1)
+            except ConfoundNotFoundException as exception:
+                not_found_conf += exception.params
+                not_found_keys += exception.keywords
 
         if not_found_conf or not_found_keys:
             _raise_conf_not_found_error(not_found_conf, not_found_keys)
