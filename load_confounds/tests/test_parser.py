@@ -25,6 +25,8 @@ def _simu_img(demean=True):
     X = lc.Confounds(strategy=["motion"], motion="basic", demean=demean).load(
         file_confounds
     )
+    # repeat X in length (axis = 0) three times to increase the degree of freedom
+    X = np.tile(X, (3, 1))
 
     # the number of time points is based on the example confound file
     nt = X.shape[0]
@@ -84,10 +86,11 @@ def _regression(confounds):
     """Simple regression with nilearn."""
     # Simulate data
     img, mask_conf, _, _ = _simu_img(demean=True)
+    confounds = np.tile(confounds, (3, 1))  # matching L29 (_simu_img)
 
     # Do the regression
     masker = NiftiMasker(mask_img=mask_conf, standardize=True)
-    tseries_clean = masker.fit_transform(img, confounds=confounds)
+    tseries_clean = masker.fit_transform(img, confounds)
     assert tseries_clean.shape[0] == confounds.shape[0]
 
 
