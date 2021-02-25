@@ -172,7 +172,7 @@ class ConfoundNotFoundException(Exception):
         params : list of not found params
     """
     def __init__(self, params=None, keywords=None):
-        self.params = params if parmas else []
+        self.params = params if params else []
         self.keywords = keywords if keywords else []
 
 
