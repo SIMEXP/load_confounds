@@ -140,7 +140,8 @@ def _pca_motion(confounds_motion, n_components):
     return motion_pca
 
 def _load_censoring(confounds_raw, censoring, fd_thresh):
-    """Perform basic censoring - Remove volumes if framewise displacement exceeds threshold"""    
+    """Perform basic censoring - Remove volumes if framewise displacement exceeds threshold"""
+    """Power, Jonathan D., et al. "Steps toward optimizing motion artifact removal in functional connectivity MRI; a reply to Carp." Neuroimage 76 (2013)."""
     n_scans = len(confounds_raw)
     # Get indices of fd outliers
     fd_outliers = np.where(confounds_raw['framewise_displacement'] > fd_thresh)[0]
@@ -160,6 +161,7 @@ def _load_censoring(confounds_raw, censoring, fd_thresh):
 
 def _optimize_censoring(fd_outliers, n_scans):
     """Perform optimized censoring. After censoring volumes, further remove continuous segments containing fewer than 5 volumes"""
+    """Power, Jonathan D., et al. "Methods to detect, characterize, and remove motion artifact in resting state fMRI." Neuroimage 84 (2014): 320-341."""
     # Start by checking if the beginning continuous segment is fewer than 5 volumes
     if fd_outliers[0] < 5:
         fd_outliers = np.asarray(list(range(fd_outliers[0])) + list(fd_outliers))
