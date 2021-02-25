@@ -266,7 +266,6 @@ def test_AggrICAAROMA():
         "global_signal",
     ]
     for c in conf.columns_:
-        print(c)
         # Check that all fixed name model categories
         fixed = c in list_check
         cosines = re.match('cosine+', c)

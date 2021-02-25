@@ -65,7 +65,6 @@ def _tseries_std(img, mask_img, confounds, standardize):
     tseries = masker.fit_transform(img, confounds=confounds)
     return tseries.std(axis=0)
 
-
 def _denoise(img, mask_img, confounds, standardize):
     """Extract time series with and without confounds."""
     masker = NiftiMasker(mask_img=mask_img, standardize=standardize)
@@ -93,7 +92,7 @@ def _regression(confounds):
     tseries_clean = masker.fit_transform(img, confounds)
     assert tseries_clean.shape[0] == confounds.shape[0]
 
-
+@pytest.mark.filterwarnings("ignore")
 def test_nilearn_regress():
     """Try regressing out all motion types in nilearn."""
     # Regress full motion
@@ -125,7 +124,7 @@ def test_nilearn_regress():
     confounds = lc.Confounds(strategy=["ica_aroma"]).load(file_confounds)
     _regression(confounds)
 
-
+@pytest.mark.filterwarnings("ignore")
 def test_nilearn_standardize_false():
     """Test removing confounds in nilearn with no standardization."""
     # Simulate data
@@ -141,7 +140,7 @@ def test_nilearn_standardize_false():
     tseries_std = _tseries_std(img, mask_rand, X, False)
     assert np.mean(tseries_std > 0.9)
 
-
+@pytest.mark.filterwarnings("ignore")
 def test_nilearn_standardize_zscore():
     """Test removing confounds in nilearn with zscore standardization."""
     # Simulate data
@@ -164,7 +163,6 @@ def test_nilearn_standardize_zscore():
     corr = _corr_tseries(tseries_raw, tseries_clean)
     assert corr.mean() > 0.8
 
-
 def test_nilearn_standardize_psc():
     """Test removing confounds in nilearn with psc standardization."""
     # Similar test to test_nilearn_standardize_zscore, but with psc
@@ -173,9 +171,13 @@ def test_nilearn_standardize_psc():
     img, mask_conf, mask_rand, X = _simu_img(demean=False)
 
     # Areas with
-    tseries_raw, tseries_clean = _denoise(img, mask_conf, X, "psc")
+    with pytest.warns(UserWarning) as records:
+        tseries_raw, tseries_clean = _denoise(img, mask_conf, X, "psc")
+
+    nilear_warning = sum('psc standardization strategy' in str(r.message) for r in records)
+    assert nilear_warning == 1
     corr = _corr_tseries(tseries_raw, tseries_clean)
-    assert corr.mean() < 0.2
+    assert not corr.mean() < 0.2  # expect failure
 
     # Areas with random noise
     tseries_raw, tseries_clean = _denoise(img, mask_rand, X, "psc")
