@@ -57,10 +57,9 @@ def _simu_img(demean=True):
 
 def _simu_incomplete_confounds(params=None, keywords=None):
     """Simulate a confounds dataframe without the specified params and keywords."""
-
     params = params if params else []
     keywords = keywords if keywords else []
-    
+
     complete_param_list = [
         "csf", "csf_derivative1", "csf_derivative1_power2", "csf_power2",
         "white_matter", "white_matter_derivative1", "white_matter_power2",

@@ -73,6 +73,12 @@ def _label_compcor(confounds_raw, compcor_suffix, n_compcor):
     return compcor_cols
 
 
+def _load_high_pass(confounds_raw):
+    """Load the high pass filter regressors."""
+    high_pass_params = _find_confounds(confounds_raw, ["cosine"])
+    return confounds_raw[high_pass_params]
+
+
 def _pca_motion(confounds_motion, n_components):
     """Reduce the motion paramaters using PCA."""
     n_available = confounds_motion.shape[1]
@@ -172,6 +178,7 @@ class ConfoundNotFoundException(Exception):
         params : list of not found params
     """
     def __init__(self, params=None, keywords=None):
+        """Default values are empty lists."""
         self.params = params if params else []
         self.keywords = keywords if keywords else []
 
@@ -319,7 +326,7 @@ class Confounds:
 
         load_functions = {
             "motion": self._load_motion,
-            "high_pass": self._load_high_pass,
+            "high_pass": _load_high_pass,
             "wm_csf": self._load_wm_csf,
             "global": self._load_global,
             "compcor": self._load_compcor
@@ -381,8 +388,3 @@ class Confounds:
         wm_csf_params = _add_suffix(["csf", "white_matter"], self.wm_csf)
         _check_params(confounds_raw, wm_csf_params)
         return confounds_raw[wm_csf_params]
-
-    def _load_high_pass(self, confounds_raw):
-        """Load the high pass filter regressors."""
-        high_pass_params = _find_confounds(confounds_raw, ["cosine"])
-        return confounds_raw[high_pass_params]
