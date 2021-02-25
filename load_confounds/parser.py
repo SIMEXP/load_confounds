@@ -146,9 +146,14 @@ def _load_censoring(confounds_raw, censoring, fd_thresh):
     fd_outliers = np.where(confounds_raw['framewise_displacement'] > fd_thresh)[0]
     # Do optimized scrubbing if desired
     if censoring == 'optimized':
-        fd_outliers = _optimize_censoring(fd_outliers, n_scans)
+        dvars_outliers = np.where(confounds_raw['std_dvars'] > 2)[0]
+        combined_outliers = np.sort(np.unique(np.concatenate((fd_outliers,dvars_outliers))))
+        combined_outliers = _optimize_censoring(combined_outliers, n_scans)
+    else:
+        dvars_outliers = np.where(confounds_raw['std_dvars'] > 3)[0]
+        combined_outliers = np.sort(np.unique(np.concatenate((fd_outliers,dvars_outliers))))
     # Make one-hot encoded motion outlier regressors
-    motion_outlier_regressors = pd.DataFrame(np.transpose(np.eye(n_scans)[fd_outliers]).astype(int))
+    motion_outlier_regressors = pd.DataFrame(np.transpose(np.eye(n_scans)[combined_outliers]).astype(int))
     column_names = ['motion_outlier_'+str(num) for num in range(np.shape(motion_outlier_regressors)[1])]
     motion_outlier_regressors.columns=column_names
     return motion_outlier_regressors
