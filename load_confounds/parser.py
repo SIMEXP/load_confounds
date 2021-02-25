@@ -8,7 +8,6 @@ from sklearn.decomposition import PCA
 from sklearn.preprocessing import scale
 import warnings
 import os
-import functools
 
 
 # Global variables listing the admissible types of noise components
@@ -165,15 +164,16 @@ def _raise_conf_not_found_error(not_found_conf, not_found_keys):
 
 
 class ConfoundNotFoundException(Exception):
-    """Exception raised when failing to find params in the confounds.
+    """
+    Exception raised when failing to find params in the confounds.
 
     Parameters
     ----------
         params : list of not found params
     """
-    def __init__(self, params=[], keywords=[]):
-        self.params = params
-        self.keywords = keywords
+    def __init__(self, params=None, keywords=None):
+        self.params = params if parmas else []
+        self.keywords = keywords if keywords else []
 
 
 class Confounds:
