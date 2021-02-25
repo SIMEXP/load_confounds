@@ -158,9 +158,9 @@ def _raise_conf_not_found_error(not_found_conf, not_found_keys):
     conf_str = f"parameters {not_found_conf} " if not_found_conf else ""
     and_str = "and the " if not_found_conf and not_found_keys else ""
     keys_str = f"keywords {not_found_keys} " if not_found_keys else ""
-    error_msg = "The " + conf_str + and_str + keys_str
+    error_msg = ("The " + conf_str + and_str + keys_str
                 + "cannot be found in the available confounds. You may "
-                + "want to use a different denoising strategy."
+                + "want to use a different denoising strategy.")
     raise ValueError(error_msg)
 
 
@@ -318,17 +318,17 @@ class Confounds:
         not_found_keys = []
 
         strategies = [
-            {"name": "motion", "lod_func": self._load_motion},
-            {"name": "high_pass", "lod_func": self._load_high_pass},
-            {"name": "wm_csf", "lod_func": self._load_wm_csf},
-            {"name": "global", "lod_func": self._load_global},
-            {"name": "compcor", "lod_func": self._load_compcor}
+            {"name": "motion", "load_func": self._load_motion},
+            {"name": "high_pass", "load_func": self._load_high_pass},
+            {"name": "wm_csf", "load_func": self._load_wm_csf},
+            {"name": "global", "load_func": self._load_global},
+            {"name": "compcor", "load_func": self._load_compcor}
         ]
 
         for strategy in strategies:
             if strategy["name"] in self.strategy:
                 try:
-                    loaded_confounds = strategy["load_func"](counfounds_raw)
+                    loaded_confounds = strategy["load_func"](confounds_raw)
                     confounds = pd.concat([confounds, loaded_confounds], axis=1)
                 except ConfoundNotFoundException as exception:
                     not_found_conf += exception.params
@@ -366,7 +366,7 @@ class Confounds:
         confounds_motion = confounds_raw[motion_params]
 
         # Optionally apply PCA reduction
-        if n_motion > 0:
+        if self.n_motion > 0:
             confounds_motion = _pca_motion(confounds_motion,
                                            n_components=self.n_motion)
         return confounds_motion
