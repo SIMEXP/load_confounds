@@ -77,23 +77,31 @@ def _load_high_pass(confounds_raw):
     high_pass_params = _find_confounds(confounds_raw, ["cosine"])
     return confounds_raw[high_pass_params]
 
-def _label_compcor(confounds_json, compcor_suffix, n_compcor, acompcor_mask):
-    """Builds list for the number of compcor components."""
-    compcor_cols = [key for key in confounds_json.keys() if compcor_suffix+'_comp' in key]
-    if compcor_suffix == 'a':
-        if acompcor_mask == 'combined':
-            compcor_cols = [key for key in compcor_cols if confounds_json[key]['Mask']=='combined']
-        else: compcor_cols = [key for key in compcor_cols if confounds_json[key]['Mask']!='combined']
+def _select_compcor(confounds_json, compcor_suffic, n_compcor, acompcor_mask, compcor_cols):
+    """Selects the first given number of compcor components (n_compcor)"""
+    # Only limit if the number of components is specified (otherwise, collect all compcor components)
     if n_compcor != None:
         if n_compcor > np.size(compcor_cols):
+            # If too many components are specified, limit number to only the amount of generated components
             warnings.warn("Number of requested compcor components ("+str(n_compcor)+") exceeds number of components ("+str(np.size(compcor_cols))+").")
             n_compcor = np.size(compcor_cols)
+        # If separate acompcor mask, get WM and CSF components separately
         if compcor_suffix == 'a' and acompcor_mask != 'combined':
-            n_compcor = int(np.ceil(n_compcor/2))
             csf_comps = [comp for comp in compcor_cols if confounds_json[comp]['Mask']=='CSF']
             wm_comps = [comp for comp in compcor_cols if confounds_json[comp]['Mask']=='WM']
             compcor_cols = csf_comps[0:n_compcor] + wm_comps[0:n_compcor]
         else: compcor_cols = compcor_cols[0:n_compcor]
+    return compcor_cols    
+
+def _label_compcor(confounds_json, compcor_suffix, n_compcor, acompcor_mask):
+    """Builds list for the number of compcor components."""
+    compcor_cols = [key for key in confounds_json.keys() if compcor_suffix+'_comp' in key]
+    # If acompcor, differentiate into the desired compartments (combined or separate wm/csf masks)
+    if compcor_suffix == 'a' and acompcor_mask == 'combined':
+        compcor_cols = [key for key in compcor_cols if confounds_json[key]['Mask']=='combined']
+    elif compcor_suffix == 'a' and acompcor_mask != 'combined':
+        compcor_cols = [key for key in compcor_cols if confounds_json[key]['Mask']!='combined']
+    compcor_cols = _select_compcor(confounds_json, compcor_suffic, n_compcor, acompcor_mask, compcor_cols)
     return compcor_cols
 
 def _load_compcor(confounds_raw, confounds_json, compcor, n_compcor, acompcor_mask):
