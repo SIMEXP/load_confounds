@@ -139,20 +139,17 @@ def _pca_motion(confounds_motion, n_components):
     motion_pca.columns = ["motion_pca_" + str(col + 1) for col in motion_pca.columns]
     return motion_pca
 
-def _load_censoring(confounds_raw, censoring, fd_thresh):
+def _load_censoring(confounds_raw, censoring, fd_thresh, std_dvars_thresh):
     """Perform basic censoring - Remove volumes if framewise displacement exceeds threshold"""
     """Power, Jonathan D., et al. "Steps toward optimizing motion artifact removal in functional connectivity MRI; a reply to Carp." Neuroimage 76 (2013)."""
     n_scans = len(confounds_raw)
     # Get indices of fd outliers
     fd_outliers = np.where(confounds_raw['framewise_displacement'] > fd_thresh)[0]
+    dvars_outliers = np.where(confounds_raw['std_dvars'] > std_dvars_thresh)[0]
+    combined_outliers = np.sort(np.unique(np.concatenate((fd_outliers,dvars_outliers))))
     # Do optimized scrubbing if desired
     if censoring == 'optimized':
-        dvars_outliers = np.where(confounds_raw['std_dvars'] > 2)[0]
-        combined_outliers = np.sort(np.unique(np.concatenate((fd_outliers,dvars_outliers))))
         combined_outliers = _optimize_censoring(combined_outliers, n_scans)
-    else:
-        dvars_outliers = np.where(confounds_raw['std_dvars'] > 3)[0]
-        combined_outliers = np.sort(np.unique(np.concatenate((fd_outliers,dvars_outliers))))
     # Make one-hot encoded motion outlier regressors
     motion_outlier_regressors = pd.DataFrame(np.transpose(np.eye(n_scans)[combined_outliers]).astype(int))
     column_names = ['motion_outlier_'+str(num) for num in range(np.shape(motion_outlier_regressors)[1])]
@@ -273,6 +270,9 @@ class Confounds:
         
     fd_thresh : float, optional
         Framewise displacement threshold for censoring (default = 0.2 mm)
+        
+    std_dvars_thresh : float, optional
+        Standardized DVARS threshold for censoring (default = 3)
 
     wm_csf : string, optional
         Type of confounds extracted from masks of white matter and cerebrospinal fluids.
@@ -333,6 +333,7 @@ class Confounds:
         n_motion=0,
         censoring='basic',
         fd_thresh=0.2,
+        std_dvars_thresh=3,
         wm_csf="basic",
         global_signal="basic",
         compcor="anat",
@@ -345,6 +346,7 @@ class Confounds:
         self.n_motion = n_motion
         self.censoring = censoring
         self.fd_thresh = fd_thresh
+        self.std_dvars_thresh = std_dvars_thresh
         self.wm_csf = wm_csf
         self.global_signal = global_signal
         self.compcor = compcor
@@ -396,7 +398,7 @@ class Confounds:
             confounds = pd.concat([confounds, confounds_motion], axis=1)
 
         if "censoring" in self.strategy:
-            confounds_censoring = _load_censoring(confounds_raw, self.censoring, self.fd_thresh)
+            confounds_censoring = _load_censoring(confounds_raw, self.censoring, self.fd_thresh, seld.std_dvars_thresh)
             confounds = pd.concat([confounds, confounds_censoring], axis=1)
             
         if "high_pass" in self.strategy:
