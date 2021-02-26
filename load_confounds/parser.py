@@ -398,7 +398,7 @@ class Confounds:
             confounds = pd.concat([confounds, confounds_motion], axis=1)
 
         if "censoring" in self.strategy:
-            confounds_censoring = _load_censoring(confounds_raw, self.censoring, self.fd_thresh, seld.std_dvars_thresh)
+            confounds_censoring = _load_censoring(confounds_raw, self.censoring, self.fd_thresh, self.std_dvars_thresh)
             confounds = pd.concat([confounds, confounds_censoring], axis=1)
             
         if "high_pass" in self.strategy:
