@@ -11,7 +11,8 @@ import os
 
 
 # Global variables listing the admissible types of noise components
-all_confounds = ["motion", "high_pass", "wm_csf", "global", "compcor"]
+
+all_confounds = ["motion", "high_pass", "wm_csf", "global", "compcor", "ica_aroma"]
 
 
 def _add_suffix(params, model):
@@ -80,7 +81,7 @@ def _load_high_pass(confounds_raw):
 def _label_compcor(confounds_raw, compcor_suffix, n_compcor):
     """Builds list for the number of compcor components."""
     compcor_cols = []
-    for nn in range(n_compcor + 1):
+    for nn in range(n_compcor):
         nn_str = str(nn).zfill(2)
         compcor_col = compcor_suffix + "_comp_cor_" + nn_str
         if compcor_col not in confounds_raw.columns:
@@ -122,6 +123,10 @@ def _load_motion(confounds_raw, motion, n_motion):
 
     return confounds_motion
 
+def _load_ica_aroma(confounds_raw):
+    """Load the ICA-AROMA regressors."""
+    ica_aroma_params = _find_confounds(confounds_raw, ["aroma"])
+    return confounds_raw[ica_aroma_params]
 
 def _pca_motion(confounds_motion, n_components):
     """Reduce the motion paramaters using PCA."""
@@ -215,6 +220,7 @@ class Confounds:
         "high_pass" discrete cosines covering low frequencies.
         "wm_csf" confounds derived from white matter and cerebrospinal fluid.
         "global" confounds derived from the global signal.
+        "ica_aroma" confounds derived from ICA-AROMA.
 
     motion : string, optional
         Type of confounds extracted from head motion estimates.
@@ -290,7 +296,7 @@ class Confounds:
         wm_csf="basic",
         global_signal="basic",
         compcor="anat",
-        n_compcor=10,
+        n_compcor=6,
         demean=True,
     ):
         """Default parameters."""
@@ -364,6 +370,10 @@ class Confounds:
                 confounds_raw, self.compcor, self.n_compcor
             )
             confounds = pd.concat([confounds, confounds_compcor], axis=1)
+
+        if "ica_aroma" in self.strategy:
+            confounds_ica_aroma = _load_ica_aroma(confounds_raw)
+            confounds = pd.concat([confounds, confounds_ica_aroma], axis=1)
 
         confounds, labels = _confounds_to_ndarray(confounds, self.demean)
 
