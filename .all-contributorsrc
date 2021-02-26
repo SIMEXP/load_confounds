@@ -48,7 +48,8 @@
         "code",
         "data",
         "doc",
-        "test"
+        "test",
+        "bug"
       ]
     },
     {
