@@ -109,6 +109,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "m-w-w",
+      "name": "m-w-w",
+      "avatar_url": "https://avatars.githubusercontent.com/u/36826334?v=4",
+      "profile": "https://github.com/m-w-w",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
