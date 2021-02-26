@@ -1,4 +1,5 @@
 import os
+import re
 import load_confounds.parser as lc
 import pandas as pd
 import numpy as np
@@ -8,12 +9,12 @@ import pytest
 from nibabel import Nifti1Image
 from nilearn.input_data import NiftiMasker
 
+
 path_data = os.path.join(os.path.dirname(lc.__file__), "data")
 file_confounds = os.path.join(path_data, "test_desc-confounds_regressors.tsv")
 
-
 def _simu_img(demean=True):
-    """Simulate an nifti image with some parts confounds and some parts noise."""
+    """Simulate an nifti image based on confound file with some parts confounds and some parts noise."""
     # set the size of the image matrix
     nx = 5
     ny = 5
@@ -24,6 +25,8 @@ def _simu_img(demean=True):
     X = lc.Confounds(strategy=["motion"], motion="basic", demean=demean).load(
         file_confounds
     )
+    # repeat X in length (axis = 0) three times to increase the degree of freedom
+    X = np.tile(X, (3, 1))
 
     # the number of time points is based on the example confound file
     nt = X.shape[0]
@@ -62,7 +65,6 @@ def _tseries_std(img, mask_img, confounds, standardize):
     tseries = masker.fit_transform(img, confounds=confounds)
     return tseries.std(axis=0)
 
-
 def _denoise(img, mask_img, confounds, standardize):
     """Extract time series with and without confounds."""
     masker = NiftiMasker(mask_img=mask_img, standardize=standardize)
@@ -83,12 +85,14 @@ def _regression(confounds):
     """Simple regression with nilearn."""
     # Simulate data
     img, mask_conf, _, _ = _simu_img(demean=True)
+    confounds = np.tile(confounds, (3, 1))  # matching L29 (_simu_img)
+
     # Do the regression
     masker = NiftiMasker(mask_img=mask_conf, standardize=True)
-    tseries_clean = masker.fit_transform(img, confounds=confounds)
+    tseries_clean = masker.fit_transform(img, confounds)
     assert tseries_clean.shape[0] == confounds.shape[0]
 
-
+@pytest.mark.filterwarnings("ignore")
 def test_nilearn_regress():
     """Try regressing out all motion types in nilearn."""
     # Regress full motion
@@ -102,7 +106,6 @@ def test_nilearn_regress():
     # Regress wm_csf
     confounds = lc.Confounds(strategy=["wm_csf"], wm_csf="full").load(file_confounds)
     _regression(confounds)
-
     # Regress global
     confounds = lc.Confounds(strategy=["global"], global_signal="full").load(
         file_confounds
@@ -117,7 +120,11 @@ def test_nilearn_regress():
     confounds = lc.Confounds(strategy=["compcor"], compcor="temp").load(file_confounds)
     _regression(confounds)
 
+    # Regress ICA-AROMA
+    confounds = lc.Confounds(strategy=["ica_aroma"]).load(file_confounds)
+    _regression(confounds)
 
+@pytest.mark.filterwarnings("ignore")
 def test_nilearn_standardize_false():
     """Test removing confounds in nilearn with no standardization."""
     # Simulate data
@@ -133,10 +140,11 @@ def test_nilearn_standardize_false():
     tseries_std = _tseries_std(img, mask_rand, X, False)
     assert np.mean(tseries_std > 0.9)
 
-
+@pytest.mark.filterwarnings("ignore")
 def test_nilearn_standardize_zscore():
     """Test removing confounds in nilearn with zscore standardization."""
     # Simulate data
+
     img, mask_conf, mask_rand, X = _simu_img(demean=True)
 
     # We now load the time series with vs without confounds
@@ -155,17 +163,21 @@ def test_nilearn_standardize_zscore():
     corr = _corr_tseries(tseries_raw, tseries_clean)
     assert corr.mean() > 0.8
 
-
 def test_nilearn_standardize_psc():
     """Test removing confounds in nilearn with psc standardization."""
     # Similar test to test_nilearn_standardize_zscore, but with psc
     # Simulate data
+
     img, mask_conf, mask_rand, X = _simu_img(demean=False)
 
     # Areas with
-    tseries_raw, tseries_clean = _denoise(img, mask_conf, X, "psc")
+    with pytest.warns(UserWarning) as records:
+        tseries_raw, tseries_clean = _denoise(img, mask_conf, X, "psc")
+
+    nilear_warning = sum('psc standardization strategy' in str(r.message) for r in records)
+    assert nilear_warning == 1
     corr = _corr_tseries(tseries_raw, tseries_clean)
-    assert corr.mean() < 0.2
+    assert not corr.mean() < 0.2  # expect failure
 
     # Areas with random noise
     tseries_raw, tseries_clean = _denoise(img, mask_rand, X, "psc")
@@ -244,7 +256,6 @@ def test_motion():
         assert f"{param}_power2" in conf_full.columns_
         assert f"{param}_derivative1_power2" in conf_full.columns_
 
-
 def test_n_motion():
 
     conf = lc.Confounds(strategy=["motion"], motion="full", n_motion=0.2)
@@ -259,3 +270,9 @@ def test_n_motion():
     with pytest.raises(ValueError):
         conf = lc.Confounds(strategy=["motion"], motion="full", n_motion=50)
         conf.load(file_confounds)
+
+def test_ica_aroma():
+    conf = lc.Confounds(strategy=["ica_aroma"])
+    conf.load(file_confounds)
+    for col_name in conf.columns_:
+        assert re.match('aroma_motion_+', col_name)
