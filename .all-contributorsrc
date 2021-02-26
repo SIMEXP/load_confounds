@@ -50,6 +50,59 @@
         "doc",
         "test"
       ]
+    },
+    {
+      "login": "pbellec",
+      "name": "Pierre Bellec",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1670887?v=4",
+      "profile": "http://simexp-lab.org",
+      "contributions": [
+        "code",
+        "bug",
+        "ideas",
+        "infra",
+        "test",
+        "data",
+        "eventOrganizing",
+        "maintenance",
+        "projectManagement"
+      ]
+    },
+    {
+      "login": "smeisler",
+      "name": "Steven Meisler",
+      "avatar_url": "https://avatars.githubusercontent.com/u/27028726?v=4",
+      "profile": "https://scholar.harvard.edu/steven-meisler",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "effigies",
+      "name": "Chris Markiewicz",
+      "avatar_url": "https://avatars.githubusercontent.com/u/83442?v=4",
+      "profile": "https://github.com/effigies",
+      "contributions": [
+        "ideas"
+      ]
+    },
+    {
+      "login": "srastegarnia",
+      "name": "Shima Rastegarnia",
+      "avatar_url": "https://avatars.githubusercontent.com/u/64853244?v=4",
+      "profile": "https://github.com/srastegarnia",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "nuKs",
+      "name": "Thibault PIRONT",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1691962?v=4",
+      "profile": "https://github.com/nuKs",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
