@@ -29,7 +29,7 @@ setup(
         "pandas>=0.25.3",
         "scikit-learn>=0.21.3",
         "scipy>=1.3.2",
-        "nilearn>=0.6.2",
+        "nilearn>=0.7.1",
     ],  # external packages as dependencies
     classifiers=[
         "Development Status :: 3 - Alpha",
