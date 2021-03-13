@@ -26,14 +26,21 @@ img = masker.transform(file, confounds=confounds)
 ```
 
 ## Predefined denoising strategies
-The predefined strategies are all adapted from Ciric et al. 2017, and currently include:
-*  `Params2` : Mean white matter and CSF signals, with high-pass filter.
-*  `Params6` : Basic motion parameters with high pass filter.
-*  `Params9` : Basic motion parameters, WM/CSF signals, global signal and high pass filter.
-*  `Params24` : Full motion parameters (derivatives, squares and squared derivatives), with high pass filter.
-*  `Params36` : Motion parameters, WM/CSF signals, global signal, high pass filter. All noise components are fully expanded (derivatives, squares and squared derivatives).
-*  `AnatCompCor` : Motion parameters (fully expanded), high pass filter, and acompcor.
-*  `TempCompCor` : High pass filter, and tcompcor.
+The predefined strategies are all adapted from Ciric et al. 2017, and listed in the table below, with the following conventions. `COS` are discrete cosines; `Motion` are motion parameters; `WM` is white matter average; `CSF` is average of the cerebrospinal fluid mask; `GS` is the global signal; `aCompCor` is anatomical CompCor; `tCompCor` is temporal CompCor; `AROMA` is ICA AROMA; `B` is basic; `DS` is expanded with derivatives, squares and square derivatives; `F` means that the correction is applied by loading a specific `bold` file, rather than adding confound regressors.
+
+| Strategy       | COS | Motion | WM | CSF | GS | aCompCor | tCompCor | AROMA |
+| -------------- |:---:|:------:|:--:|:---:|:--:|:--------:|:--------:|:-----:|
+| `Params2`      | B   |        | B  | B   |    |          |          |       |
+| `Params6`      | B   | B      |    |     |    |          |          |       |
+| `Params9`      | B   | B      | B  | B   | B  |          |          |       |
+| `Params24`     | B   | DS     |    |     |    |          |          |       |
+| `Params36`     | B   | DS     | DS | DS  | DS |          |          |       |
+| `Params36`     | B   | DS     | DS | DS  | DS |          |          |       |
+| `AnatCompCor`  | B   | DS     |    |     |    | B        |          |       |
+| `TempCompCor`  | B   |        |    |     |    |          | B        |       |
+| `ICAAROMA`     | B   |        | B  | B   |    |          |          | F     |
+| `AROMAGSR`     | B   |        | B  | B   | B  |          |          | F     |
+| `AggrICAAROMA` | B   |        | B  | B   | B  |          |          | B     |
 
 ## Flexible denoising strategy
 It is also possible to fine-tune a subset of noise variables, and the type of these variables:
