@@ -1,6 +1,6 @@
 # load_confounds
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-9-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-10-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 [![Pipy Badge](https://img.shields.io/pypi/v/load_confounds)](https://pypi.org/project/load-confounds/) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/1da186ba5c44489b8af6d96a9c50d3c7)](https://app.codacy.com/gh/SIMEXP/load_confounds?utm_source=github.com&utm_medium=referral&utm_content=SIMEXP/load_confounds&utm_campaign=Badge_Grade_Dashboard) [![Maintainability](https://api.codeclimate.com/v1/badges/ce6f2bf20aa87accaaa4/maintainability)](https://codeclimate.com/github/SIMEXP/load_confounds/maintainability) [![CircleCI](https://circleci.com/gh/SIMEXP/load_confounds.svg?style=svg)](https://circleci.com/gh/SIMEXP/load_confounds) [![codecov](https://codecov.io/gh/SIMEXP/load_confounds/branch/master/graph/badge.svg)](https://codecov.io/gh/SIMEXP/load_confounds)
@@ -26,14 +26,21 @@ img = masker.transform(file, confounds=confounds)
 ```
 
 ## Predefined denoising strategies
-The predefined strategies are all adapted from Ciric et al. 2017, and currently include:
-*  `Params2` : Mean white matter and CSF signals, with high-pass filter.
-*  `Params6` : Basic motion parameters with high pass filter.
-*  `Params9` : Basic motion parameters, WM/CSF signals, global signal and high pass filter.
-*  `Params24` : Full motion parameters (derivatives, squares and squared derivatives), with high pass filter.
-*  `Params36` : Motion parameters, WM/CSF signals, global signal, high pass filter. All noise components are fully expanded (derivatives, squares and squared derivatives).
-*  `AnatCompCor` : Motion parameters (fully expanded), high pass filter, and acompcor.
-*  `TempCompCor` : High pass filter, and tcompcor.
+The predefined strategies are all adapted from Ciric et al. 2017, and listed in the table below, with the following conventions. `COS` are discrete cosines; `Motion` are motion parameters; `WM` is white matter average; `CSF` is average of the cerebrospinal fluid mask; `GS` is the global signal; `aCompCor` is anatomical CompCor; `tCompCor` is temporal CompCor; `AROMA` is ICA AROMA; `B` is basic; `DS` is expanded with derivatives, squares and square derivatives; `F` means that the correction is applied by loading a specific `bold` file, rather than adding confound regressors.
+
+| Strategy       | COS | Motion | WM | CSF | GS | aCompCor | tCompCor | AROMA |
+| -------------- |:---:|:------:|:--:|:---:|:--:|:--------:|:--------:|:-----:|
+| `Params2`      | B   |        | B  | B   |    |          |          |       |
+| `Params6`      | B   | B      |    |     |    |          |          |       |
+| `Params9`      | B   | B      | B  | B   | B  |          |          |       |
+| `Params24`     | B   | DS     |    |     |    |          |          |       |
+| `Params36`     | B   | DS     | DS | DS  | DS |          |          |       |
+| `Params36`     | B   | DS     | DS | DS  | DS |          |          |       |
+| `AnatCompCor`  | B   | DS     |    |     |    | B        |          |       |
+| `TempCompCor`  | B   |        |    |     |    |          | B        |       |
+| `ICAAROMA`     | B   |        | B  | B   |    |          |          | F     |
+| `AROMAGSR`     | B   |        | B  | B   | B  |          |          | F     |
+| `AggrICAAROMA` | B   |        | B  | B   | B  |          |          | B     |
 
 ## Flexible denoising strategy
 It is also possible to fine-tune a subset of noise variables, and the type of these variables:
@@ -75,17 +82,18 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
 <!-- markdownlint-disable -->
 <table>
   <tr>
-    <td align="center"><a href="https://github.com/FrancoisPgm"><img src="https://avatars.githubusercontent.com/u/35327799?v=4?s=100" width="100px;" alt=""/><br /><sub><b>François Paugam</b></sub></a><br /><a href="#infra-FrancoisPgm" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a> <a href="https://github.com/SIMEXP/load_confounds/commits?author=FrancoisPgm" title="Code">💻</a></td>
+    <td align="center"><a href="https://github.com/FrancoisPgm"><img src="https://avatars.githubusercontent.com/u/35327799?v=4?s=100" width="100px;" alt=""/><br /><sub><b>François Paugam</b></sub></a><br /><a href="#infra-FrancoisPgm" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a> <a href="https://github.com/SIMEXP/load_confounds/commits?author=FrancoisPgm" title="Code">💻</a> <a href="https://github.com/SIMEXP/load_confounds/pulls?q=is%3Apr+reviewed-by%3AFrancoisPgm" title="Reviewed Pull Requests">👀</a></td>
     <td align="center"><a href="https://github.com/HanadS"><img src="https://avatars.githubusercontent.com/u/26352860?v=4?s=100" width="100px;" alt=""/><br /><sub><b>HanadS</b></sub></a><br /><a href="https://github.com/SIMEXP/load_confounds/commits?author=HanadS" title="Code">💻</a> <a href="https://github.com/SIMEXP/load_confounds/commits?author=HanadS" title="Tests">⚠️</a> <a href="#data-HanadS" title="Data">🔣</a> <a href="#infra-HanadS" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a> <a href="https://github.com/SIMEXP/load_confounds/commits?author=HanadS" title="Documentation">📖</a> <a href="#ideas-HanadS" title="Ideas, Planning, & Feedback">🤔</a></td>
     <td align="center"><a href="http://emdupre.me"><img src="https://avatars.githubusercontent.com/u/15017191?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Elizabeth DuPre</b></sub></a><br /><a href="#ideas-emdupre" title="Ideas, Planning, & Feedback">🤔</a></td>
-    <td align="center"><a href="https://wanghaoting.com/"><img src="https://avatars.githubusercontent.com/u/13743617?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Hao-Ting Wang</b></sub></a><br /><a href="#ideas-htwangtw" title="Ideas, Planning, & Feedback">🤔</a></td>
+    <td align="center"><a href="https://wanghaoting.com/"><img src="https://avatars.githubusercontent.com/u/13743617?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Hao-Ting Wang</b></sub></a><br /><a href="#ideas-htwangtw" title="Ideas, Planning, & Feedback">🤔</a> <a href="https://github.com/SIMEXP/load_confounds/commits?author=htwangtw" title="Code">💻</a> <a href="#data-htwangtw" title="Data">🔣</a> <a href="https://github.com/SIMEXP/load_confounds/commits?author=htwangtw" title="Documentation">📖</a> <a href="https://github.com/SIMEXP/load_confounds/commits?author=htwangtw" title="Tests">⚠️</a> <a href="https://github.com/SIMEXP/load_confounds/issues?q=author%3Ahtwangtw" title="Bug reports">🐛</a></td>
     <td align="center"><a href="http://simexp-lab.org"><img src="https://avatars.githubusercontent.com/u/1670887?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Pierre Bellec</b></sub></a><br /><a href="https://github.com/SIMEXP/load_confounds/commits?author=pbellec" title="Code">💻</a> <a href="https://github.com/SIMEXP/load_confounds/issues?q=author%3Apbellec" title="Bug reports">🐛</a> <a href="#ideas-pbellec" title="Ideas, Planning, & Feedback">🤔</a> <a href="#infra-pbellec" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a> <a href="https://github.com/SIMEXP/load_confounds/commits?author=pbellec" title="Tests">⚠️</a> <a href="#data-pbellec" title="Data">🔣</a> <a href="#eventOrganizing-pbellec" title="Event Organizing">📋</a> <a href="#maintenance-pbellec" title="Maintenance">🚧</a> <a href="#projectManagement-pbellec" title="Project Management">📆</a></td>
-    <td align="center"><a href="https://scholar.harvard.edu/steven-meisler"><img src="https://avatars.githubusercontent.com/u/27028726?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Steven Meisler</b></sub></a><br /><a href="https://github.com/SIMEXP/load_confounds/issues?q=author%3Asmeisler" title="Bug reports">🐛</a></td>
+    <td align="center"><a href="https://scholar.harvard.edu/steven-meisler"><img src="https://avatars.githubusercontent.com/u/27028726?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Steven Meisler</b></sub></a><br /><a href="https://github.com/SIMEXP/load_confounds/issues?q=author%3Asmeisler" title="Bug reports">🐛</a> <a href="https://github.com/SIMEXP/load_confounds/commits?author=smeisler" title="Tests">⚠️</a> <a href="#data-smeisler" title="Data">🔣</a> <a href="https://github.com/SIMEXP/load_confounds/commits?author=smeisler" title="Code">💻</a> <a href="https://github.com/SIMEXP/load_confounds/commits?author=smeisler" title="Documentation">📖</a> <a href="#ideas-smeisler" title="Ideas, Planning, & Feedback">🤔</a></td>
     <td align="center"><a href="https://github.com/effigies"><img src="https://avatars.githubusercontent.com/u/83442?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Chris Markiewicz</b></sub></a><br /><a href="#ideas-effigies" title="Ideas, Planning, & Feedback">🤔</a></td>
   </tr>
   <tr>
     <td align="center"><a href="https://github.com/srastegarnia"><img src="https://avatars.githubusercontent.com/u/64853244?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Shima Rastegarnia</b></sub></a><br /><a href="https://github.com/SIMEXP/load_confounds/issues?q=author%3Asrastegarnia" title="Bug reports">🐛</a></td>
     <td align="center"><a href="https://github.com/nuKs"><img src="https://avatars.githubusercontent.com/u/1691962?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Thibault PIRONT</b></sub></a><br /><a href="https://github.com/SIMEXP/load_confounds/commits?author=nuKs" title="Code">💻</a></td>
+    <td align="center"><a href="https://github.com/m-w-w"><img src="https://avatars.githubusercontent.com/u/36826334?v=4?s=100" width="100px;" alt=""/><br /><sub><b>m-w-w</b></sub></a><br /><a href="https://github.com/SIMEXP/load_confounds/commits?author=m-w-w" title="Documentation">📖</a></td>
   </tr>
 </table>
 
