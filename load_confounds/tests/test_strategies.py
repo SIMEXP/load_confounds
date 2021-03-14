@@ -189,6 +189,49 @@ def test_AnatCompCor():
 
     compcor_col_str_anat = "".join(conf.columns_)
     assert "t_comp_cor_" not in compcor_col_str_anat
+    assert (
+        "a_comp_cor_57" not in compcor_col_str_anat
+    )  # this one comes from the WW mask
+
+
+def test_AnatCompCor_not_combined():
+    """Test the AnatCompCor strategy without combined mask."""
+    # Try to load the confounds, whithout PCA reduction
+    conf = lc.AnatCompCor(acompcor_combined=False)
+    conf.load(file_confounds)
+
+    # Check that the confonds is a data frame
+    assert isinstance(conf.confounds_, np.ndarray)
+
+    list_check = [
+        "trans_x",
+        "trans_y",
+        "rot_z",
+        "trans_x_derivative1",
+        "trans_x_power2",
+        "trans_y_derivative1_power2",
+        "trans_z_derivative1",
+        "trans_z_power2",
+        "trans_z_derivative1_power2",
+        "rot_y_derivative1",
+        "rot_y_power2",
+        "rot_z_power2",
+        "rot_z_derivative1_power2",
+        "cosine00",
+        "cosine01",
+        "a_comp_cor_57",  # from CSF mask
+        "a_comp_cor_58",  # from CSF mask
+        "a_comp_cor_105",  # from WM mask
+    ]
+
+    for check in list_check:
+        assert check in conf.columns_
+
+    compcor_col_str_anat = "".join(conf.columns_)
+    assert "t_comp_cor_" not in compcor_col_str_anat
+    assert (
+        "a_comp_cor_00" not in compcor_col_str_anat
+    )  # this one comes from the combined mask
 
 
 def test_TempCompCor():
@@ -216,6 +259,7 @@ def test_TempCompCor():
     compcor_col_str_anat = "".join(conf.columns_)
     assert "a_comp_cor_" not in compcor_col_str_anat
 
+
 def test_ICAAROMA():
     """Test the (non-aggressive) ICA-AROMA strategy."""
     conf = lc.ICAAROMA()
@@ -234,8 +278,9 @@ def test_ICAAROMA():
     for c in conf.columns_:
         # Check that all fixed name model categories
         fixed = c in list_check
-        cosines = re.match('cosine+', c)
+        cosines = re.match("cosine+", c)
         assert fixed or cosines
+
 
 def test_AROMAGSR():
     """Test the (non-aggressive) AROMA-GSR strategy."""
@@ -251,8 +296,9 @@ def test_AROMAGSR():
     for c in conf.columns_:
         # Check that all fixed name model categories
         fixed = c in list_check
-        cosines = re.match('cosine+', c)
+        cosines = re.match("cosine+", c)
         assert fixed or cosines
+
 
 def test_AggrICAAROMA():
     """Test the aggressive ICA-AROMA strategy."""
@@ -268,6 +314,6 @@ def test_AggrICAAROMA():
     for c in conf.columns_:
         # Check that all fixed name model categories
         fixed = c in list_check
-        cosines = re.match('cosine+', c)
-        aroma = re.match('aroma_motion_+', c)
+        cosines = re.match("cosine+", c)
+        aroma = re.match("aroma_motion_+", c)
         assert fixed or cosines or aroma

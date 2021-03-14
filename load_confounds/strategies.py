@@ -176,11 +176,11 @@ class AnatCompCor(Confounds):
     confounds_raw : Pandas Dataframe or path to tsv file(s), optionally as a list.
         Raw confounds from fmriprep
 
-    n_compcor : int, optional
+    n_compcor : int or "auto", optional
         The number of noise components to be extracted.
-        Default is to select all components (50% variance explained by fMRIPrep defaults)
+        Default is "auto": select all components (50% variance explained by fMRIPrep defaults)
 
-    acompcor_combine: boolean, optional
+    acompcor_combined: boolean, optional
         If true, use components generated from the combined white matter and csf
         masks. Otherwise, components are generated from each mask separately and then
         concatenated.
@@ -198,14 +198,14 @@ class AnatCompCor(Confounds):
 
     """
 
-    def __init__(self, n_compcor=10, demean=True):
+    def __init__(self, n_compcor="auto", demean=True, acompcor_combined=True):
         """Default parameters."""
         self.strategy = ["high_pass", "motion", "compcor"]
         self.motion = "full"
         self.n_motion = 0
         self.compcor = "anat"
         self.n_compcor = n_compcor
-        self.acompcor_combine = True
+        self.acompcor_combined = acompcor_combined
         self.demean = demean
 
 
@@ -219,9 +219,9 @@ class TempCompCor(Confounds):
     confounds_raw : Pandas Dataframe or path to tsv file(s), optionally as a list.
         Raw confounds from fmriprep
 
-    n_compcor : int, optional
+    n_compcor : int or "auto", optional
         The number of noise components to be extracted.
-        Default is to select all components (50% variance explained by fMRIPrep defaults)
+        Default is "auto": select all components (50% variance explained by fMRIPrep defaults)
 
     demean : boolean, optional
         If True, the confounds are standardized to a zero mean (over time).
@@ -236,12 +236,12 @@ class TempCompCor(Confounds):
 
     """
 
-    def __init__(self, n_compcor=6, demean=True):
+    def __init__(self, n_compcor="auto", demean=True):
         """Default parameters."""
         self.strategy = ["high_pass", "compcor"]
         self.compcor = "temp"
         self.n_compcor = n_compcor
-        self.acompcor_combine = None
+        self.acompcor_combined = None
         self.demean = demean
 
 
@@ -277,6 +277,7 @@ class ICAAROMA(Confounds):
         self.demean = demean
         self.wm_csf = "basic"
 
+
 class AROMAGSR(Confounds):
     """
     Load confounds for post-non-aggresive AROMA-GSR strategy from Ciric et al. 2017.
@@ -309,6 +310,7 @@ class AROMAGSR(Confounds):
         self.global_signal = "basic"
         self.wm_csf = "basic"
         self.demean = demean
+
 
 class AggrICAAROMA(Confounds):
     """
