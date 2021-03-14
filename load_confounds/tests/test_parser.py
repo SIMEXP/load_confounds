@@ -247,6 +247,15 @@ def test_motion():
         assert f"{param}_derivative1_power2" in conf_full.columns_
 
 
+def test_n_compcor():
+
+    conf = lc.Confounds(strategy=["compcor"], compcor="anat", n_compcor=2)
+    conf.load(file_confounds)
+    assert "a_comp_cor_00" in conf.columns_
+    assert "a_comp_cor_01" in conf.columns_
+    assert "a_comp_cor_02" not in conf.columns_
+
+
 def test_n_motion():
 
     conf = lc.Confounds(strategy=["motion"], motion="full", n_motion=0.2)

@@ -90,7 +90,7 @@ def _select_compcor(compcor_cols, n_compcor, compcor_mask):
     """retain a specified number of compcor components."""
     # only select if not "auto", or less components are requested than there actually is
     if (n_compcor != "auto") and (n_compcor < len(compcor_cols)):
-        compcor_cols = compcor_col[0:n_compcor]
+        compcor_cols = compcor_cols[0:n_compcor]
     return compcor_cols
 
 
@@ -126,7 +126,7 @@ def _load_compcor(confounds_raw, confounds_json, compcor, n_compcor, acompcor_co
     """Load compcor regressors."""
     if compcor == "anat":
         compcor_cols = _load_acompcor(confounds_json, n_compcor, acompcor_combined)
-        
+
     if compcor == "temp":
         compcor_cols = _label_compcor(confounds_json, "t", n_compcor, acompcor_combined)
 
