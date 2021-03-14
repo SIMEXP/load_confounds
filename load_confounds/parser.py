@@ -76,8 +76,8 @@ def _load_high_pass(confounds_raw):
     high_pass_params = _find_confounds(confounds_raw, ["cosine"])
     return confounds_raw[high_pass_params]
 
-  
-def _select_compcor(confounds_json, compcor_suffic, n_compcor, acompcor_mask, compcor_cols):
+
+def _select_compcor(confounds_json, compcor_suffix, n_compcor, acompcor_mask, compcor_cols):
     """Selects the first given number of compcor components (n_compcor)"""
     # Only limit if the number of components is specified (otherwise, collect all compcor components)
     if n_compcor != None:
@@ -91,9 +91,9 @@ def _select_compcor(confounds_json, compcor_suffic, n_compcor, acompcor_mask, co
             wm_comps = [comp for comp in compcor_cols if confounds_json[comp]['Mask']=='WM']
             compcor_cols = csf_comps[0:n_compcor] + wm_comps[0:n_compcor]
         else: compcor_cols = compcor_cols[0:n_compcor]
-    return compcor_cols    
+    return compcor_cols
 
-  
+
 def _label_compcor(confounds_json, compcor_suffix, n_compcor, acompcor_mask):
     """Builds list for the number of compcor components."""
     compcor_cols = [key for key in confounds_json.keys() if compcor_suffix+'_comp' in key]
@@ -105,7 +105,7 @@ def _label_compcor(confounds_json, compcor_suffix, n_compcor, acompcor_mask):
     compcor_cols = _select_compcor(confounds_json, compcor_suffic, n_compcor, acompcor_mask, compcor_cols)
     return compcor_cols
 
-  
+
 def _load_compcor(confounds_raw, confounds_json, compcor, n_compcor, acompcor_mask):
     """Load compcor regressors."""
     if compcor == "anat":
@@ -136,13 +136,13 @@ def _load_motion(confounds_raw, motion, n_motion):
 
     return confounds_motion
 
-  
+
 def _load_ica_aroma(confounds_raw):
     """Load the ICA-AROMA regressors."""
     ica_aroma_params = _find_confounds(confounds_raw, ["aroma"])
     return confounds_raw[ica_aroma_params]
 
-  
+
 def _pca_motion(confounds_motion, n_components):
     """Reduce the motion paramaters using PCA."""
     n_available = confounds_motion.shape[1]
@@ -159,7 +159,7 @@ def _pca_motion(confounds_motion, n_components):
     motion_pca.columns = ["motion_pca_" + str(col + 1) for col in motion_pca.columns]
     return motion_pca
 
-  
+
 def _load_censoring(confounds_raw, censoring, fd_thresh, std_dvars_thresh):
     """Perform basic censoring - Remove volumes if framewise displacement exceeds threshold"""
     """Power, Jonathan D., et al. "Steps toward optimizing motion artifact removal in functional connectivity MRI; a reply to Carp." Neuroimage 76 (2013)."""
@@ -177,16 +177,16 @@ def _load_censoring(confounds_raw, censoring, fd_thresh, std_dvars_thresh):
     motion_outlier_regressors.columns=column_names
     return motion_outlier_regressors
 
-  
+
 def _optimize_censoring(fd_outliers, n_scans):
     """Perform optimized censoring. After censoring volumes, further remove continuous segments containing fewer than 5 volumes"""
     """Power, Jonathan D., et al. "Methods to detect, characterize, and remove motion artifact in resting state fMRI." Neuroimage 84 (2014): 320-341."""
     # Start by checking if the beginning continuous segment is fewer than 5 volumes
     if fd_outliers[0] < 5:
         fd_outliers = np.asarray(list(range(fd_outliers[0])) + list(fd_outliers))
-    # Do the same for the ending segment of scans  
+    # Do the same for the ending segment of scans
     if n_scans - (fd_outliers[-1] + 1) < 5:
-        fd_outliers = np.asarray(list(fd_outliers) + list(range(fd_outliers[-1], n_scans)))   
+        fd_outliers = np.asarray(list(fd_outliers) + list(range(fd_outliers[-1], n_scans)))
     # Now do everything in between
     fd_outlier_ind_diffs = np.diff(fd_outliers)
     short_segments_inds = np.where(np.logical_and(fd_outlier_ind_diffs > 1, fd_outlier_ind_diffs < 6))[0]
@@ -195,7 +195,7 @@ def _optimize_censoring(fd_outliers, n_scans):
     fd_outliers = np.sort(np.unique(fd_outliers))
     return fd_outliers
 
-  
+
 def _sanitize_strategy(strategy):
     """Defines the supported denoising strategies."""
     if isinstance(strategy, list):
@@ -286,10 +286,10 @@ class Confounds:
         analysis is applied to the motion parameters, and the number of extracted
         components is set to exceed `n_motion` percent of the parameters variance.
         If the n_components = 0, then no PCA is performed.
-        
+
     fd_thresh : float, optional
         Framewise displacement threshold for censoring (default = 0.2 mm)
-        
+
     std_dvars_thresh : float, optional
         Standardized DVARS threshold for censoring (default = 3)
 
@@ -415,7 +415,7 @@ class Confounds:
               confounds_json = json.load(f)
         # Convert tsv file to pandas dataframe
         confounds_raw = _confounds_to_df(confounds_raw)
-        
+
         confounds = pd.DataFrame()
 
         if "motion" in self.strategy:
@@ -425,7 +425,7 @@ class Confounds:
         if "censoring" in self.strategy:
             confounds_censoring = _load_censoring(confounds_raw, self.censoring, self.fd_thresh, self.std_dvars_thresh)
             confounds = pd.concat([confounds, confounds_censoring], axis=1)
-            
+
         if "high_pass" in self.strategy:
             confounds_high_pass = _load_high_pass(confounds_raw)
             confounds = pd.concat([confounds, confounds_high_pass], axis=1)
