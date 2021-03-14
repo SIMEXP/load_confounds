@@ -87,7 +87,7 @@ def _load_high_pass(confounds_raw):
 
 
 def _select_compcor(
-    confounds_json, compcor_suffix, n_compcor, acompcor_mask, compcor_cols
+    confounds_json, compcor_suffix, n_compcor, acompcor_combine, compcor_cols
 ):
     """Selects the first given number of compcor components (n_compcor)"""
     # Only limit if the number of components is specified (otherwise, collect all compcor components)
@@ -95,15 +95,11 @@ def _select_compcor(
         if n_compcor > np.size(compcor_cols):
             # If too many components are specified, limit number to only the amount of generated components
             warnings.warn(
-                "Number of requested compcor components ("
-                + str(n_compcor)
-                + ") exceeds number of components ("
-                + str(np.size(compcor_cols))
-                + ")."
+                f"Requested # of compcor components ({n_compcor}) is larger than available ({compcor_cols})."
             )
             n_compcor = np.size(compcor_cols)
         # If separate acompcor mask, get WM and CSF components separately
-        if compcor_suffix == "a" and acompcor_mask != "combined":
+        if compcor_suffix == "a" and not acompcor_combine:
             csf_comps = [
                 comp for comp in compcor_cols if confounds_json[comp]["Mask"] == "CSF"
             ]
@@ -116,38 +112,38 @@ def _select_compcor(
     return compcor_cols
 
 
-def _label_compcor(confounds_json, compcor_suffix, n_compcor, acompcor_mask):
+def _label_compcor(confounds_json, compcor_suffix, n_compcor, acompcor_combine):
     """Builds list for the number of compcor components."""
     compcor_cols = [
         key for key in confounds_json.keys() if compcor_suffix + "_comp" in key
     ]
     # If acompcor, differentiate into the desired compartments (combined or separate wm/csf masks)
-    if compcor_suffix == "a" and acompcor_mask == "combined":
+    if compcor_suffix == "a" and acompcor_combine:
         compcor_cols = [
             key for key in compcor_cols if confounds_json[key]["Mask"] == "combined"
         ]
-    elif compcor_suffix == "a" and acompcor_mask != "combined":
+    elif compcor_suffix == "a" and not acompcor_combine:
         compcor_cols = [
             key for key in compcor_cols if confounds_json[key]["Mask"] != "combined"
         ]
     compcor_cols = _select_compcor(
-        confounds_json, compcor_suffic, n_compcor, acompcor_mask, compcor_cols
+        confounds_json, compcor_suffix, n_compcor, acompcor_combine, compcor_cols
     )
     return compcor_cols
 
 
-def _load_compcor(confounds_raw, confounds_json, compcor, n_compcor, acompcor_mask):
+def _load_compcor(confounds_raw, confounds_json, compcor, n_compcor, acompcor_combine):
     """Load compcor regressors."""
     if compcor == "anat":
-        compcor_cols = _label_compcor(confounds_json, "a", n_compcor, acompcor_mask)
+        compcor_cols = _label_compcor(confounds_json, "a", n_compcor, acompcor_combine)
 
     if compcor == "temp":
-        compcor_cols = _label_compcor(confounds_json, "t", n_compcor, acompcor_mask)
+        compcor_cols = _label_compcor(confounds_json, "t", n_compcor, acompcor_combine)
 
     if compcor == "full":
-        compcor_cols = _label_compcor(confounds_json, "a", n_compcor, acompcor_mask)
+        compcor_cols = _label_compcor(confounds_json, "a", n_compcor, acompcor_combine)
         compcor_cols.extend(
-            _label_compcor(confounds_json, "t", n_compcor, acompcor_mask)
+            _label_compcor(confounds_json, "t", n_compcor, acompcor_combine)
         )
 
     _check_params(confounds_raw, compcor_cols)
@@ -254,22 +250,26 @@ def _sanitize_strategy(strategy):
 
 def _confounds_to_df(confounds_raw):
     """Load raw confounds as a pandas DataFrame."""
-    if not isinstance(confounds_raw, pd.DataFrame):
-        if "nii" in confounds_raw[-6:]:
-            suffix = "_space-" + confounds_raw.split("space-")[1]
+    if "nii" in confounds_raw[-6:]:
+        suffix = "_space-" + confounds_raw.split("space-")[1]
+        confounds_raw = confounds_raw.replace(
+            suffix, "_desc-confounds_timeseries.tsv",
+        )
+        # fmriprep has changed the file suffix between v20.1.1 and v20.2.0 with respect to BEP 012.
+        # cf. https://neurostars.org/t/naming-change-confounds-regressors-to-confounds-timeseries/17637
+        # Check file with new naming scheme exists or replace, for backward compatibility.
+        if not os.path.exists(confounds_raw):
             confounds_raw = confounds_raw.replace(
-                suffix, "_desc-confounds_timeseries.tsv",
+                "_desc-confounds_timeseries.tsv", "_desc-confounds_regressors.tsv",
             )
-            # fmriprep has changed the file suffix between v20.1.1 and v20.2.0 with respect to BEP 012.
-            # cf. https://neurostars.org/t/naming-change-confounds-regressors-to-confounds-timeseries/17637
-            # Check file with new naming scheme exists or replace, for backward compatibility.
-            if not os.path.exists(confounds_raw):
-                confounds_raw = confounds_raw.replace(
-                    "_desc-confounds_timeseries.tsv", "_desc-confounds_regressors.tsv",
-                )
 
-        confounds_raw = pd.read_csv(confounds_raw, delimiter="\t", encoding="utf-8")
-    return confounds_raw
+    # Load JSON file
+    with open(confounds_raw.replace("tsv", "json"), 'rb') as f:
+        confounds_json = json.load(f)
+
+    confounds_raw = pd.read_csv(confounds_raw, delimiter="\t", encoding="utf-8")
+    
+    return confounds_raw, confounds_json
 
 
 def _sanitize_confounds(confounds_raw):
@@ -352,7 +352,7 @@ class Confounds:
         "derivatives" global signal and derivative (2 parameters)
         "full" global signal + derivatives + quadratic terms + power2d derivatives (4 parameters)
 
-    compcor : string,optional
+    compcor : string, optional
         Type of confounds extracted from a component based noise correction method
         "anat" noise components calculated using anatomical compcor
         "temp" noise components calculated using temporal compcor
@@ -361,6 +361,11 @@ class Confounds:
     n_compcor : int, optional
         The number of noise components to be extracted.
         Default is to select all components (50% variance explained by fMRIPrep defaults)
+
+    acompcor_combine: boolean, optional
+        If true, use components generated from the combined white matter and csf
+        masks. Otherwise, components are generated from each mask separately and then
+        concatenated.
 
     demean : boolean, optional
         If True, the confounds are standardized to a zero mean (over time).
@@ -402,7 +407,7 @@ class Confounds:
         wm_csf="basic",
         global_signal="basic",
         compcor="anat",
-        acompcor_mask="combined",
+        acompcor_combine=True,
         n_compcor=None,
         demean=True,
     ):
@@ -416,7 +421,7 @@ class Confounds:
         self.wm_csf = wm_csf
         self.global_signal = global_signal
         self.compcor = compcor
-        self.acompcor_mask = acompcor_mask
+        self.acompcor_combine = acompcor_combine
         self.n_compcor = n_compcor
         self.demean = demean
 
@@ -426,8 +431,9 @@ class Confounds:
 
         Parameters
         ----------
-        confounds_raw : Pandas Dataframe or path to tsv file(s), optionally as a list.
-            Raw confounds from fmriprep
+        confounds_raw : path to tsv or nii file(s), optionally as a list.
+            Raw confounds from fmriprep. If a nii is provided, the companion
+            tsv will be automatically detected.
 
         Returns
         -------
@@ -455,11 +461,8 @@ class Confounds:
 
     def _load_single(self, confounds_raw):
         """Load a single confounds file from fmriprep."""
-        # Load JSON file
-        with open(confounds_raw.replace("tsv", "json")) as f:
-            confounds_json = json.load(f)
         # Convert tsv file to pandas dataframe
-        confounds_raw = _confounds_to_df(confounds_raw)
+        confounds_raw, confounds_json = _confounds_to_df(confounds_raw)
 
         confounds = pd.DataFrame()
 
@@ -491,7 +494,7 @@ class Confounds:
                 confounds_json,
                 self.compcor,
                 self.n_compcor,
-                self.acompcor_mask,
+                self.acompcor_combine,
             )
             confounds = pd.concat([confounds, confounds_compcor], axis=1)
 
