@@ -170,14 +170,10 @@ def test_nilearn_standardize_psc():
 
     img, mask_conf, mask_rand, X = _simu_img(demean=False)
 
-    # Areas with
-    with pytest.warns(UserWarning) as records:
-        tseries_raw, tseries_clean = _denoise(img, mask_conf, X, "psc")
-
-    nilear_warning = sum('psc standardization strategy' in str(r.message) for r in records)
-    assert nilear_warning == 1
+    # Areas with confound
+    tseries_raw, tseries_clean = _denoise(img, mask_conf, X, "psc")
     corr = _corr_tseries(tseries_raw, tseries_clean)
-    assert not corr.mean() < 0.2  # expect failure
+    assert corr.mean() < 0.2
 
     # Areas with random noise
     tseries_raw, tseries_clean = _denoise(img, mask_rand, X, "psc")
