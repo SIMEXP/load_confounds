@@ -114,15 +114,19 @@ def _label_compcor(confounds_json, prefix, n_compcor, compcor_mask):
     return _select_compcor(compcor_cols, n_compcor, compcor_mask)
 
 
+def _load_acompcor(confounds_json, n_compcor, acompcor_combined):
+    if acompcor_combined:
+        compcor_cols = _label_compcor(confounds_json, "a", n_compcor, "combined")
+    else:
+        compcor_cols = _label_compcor(confounds_json, "a", n_compcor, "WM")
+        compcor_cols.extend(_label_compcor(confounds_json, "a", n_compcor, "CSF"))
+    return compcor_cols
+
 def _load_compcor(confounds_raw, confounds_json, compcor, n_compcor, acompcor_combined):
     """Load compcor regressors."""
     if compcor == "anat":
-        if acompcor_combined:
-            compcor_cols = _label_compcor(confounds_json, "a", n_compcor, "combined")
-        else:
-            compcor_cols = _label_compcor(confounds_json, "a", n_compcor, "WM")
-            compcor_cols.extend(_label_compcor(confounds_json, "a", n_compcor, "CSF"))
-
+        compcor_cols = _load_acompcor(confounds_json, n_compcor, acompcor_combined)
+        
     if compcor == "temp":
         compcor_cols = _label_compcor(confounds_json, "t", n_compcor, acompcor_combined)
 
