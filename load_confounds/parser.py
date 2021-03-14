@@ -8,10 +8,20 @@ from sklearn.decomposition import PCA
 from sklearn.preprocessing import scale
 import warnings
 import os
+import json
 
 
 # Global variables listing the admissible types of noise components
-all_confounds = ["motion", "high_pass", "wm_csf", "global", "compcor", "ica_aroma", "censoring"]
+all_confounds = [
+    "motion",
+    "high_pass",
+    "wm_csf",
+    "global",
+    "compcor",
+    "ica_aroma",
+    "censoring",
+]
+
 
 def _add_suffix(params, model):
     """
@@ -76,33 +86,56 @@ def _load_high_pass(confounds_raw):
     return confounds_raw[high_pass_params]
 
 
-def _label_compcor(confounds_raw, compcor_suffix, n_compcor):
-    """Builds list for the number of compcor components."""
-    compcor_cols = []
-    for nn in range(n_compcor):
-        nn_str = str(nn).zfill(2)
-        compcor_col = compcor_suffix + "_comp_cor_" + nn_str
-        if compcor_col not in confounds_raw.columns:
-            warnings.warn(f"could not find any confound with the key {compcor_col}")
-        else:
-            compcor_cols.append(compcor_col)
-
+def _select_compcor(compcor_cols, n_compcor, compcor_mask):
+    """retain a specified number of compcor components."""
+    # only select if not "auto", or less components are requested than there actually is
+    if (n_compcor != "auto") and (n_compcor < len(compcor_cols)):
+        compcor_cols = compcor_cols[0:n_compcor]
     return compcor_cols
 
 
-def _load_compcor(confounds_raw, compcor, n_compcor):
+def _label_compcor(confounds_json, prefix, n_compcor, compcor_mask):
+    """Builds list for the number of compcor components."""
+    # all possible compcor confounds, mixing different types of mask
+    all_compcor = [
+        comp for comp in confounds_json.keys() if f"{prefix}_comp_cor" in comp
+    ]
+
+    # loop and only retain the relevant confounds
+    compcor_cols = []
+    for nn in range(len(all_compcor)):
+        nn_str = str(nn).zfill(2)
+        compcor_col = f"{prefix}_comp_cor_{nn_str}"
+        if (prefix == "t") or (
+            (prefix == "a") and (confounds_json[compcor_col]["Mask"] == compcor_mask)
+        ):
+            compcor_cols.append(compcor_col)
+
+    return _select_compcor(compcor_cols, n_compcor, compcor_mask)
+
+
+def _load_acompcor(confounds_json, n_compcor, acompcor_combined):
+    if acompcor_combined:
+        compcor_cols = _label_compcor(confounds_json, "a", n_compcor, "combined")
+    else:
+        compcor_cols = _label_compcor(confounds_json, "a", n_compcor, "WM")
+        compcor_cols.extend(_label_compcor(confounds_json, "a", n_compcor, "CSF"))
+    return compcor_cols
+
+def _load_compcor(confounds_raw, confounds_json, compcor, n_compcor, acompcor_combined):
     """Load compcor regressors."""
     if compcor == "anat":
-        compcor_cols = _label_compcor(confounds_raw, "a", n_compcor)
+        compcor_cols = _load_acompcor(confounds_json, n_compcor, acompcor_combined)
 
     if compcor == "temp":
-        compcor_cols = _label_compcor(confounds_raw, "t", n_compcor)
+        compcor_cols = _label_compcor(confounds_json, "t", n_compcor, acompcor_combined)
 
     if compcor == "full":
-        compcor_cols = _label_compcor(confounds_raw, "a", n_compcor)
-        compcor_cols.extend(_label_compcor(confounds_raw, "t", n_compcor))
+        compcor_cols = _label_compcor(confounds_json, "a", n_compcor, acompcor_combined)
+        compcor_cols.extend(
+            _label_compcor(confounds_json, "t", n_compcor, acompcor_combined)
+        )
 
-    compcor_cols.sort()
     _check_params(confounds_raw, compcor_cols)
     return confounds_raw[compcor_cols]
 
@@ -121,10 +154,12 @@ def _load_motion(confounds_raw, motion, n_motion):
 
     return confounds_motion
 
+
 def _load_ica_aroma(confounds_raw):
     """Load the ICA-AROMA regressors."""
     ica_aroma_params = _find_confounds(confounds_raw, ["aroma"])
     return confounds_raw[ica_aroma_params]
+
 
 def _pca_motion(confounds_motion, n_components):
     """Reduce the motion paramaters using PCA."""
@@ -142,22 +177,31 @@ def _pca_motion(confounds_motion, n_components):
     motion_pca.columns = ["motion_pca_" + str(col + 1) for col in motion_pca.columns]
     return motion_pca
 
+
 def _load_censoring(confounds_raw, censoring, fd_thresh, std_dvars_thresh):
     """Perform basic censoring - Remove volumes if framewise displacement exceeds threshold"""
     """Power, Jonathan D., et al. "Steps toward optimizing motion artifact removal in functional connectivity MRI; a reply to Carp." Neuroimage 76 (2013)."""
     n_scans = len(confounds_raw)
     # Get indices of fd outliers
-    fd_outliers = np.where(confounds_raw['framewise_displacement'] > fd_thresh)[0]
-    dvars_outliers = np.where(confounds_raw['std_dvars'] > std_dvars_thresh)[0]
-    combined_outliers = np.sort(np.unique(np.concatenate((fd_outliers,dvars_outliers))))
+    fd_outliers = np.where(confounds_raw["framewise_displacement"] > fd_thresh)[0]
+    dvars_outliers = np.where(confounds_raw["std_dvars"] > std_dvars_thresh)[0]
+    combined_outliers = np.sort(
+        np.unique(np.concatenate((fd_outliers, dvars_outliers)))
+    )
     # Do optimized scrubbing if desired
-    if censoring == 'optimized':
+    if censoring == "optimized":
         combined_outliers = _optimize_censoring(combined_outliers, n_scans)
     # Make one-hot encoded motion outlier regressors
-    motion_outlier_regressors = pd.DataFrame(np.transpose(np.eye(n_scans)[combined_outliers]).astype(int))
-    column_names = ['motion_outlier_'+str(num) for num in range(np.shape(motion_outlier_regressors)[1])]
-    motion_outlier_regressors.columns=column_names
+    motion_outlier_regressors = pd.DataFrame(
+        np.transpose(np.eye(n_scans)[combined_outliers]).astype(int)
+    )
+    column_names = [
+        "motion_outlier_" + str(num)
+        for num in range(np.shape(motion_outlier_regressors)[1])
+    ]
+    motion_outlier_regressors.columns = column_names
     return motion_outlier_regressors
+
 
 def _optimize_censoring(fd_outliers, n_scans):
     """Perform optimized censoring. After censoring volumes, further remove continuous segments containing fewer than 5 volumes"""
@@ -165,16 +209,23 @@ def _optimize_censoring(fd_outliers, n_scans):
     # Start by checking if the beginning continuous segment is fewer than 5 volumes
     if fd_outliers[0] < 5:
         fd_outliers = np.asarray(list(range(fd_outliers[0])) + list(fd_outliers))
-    # Do the same for the ending segment of scans  
+    # Do the same for the ending segment of scans
     if n_scans - (fd_outliers[-1] + 1) < 5:
-        fd_outliers = np.asarray(list(fd_outliers) + list(range(fd_outliers[-1], n_scans)))   
+        fd_outliers = np.asarray(
+            list(fd_outliers) + list(range(fd_outliers[-1], n_scans))
+        )
     # Now do everything in between
     fd_outlier_ind_diffs = np.diff(fd_outliers)
-    short_segments_inds = np.where(np.logical_and(fd_outlier_ind_diffs > 1, fd_outlier_ind_diffs < 6))[0]
+    short_segments_inds = np.where(
+        np.logical_and(fd_outlier_ind_diffs > 1, fd_outlier_ind_diffs < 6)
+    )[0]
     for ind in short_segments_inds:
-        fd_outliers = np.asarray(list(fd_outliers) + list(range(fd_outliers[ind]+1,fd_outliers[ind+1])))
+        fd_outliers = np.asarray(
+            list(fd_outliers) + list(range(fd_outliers[ind] + 1, fd_outliers[ind + 1]))
+        )
     fd_outliers = np.sort(np.unique(fd_outliers))
     return fd_outliers
+
 
 def _sanitize_strategy(strategy):
     """Defines the supported denoising strategies."""
@@ -189,22 +240,24 @@ def _sanitize_strategy(strategy):
 
 def _confounds_to_df(confounds_raw):
     """Load raw confounds as a pandas DataFrame."""
-    if not isinstance(confounds_raw, pd.DataFrame):
-        if "nii" in confounds_raw[-6:]:
-            suffix = "_space-" + confounds_raw.split("space-")[1]
+    if "nii" in confounds_raw[-6:]:
+        suffix = "_space-" + confounds_raw.split("space-")[1]
+        confounds_raw = confounds_raw.replace(suffix, "_desc-confounds_timeseries.tsv",)
+        # fmriprep has changed the file suffix between v20.1.1 and v20.2.0 with respect to BEP 012.
+        # cf. https://neurostars.org/t/naming-change-confounds-regressors-to-confounds-timeseries/17637
+        # Check file with new naming scheme exists or replace, for backward compatibility.
+        if not os.path.exists(confounds_raw):
             confounds_raw = confounds_raw.replace(
-                suffix, "_desc-confounds_timeseries.tsv",
+                "_desc-confounds_timeseries.tsv", "_desc-confounds_regressors.tsv",
             )
-            # fmriprep has changed the file suffix between v20.1.1 and v20.2.0 with respect to BEP 012.
-            # cf. https://neurostars.org/t/naming-change-confounds-regressors-to-confounds-timeseries/17637
-            # Check file with new naming scheme exists or replace, for backward compatibility.
-            if not os.path.exists(confounds_raw):
-                confounds_raw = confounds_raw.replace(
-                    "_desc-confounds_timeseries.tsv", "_desc-confounds_regressors.tsv",
-                )
 
-        confounds_raw = pd.read_csv(confounds_raw, delimiter="\t", encoding="utf-8")
-    return confounds_raw
+    # Load JSON file
+    with open(confounds_raw.replace("tsv", "json"), "rb") as f:
+        confounds_json = json.load(f)
+
+    confounds_raw = pd.read_csv(confounds_raw, delimiter="\t", encoding="utf-8")
+
+    return confounds_raw, confounds_json
 
 
 def _sanitize_confounds(confounds_raw):
@@ -266,15 +319,10 @@ class Confounds:
         analysis is applied to the motion parameters, and the number of extracted
         components is set to exceed `n_motion` percent of the parameters variance.
         If the n_components = 0, then no PCA is performed.
-        
-    censoring : string, optional
-        Type of volume censoring, if desired
-        "basic" remove volumes above framewise displacement threshold
-        "optimized" after basic scrubbing, remove continuous segments fewer than 5 volumes
-        
+
     fd_thresh : float, optional
         Framewise displacement threshold for censoring (default = 0.2 mm)
-        
+
     std_dvars_thresh : float, optional
         Standardized DVARS threshold for censoring (default = 3)
 
@@ -292,14 +340,20 @@ class Confounds:
         "derivatives" global signal and derivative (2 parameters)
         "full" global signal + derivatives + quadratic terms + power2d derivatives (4 parameters)
 
-    compcor : string,optional
+    compcor : string, optional
         Type of confounds extracted from a component based noise correction method
         "anat" noise components calculated using anatomical compcor
         "temp" noise components calculated using temporal compcor
         "full" noise components calculated using both temporal and anatomical
 
-    n_compcor : int, optional
+    n_compcor : int or "auto", optional
         The number of noise components to be extracted.
+        Default is "auto": select all components (50% variance explained by fMRIPrep defaults)
+
+    acompcor_combined: boolean, optional
+        If true, use components generated from the combined white matter and csf
+        masks. Otherwise, components are generated from each mask separately and then
+        concatenated.
 
     demean : boolean, optional
         If True, the confounds are standardized to a zero mean (over time).
@@ -335,13 +389,14 @@ class Confounds:
         strategy=["motion", "high_pass", "wm_csf"],
         motion="full",
         n_motion=0,
-        censoring='basic',
+        censoring="basic",
         fd_thresh=0.2,
         std_dvars_thresh=3,
         wm_csf="basic",
         global_signal="basic",
         compcor="anat",
-        n_compcor=6,
+        acompcor_combined=True,
+        n_compcor="auto",
         demean=True,
     ):
         """Default parameters."""
@@ -354,6 +409,7 @@ class Confounds:
         self.wm_csf = wm_csf
         self.global_signal = global_signal
         self.compcor = compcor
+        self.acompcor_combined = acompcor_combined
         self.n_compcor = n_compcor
         self.demean = demean
 
@@ -363,8 +419,9 @@ class Confounds:
 
         Parameters
         ----------
-        confounds_raw : Pandas Dataframe or path to tsv file(s), optionally as a list.
-            Raw confounds from fmriprep
+        confounds_raw : path to tsv or nii file(s), optionally as a list.
+            Raw confounds from fmriprep. If a nii is provided, the companion
+            tsv will be automatically detected.
 
         Returns
         -------
@@ -393,7 +450,7 @@ class Confounds:
     def _load_single(self, confounds_raw):
         """Load a single confounds file from fmriprep."""
         # Convert tsv file to pandas dataframe
-        confounds_raw = _confounds_to_df(confounds_raw)
+        confounds_raw, confounds_json = _confounds_to_df(confounds_raw)
 
         confounds = pd.DataFrame()
 
@@ -402,9 +459,11 @@ class Confounds:
             confounds = pd.concat([confounds, confounds_motion], axis=1)
 
         if "censoring" in self.strategy:
-            confounds_censoring = _load_censoring(confounds_raw, self.censoring, self.fd_thresh, self.std_dvars_thresh)
+            confounds_censoring = _load_censoring(
+                confounds_raw, self.censoring, self.fd_thresh, self.std_dvars_thresh
+            )
             confounds = pd.concat([confounds, confounds_censoring], axis=1)
-            
+
         if "high_pass" in self.strategy:
             confounds_high_pass = _load_high_pass(confounds_raw)
             confounds = pd.concat([confounds, confounds_high_pass], axis=1)
@@ -419,7 +478,11 @@ class Confounds:
 
         if "compcor" in self.strategy:
             confounds_compcor = _load_compcor(
-                confounds_raw, self.compcor, self.n_compcor
+                confounds_raw,
+                confounds_json,
+                self.compcor,
+                self.n_compcor,
+                self.acompcor_combined,
             )
             confounds = pd.concat([confounds, confounds_compcor], axis=1)
 
