@@ -8,6 +8,7 @@ from sklearn.decomposition import PCA
 from sklearn.preprocessing import scale
 import warnings
 import os
+import json
 
 
 # Global variables listing the admissible types of noise components
@@ -75,34 +76,48 @@ def _load_high_pass(confounds_raw):
     high_pass_params = _find_confounds(confounds_raw, ["cosine"])
     return confounds_raw[high_pass_params]
 
+  
+def _select_compcor(confounds_json, compcor_suffic, n_compcor, acompcor_mask, compcor_cols):
+    """Selects the first given number of compcor components (n_compcor)"""
+    # Only limit if the number of components is specified (otherwise, collect all compcor components)
+    if n_compcor != None:
+        if n_compcor > np.size(compcor_cols):
+            # If too many components are specified, limit number to only the amount of generated components
+            warnings.warn("Number of requested compcor components ("+str(n_compcor)+") exceeds number of components ("+str(np.size(compcor_cols))+").")
+            n_compcor = np.size(compcor_cols)
+        # If separate acompcor mask, get WM and CSF components separately
+        if compcor_suffix == 'a' and acompcor_mask != 'combined':
+            csf_comps = [comp for comp in compcor_cols if confounds_json[comp]['Mask']=='CSF']
+            wm_comps = [comp for comp in compcor_cols if confounds_json[comp]['Mask']=='WM']
+            compcor_cols = csf_comps[0:n_compcor] + wm_comps[0:n_compcor]
+        else: compcor_cols = compcor_cols[0:n_compcor]
+    return compcor_cols    
 
-def _label_compcor(confounds_raw, compcor_suffix, n_compcor):
+  
+def _label_compcor(confounds_json, compcor_suffix, n_compcor, acompcor_mask):
     """Builds list for the number of compcor components."""
-    compcor_cols = []
-    for nn in range(n_compcor):
-        nn_str = str(nn).zfill(2)
-        compcor_col = compcor_suffix + "_comp_cor_" + nn_str
-        if compcor_col not in confounds_raw.columns:
-            warnings.warn(f"could not find any confound with the key {compcor_col}")
-        else:
-            compcor_cols.append(compcor_col)
-
+    compcor_cols = [key for key in confounds_json.keys() if compcor_suffix+'_comp' in key]
+    # If acompcor, differentiate into the desired compartments (combined or separate wm/csf masks)
+    if compcor_suffix == 'a' and acompcor_mask == 'combined':
+        compcor_cols = [key for key in compcor_cols if confounds_json[key]['Mask']=='combined']
+    elif compcor_suffix == 'a' and acompcor_mask != 'combined':
+        compcor_cols = [key for key in compcor_cols if confounds_json[key]['Mask']!='combined']
+    compcor_cols = _select_compcor(confounds_json, compcor_suffic, n_compcor, acompcor_mask, compcor_cols)
     return compcor_cols
 
-
-def _load_compcor(confounds_raw, compcor, n_compcor):
+  
+def _load_compcor(confounds_raw, confounds_json, compcor, n_compcor, acompcor_mask):
     """Load compcor regressors."""
     if compcor == "anat":
-        compcor_cols = _label_compcor(confounds_raw, "a", n_compcor)
+        compcor_cols = _label_compcor(confounds_json, "a", n_compcor, acompcor_mask)
 
     if compcor == "temp":
-        compcor_cols = _label_compcor(confounds_raw, "t", n_compcor)
+        compcor_cols = _label_compcor(confounds_json, "t", n_compcor, acompcor_mask)
 
     if compcor == "full":
-        compcor_cols = _label_compcor(confounds_raw, "a", n_compcor)
-        compcor_cols.extend(_label_compcor(confounds_raw, "t", n_compcor))
+        compcor_cols = _label_compcor(confounds_json, "a", n_compcor, acompcor_mask)
+        compcor_cols.extend(_label_compcor(confounds_json, "t", n_compcor, acompcor_mask))
 
-    compcor_cols.sort()
     _check_params(confounds_raw, compcor_cols)
     return confounds_raw[compcor_cols]
 
@@ -121,11 +136,13 @@ def _load_motion(confounds_raw, motion, n_motion):
 
     return confounds_motion
 
+  
 def _load_ica_aroma(confounds_raw):
     """Load the ICA-AROMA regressors."""
     ica_aroma_params = _find_confounds(confounds_raw, ["aroma"])
     return confounds_raw[ica_aroma_params]
 
+  
 def _pca_motion(confounds_motion, n_components):
     """Reduce the motion paramaters using PCA."""
     n_available = confounds_motion.shape[1]
@@ -142,6 +159,7 @@ def _pca_motion(confounds_motion, n_components):
     motion_pca.columns = ["motion_pca_" + str(col + 1) for col in motion_pca.columns]
     return motion_pca
 
+  
 def _load_censoring(confounds_raw, censoring, fd_thresh, std_dvars_thresh):
     """Perform basic censoring - Remove volumes if framewise displacement exceeds threshold"""
     """Power, Jonathan D., et al. "Steps toward optimizing motion artifact removal in functional connectivity MRI; a reply to Carp." Neuroimage 76 (2013)."""
@@ -159,6 +177,7 @@ def _load_censoring(confounds_raw, censoring, fd_thresh, std_dvars_thresh):
     motion_outlier_regressors.columns=column_names
     return motion_outlier_regressors
 
+  
 def _optimize_censoring(fd_outliers, n_scans):
     """Perform optimized censoring. After censoring volumes, further remove continuous segments containing fewer than 5 volumes"""
     """Power, Jonathan D., et al. "Methods to detect, characterize, and remove motion artifact in resting state fMRI." Neuroimage 84 (2014): 320-341."""
@@ -176,6 +195,7 @@ def _optimize_censoring(fd_outliers, n_scans):
     fd_outliers = np.sort(np.unique(fd_outliers))
     return fd_outliers
 
+  
 def _sanitize_strategy(strategy):
     """Defines the supported denoising strategies."""
     if isinstance(strategy, list):
@@ -267,11 +287,6 @@ class Confounds:
         components is set to exceed `n_motion` percent of the parameters variance.
         If the n_components = 0, then no PCA is performed.
         
-    censoring : string, optional
-        Type of volume censoring, if desired
-        "basic" remove volumes above framewise displacement threshold
-        "optimized" after basic scrubbing, remove continuous segments fewer than 5 volumes
-        
     fd_thresh : float, optional
         Framewise displacement threshold for censoring (default = 0.2 mm)
         
@@ -300,6 +315,7 @@ class Confounds:
 
     n_compcor : int, optional
         The number of noise components to be extracted.
+        Default is to select all components (50% variance explained by fMRIPrep defaults)
 
     demean : boolean, optional
         If True, the confounds are standardized to a zero mean (over time).
@@ -341,7 +357,8 @@ class Confounds:
         wm_csf="basic",
         global_signal="basic",
         compcor="anat",
-        n_compcor=6,
+        acompcor_mask="combined",
+        n_compcor=None,
         demean=True,
     ):
         """Default parameters."""
@@ -354,6 +371,7 @@ class Confounds:
         self.wm_csf = wm_csf
         self.global_signal = global_signal
         self.compcor = compcor
+        self.acompcor_mask = acompcor_mask
         self.n_compcor = n_compcor
         self.demean = demean
 
@@ -392,9 +410,12 @@ class Confounds:
 
     def _load_single(self, confounds_raw):
         """Load a single confounds file from fmriprep."""
+        # Load JSON file
+        with open(confounds_raw.replace('tsv','json')) as f:
+              confounds_json = json.load(f)
         # Convert tsv file to pandas dataframe
         confounds_raw = _confounds_to_df(confounds_raw)
-
+        
         confounds = pd.DataFrame()
 
         if "motion" in self.strategy:
@@ -419,7 +440,7 @@ class Confounds:
 
         if "compcor" in self.strategy:
             confounds_compcor = _load_compcor(
-                confounds_raw, self.compcor, self.n_compcor
+                confounds_raw, confounds_json, self.compcor, self.n_compcor,self.acompcor_mask
             )
             confounds = pd.concat([confounds, confounds_compcor], axis=1)
 
