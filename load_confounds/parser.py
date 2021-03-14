@@ -12,7 +12,16 @@ import json
 
 
 # Global variables listing the admissible types of noise components
-all_confounds = ["motion", "high_pass", "wm_csf", "global", "compcor", "ica_aroma", "censoring"]
+all_confounds = [
+    "motion",
+    "high_pass",
+    "wm_csf",
+    "global",
+    "compcor",
+    "ica_aroma",
+    "censoring",
+]
+
 
 def _add_suffix(params, model):
     """
@@ -77,32 +86,53 @@ def _load_high_pass(confounds_raw):
     return confounds_raw[high_pass_params]
 
 
-def _select_compcor(confounds_json, compcor_suffix, n_compcor, acompcor_mask, compcor_cols):
+def _select_compcor(
+    confounds_json, compcor_suffix, n_compcor, acompcor_mask, compcor_cols
+):
     """Selects the first given number of compcor components (n_compcor)"""
     # Only limit if the number of components is specified (otherwise, collect all compcor components)
     if n_compcor != None:
         if n_compcor > np.size(compcor_cols):
             # If too many components are specified, limit number to only the amount of generated components
-            warnings.warn("Number of requested compcor components ("+str(n_compcor)+") exceeds number of components ("+str(np.size(compcor_cols))+").")
+            warnings.warn(
+                "Number of requested compcor components ("
+                + str(n_compcor)
+                + ") exceeds number of components ("
+                + str(np.size(compcor_cols))
+                + ")."
+            )
             n_compcor = np.size(compcor_cols)
         # If separate acompcor mask, get WM and CSF components separately
-        if compcor_suffix == 'a' and acompcor_mask != 'combined':
-            csf_comps = [comp for comp in compcor_cols if confounds_json[comp]['Mask']=='CSF']
-            wm_comps = [comp for comp in compcor_cols if confounds_json[comp]['Mask']=='WM']
+        if compcor_suffix == "a" and acompcor_mask != "combined":
+            csf_comps = [
+                comp for comp in compcor_cols if confounds_json[comp]["Mask"] == "CSF"
+            ]
+            wm_comps = [
+                comp for comp in compcor_cols if confounds_json[comp]["Mask"] == "WM"
+            ]
             compcor_cols = csf_comps[0:n_compcor] + wm_comps[0:n_compcor]
-        else: compcor_cols = compcor_cols[0:n_compcor]
+        else:
+            compcor_cols = compcor_cols[0:n_compcor]
     return compcor_cols
 
 
 def _label_compcor(confounds_json, compcor_suffix, n_compcor, acompcor_mask):
     """Builds list for the number of compcor components."""
-    compcor_cols = [key for key in confounds_json.keys() if compcor_suffix+'_comp' in key]
+    compcor_cols = [
+        key for key in confounds_json.keys() if compcor_suffix + "_comp" in key
+    ]
     # If acompcor, differentiate into the desired compartments (combined or separate wm/csf masks)
-    if compcor_suffix == 'a' and acompcor_mask == 'combined':
-        compcor_cols = [key for key in compcor_cols if confounds_json[key]['Mask']=='combined']
-    elif compcor_suffix == 'a' and acompcor_mask != 'combined':
-        compcor_cols = [key for key in compcor_cols if confounds_json[key]['Mask']!='combined']
-    compcor_cols = _select_compcor(confounds_json, compcor_suffic, n_compcor, acompcor_mask, compcor_cols)
+    if compcor_suffix == "a" and acompcor_mask == "combined":
+        compcor_cols = [
+            key for key in compcor_cols if confounds_json[key]["Mask"] == "combined"
+        ]
+    elif compcor_suffix == "a" and acompcor_mask != "combined":
+        compcor_cols = [
+            key for key in compcor_cols if confounds_json[key]["Mask"] != "combined"
+        ]
+    compcor_cols = _select_compcor(
+        confounds_json, compcor_suffic, n_compcor, acompcor_mask, compcor_cols
+    )
     return compcor_cols
 
 
@@ -116,7 +146,9 @@ def _load_compcor(confounds_raw, confounds_json, compcor, n_compcor, acompcor_ma
 
     if compcor == "full":
         compcor_cols = _label_compcor(confounds_json, "a", n_compcor, acompcor_mask)
-        compcor_cols.extend(_label_compcor(confounds_json, "t", n_compcor, acompcor_mask))
+        compcor_cols.extend(
+            _label_compcor(confounds_json, "t", n_compcor, acompcor_mask)
+        )
 
     _check_params(confounds_raw, compcor_cols)
     return confounds_raw[compcor_cols]
@@ -165,16 +197,23 @@ def _load_censoring(confounds_raw, censoring, fd_thresh, std_dvars_thresh):
     """Power, Jonathan D., et al. "Steps toward optimizing motion artifact removal in functional connectivity MRI; a reply to Carp." Neuroimage 76 (2013)."""
     n_scans = len(confounds_raw)
     # Get indices of fd outliers
-    fd_outliers = np.where(confounds_raw['framewise_displacement'] > fd_thresh)[0]
-    dvars_outliers = np.where(confounds_raw['std_dvars'] > std_dvars_thresh)[0]
-    combined_outliers = np.sort(np.unique(np.concatenate((fd_outliers,dvars_outliers))))
+    fd_outliers = np.where(confounds_raw["framewise_displacement"] > fd_thresh)[0]
+    dvars_outliers = np.where(confounds_raw["std_dvars"] > std_dvars_thresh)[0]
+    combined_outliers = np.sort(
+        np.unique(np.concatenate((fd_outliers, dvars_outliers)))
+    )
     # Do optimized scrubbing if desired
-    if censoring == 'optimized':
+    if censoring == "optimized":
         combined_outliers = _optimize_censoring(combined_outliers, n_scans)
     # Make one-hot encoded motion outlier regressors
-    motion_outlier_regressors = pd.DataFrame(np.transpose(np.eye(n_scans)[combined_outliers]).astype(int))
-    column_names = ['motion_outlier_'+str(num) for num in range(np.shape(motion_outlier_regressors)[1])]
-    motion_outlier_regressors.columns=column_names
+    motion_outlier_regressors = pd.DataFrame(
+        np.transpose(np.eye(n_scans)[combined_outliers]).astype(int)
+    )
+    column_names = [
+        "motion_outlier_" + str(num)
+        for num in range(np.shape(motion_outlier_regressors)[1])
+    ]
+    motion_outlier_regressors.columns = column_names
     return motion_outlier_regressors
 
 
@@ -186,12 +225,18 @@ def _optimize_censoring(fd_outliers, n_scans):
         fd_outliers = np.asarray(list(range(fd_outliers[0])) + list(fd_outliers))
     # Do the same for the ending segment of scans
     if n_scans - (fd_outliers[-1] + 1) < 5:
-        fd_outliers = np.asarray(list(fd_outliers) + list(range(fd_outliers[-1], n_scans)))
+        fd_outliers = np.asarray(
+            list(fd_outliers) + list(range(fd_outliers[-1], n_scans))
+        )
     # Now do everything in between
     fd_outlier_ind_diffs = np.diff(fd_outliers)
-    short_segments_inds = np.where(np.logical_and(fd_outlier_ind_diffs > 1, fd_outlier_ind_diffs < 6))[0]
+    short_segments_inds = np.where(
+        np.logical_and(fd_outlier_ind_diffs > 1, fd_outlier_ind_diffs < 6)
+    )[0]
     for ind in short_segments_inds:
-        fd_outliers = np.asarray(list(fd_outliers) + list(range(fd_outliers[ind]+1,fd_outliers[ind+1])))
+        fd_outliers = np.asarray(
+            list(fd_outliers) + list(range(fd_outliers[ind] + 1, fd_outliers[ind + 1]))
+        )
     fd_outliers = np.sort(np.unique(fd_outliers))
     return fd_outliers
 
@@ -351,7 +396,7 @@ class Confounds:
         strategy=["motion", "high_pass", "wm_csf"],
         motion="full",
         n_motion=0,
-        censoring='basic',
+        censoring="basic",
         fd_thresh=0.2,
         std_dvars_thresh=3,
         wm_csf="basic",
@@ -411,8 +456,8 @@ class Confounds:
     def _load_single(self, confounds_raw):
         """Load a single confounds file from fmriprep."""
         # Load JSON file
-        with open(confounds_raw.replace('tsv','json')) as f:
-              confounds_json = json.load(f)
+        with open(confounds_raw.replace("tsv", "json")) as f:
+            confounds_json = json.load(f)
         # Convert tsv file to pandas dataframe
         confounds_raw = _confounds_to_df(confounds_raw)
 
@@ -423,7 +468,9 @@ class Confounds:
             confounds = pd.concat([confounds, confounds_motion], axis=1)
 
         if "censoring" in self.strategy:
-            confounds_censoring = _load_censoring(confounds_raw, self.censoring, self.fd_thresh, self.std_dvars_thresh)
+            confounds_censoring = _load_censoring(
+                confounds_raw, self.censoring, self.fd_thresh, self.std_dvars_thresh
+            )
             confounds = pd.concat([confounds, confounds_censoring], axis=1)
 
         if "high_pass" in self.strategy:
@@ -440,7 +487,11 @@ class Confounds:
 
         if "compcor" in self.strategy:
             confounds_compcor = _load_compcor(
-                confounds_raw, confounds_json, self.compcor, self.n_compcor,self.acompcor_mask
+                confounds_raw,
+                confounds_json,
+                self.compcor,
+                self.n_compcor,
+                self.acompcor_mask,
             )
             confounds = pd.concat([confounds, confounds_compcor], axis=1)
 
