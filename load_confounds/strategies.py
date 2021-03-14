@@ -178,6 +178,12 @@ class AnatCompCor(Confounds):
 
     n_compcor : int, optional
         The number of noise components to be extracted.
+        Default is to select all components (50% variance explained by fMRIPrep defaults)
+
+    acompcor_combine: boolean, optional
+        If true, use components generated from the combined white matter and csf
+        masks. Otherwise, components are generated from each mask separately and then
+        concatenated.
 
     demean : boolean, optional
         If True, the confounds are standardized to a zero mean (over time).
@@ -199,6 +205,7 @@ class AnatCompCor(Confounds):
         self.n_motion = 0
         self.compcor = "anat"
         self.n_compcor = n_compcor
+        self.acompcor_combine = True
         self.demean = demean
 
 
@@ -214,6 +221,7 @@ class TempCompCor(Confounds):
 
     n_compcor : int, optional
         The number of noise components to be extracted.
+        Default is to select all components (50% variance explained by fMRIPrep defaults)
 
     demean : boolean, optional
         If True, the confounds are standardized to a zero mean (over time).
@@ -233,6 +241,7 @@ class TempCompCor(Confounds):
         self.strategy = ["high_pass", "compcor"]
         self.compcor = "temp"
         self.n_compcor = n_compcor
+        self.acompcor_combine = None
         self.demean = demean
 
 
