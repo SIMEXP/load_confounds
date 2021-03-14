@@ -181,18 +181,6 @@ def test_nilearn_standardize_psc():
     assert corr.mean() > 0.8
 
 
-def test_read_file():
-    """Check that loading missing or incomplete files produce error messages."""
-    conf = lc.Confounds()
-    with pytest.raises(FileNotFoundError):
-        conf.load(" ")
-
-    with pytest.raises(ValueError):
-        df = pd.read_csv(file_confounds, sep="\t")
-        df = df.drop("trans_x", axis=1)
-        conf.load(df)
-
-
 def test_confounds2df():
     """Check auto-detect of confonds from an fMRI nii image."""
     conf = lc.Confounds()
