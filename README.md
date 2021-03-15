@@ -35,7 +35,6 @@ The predefined strategies are all adapted from Ciric et al. 2017, and listed in 
 | `Params9`      | B   | B      | B  | B   | B  |          |          |       |
 | `Params24`     | B   | DS     |    |     |    |          |          |       |
 | `Params36`     | B   | DS     | DS | DS  | DS |          |          |       |
-| `Params36`     | B   | DS     | DS | DS  | DS |          |          |       |
 | `AnatCompCor`  | B   | DS     |    |     |    | B        |          |       |
 | `TempCompCor`  | B   |        |    |     |    |          | B        |       |
 | `ICAAROMA`     | B   |        | B  | B   |    |          |          | F     |
