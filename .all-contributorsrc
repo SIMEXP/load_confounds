@@ -12,7 +12,8 @@
       "profile": "https://github.com/FrancoisPgm",
       "contributions": [
         "infra",
-        "code"
+        "code",
+        "review"
       ]
     },
     {
@@ -44,7 +45,12 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/13743617?v=4",
       "profile": "https://wanghaoting.com/",
       "contributions": [
-        "ideas"
+        "ideas",
+        "code",
+        "data",
+        "doc",
+        "test",
+        "bug"
       ]
     },
     {
@@ -70,7 +76,12 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/27028726?v=4",
       "profile": "https://scholar.harvard.edu/steven-meisler",
       "contributions": [
-        "bug"
+        "bug",
+        "test",
+        "data",
+        "code",
+        "doc",
+        "ideas"
       ]
     },
     {
@@ -98,6 +109,15 @@
       "profile": "https://github.com/nuKs",
       "contributions": [
         "code"
+      ]
+    },
+    {
+      "login": "m-w-w",
+      "name": "m-w-w",
+      "avatar_url": "https://avatars.githubusercontent.com/u/36826334?v=4",
+      "profile": "https://github.com/m-w-w",
+      "contributions": [
+        "doc"
       ]
     }
   ],

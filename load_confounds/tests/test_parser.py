@@ -1,4 +1,5 @@
 import os
+import re
 import load_confounds.parser as lc
 import pandas as pd
 import numpy as np
@@ -8,12 +9,13 @@ import pytest
 from nibabel import Nifti1Image
 from nilearn.input_data import NiftiMasker
 
+
 path_data = os.path.join(os.path.dirname(lc.__file__), "data")
 file_confounds = os.path.join(path_data, "test_desc-confounds_regressors.tsv")
 
 
 def _simu_img(demean=True):
-    """Simulate an nifti image with some parts confounds and some parts noise."""
+    """Simulate an nifti image based on confound file with some parts confounds and some parts noise."""
     # set the size of the image matrix
     nx = 5
     ny = 5
@@ -24,6 +26,8 @@ def _simu_img(demean=True):
     X = lc.Confounds(strategy=["motion"], motion="basic", demean=demean).load(
         file_confounds
     )
+    # repeat X in length (axis = 0) three times to increase the degree of freedom
+    X = np.tile(X, (3, 1))
 
     # the number of time points is based on the example confound file
     nt = X.shape[0]
@@ -115,12 +119,15 @@ def _regression(confounds):
     """Simple regression with nilearn."""
     # Simulate data
     img, mask_conf, _, _ = _simu_img(demean=True)
+    confounds = np.tile(confounds, (3, 1))  # matching L29 (_simu_img)
+
     # Do the regression
     masker = NiftiMasker(mask_img=mask_conf, standardize=True)
-    tseries_clean = masker.fit_transform(img, confounds=confounds)
+    tseries_clean = masker.fit_transform(img, confounds)
     assert tseries_clean.shape[0] == confounds.shape[0]
 
 
+@pytest.mark.filterwarnings("ignore")
 def test_nilearn_regress():
     """Try regressing out all motion types in nilearn."""
     # Regress full motion
@@ -134,7 +141,6 @@ def test_nilearn_regress():
     # Regress wm_csf
     confounds = lc.Confounds(strategy=["wm_csf"], wm_csf="full").load(file_confounds)
     _regression(confounds)
-
     # Regress global
     confounds = lc.Confounds(strategy=["global"], global_signal="full").load(
         file_confounds
@@ -149,7 +155,12 @@ def test_nilearn_regress():
     confounds = lc.Confounds(strategy=["compcor"], compcor="temp").load(file_confounds)
     _regression(confounds)
 
+    # Regress ICA-AROMA
+    confounds = lc.Confounds(strategy=["ica_aroma"]).load(file_confounds)
+    _regression(confounds)
 
+
+@pytest.mark.filterwarnings("ignore")
 def test_nilearn_standardize_false():
     """Test removing confounds in nilearn with no standardization."""
     # Simulate data
@@ -166,9 +177,11 @@ def test_nilearn_standardize_false():
     assert np.mean(tseries_std > 0.9)
 
 
+@pytest.mark.filterwarnings("ignore")
 def test_nilearn_standardize_zscore():
     """Test removing confounds in nilearn with zscore standardization."""
     # Simulate data
+
     img, mask_conf, mask_rand, X = _simu_img(demean=True)
 
     # We now load the time series with vs without confounds
@@ -192,9 +205,10 @@ def test_nilearn_standardize_psc():
     """Test removing confounds in nilearn with psc standardization."""
     # Similar test to test_nilearn_standardize_zscore, but with psc
     # Simulate data
+
     img, mask_conf, mask_rand, X = _simu_img(demean=False)
 
-    # Areas with
+    # Areas with confound
     tseries_raw, tseries_clean = _denoise(img, mask_conf, X, "psc")
     corr = _corr_tseries(tseries_raw, tseries_clean)
     assert corr.mean() < 0.2
@@ -203,18 +217,6 @@ def test_nilearn_standardize_psc():
     tseries_raw, tseries_clean = _denoise(img, mask_rand, X, "psc")
     corr = _corr_tseries(tseries_raw, tseries_clean)
     assert corr.mean() > 0.8
-
-
-def test_read_file():
-    """Check that loading missing or incomplete files produce error messages."""
-    conf = lc.Confounds()
-    with pytest.raises(FileNotFoundError):
-        conf.load(" ")
-
-    with pytest.raises(ValueError):
-        df = pd.read_csv(file_confounds, sep="\t")
-        df = df.drop("trans_x", axis=1)
-        conf.load(df)
 
 
 def test_confounds2df():
@@ -277,6 +279,15 @@ def test_motion():
         assert f"{param}_derivative1_power2" in conf_full.columns_
 
 
+def test_n_compcor():
+
+    conf = lc.Confounds(strategy=["compcor"], compcor="anat", n_compcor=2)
+    conf.load(file_confounds)
+    assert "a_comp_cor_00" in conf.columns_
+    assert "a_comp_cor_01" in conf.columns_
+    assert "a_comp_cor_02" not in conf.columns_
+
+
 def test_n_motion():
 
     conf = lc.Confounds(strategy=["motion"], motion="full", n_motion=0.2)
@@ -329,3 +340,10 @@ def test_not_found_exception():
               +"available confounds. You may want to use a different denoising "
               +"strategy.")
     assert exc_info.value.args[0] == err_msg
+
+
+def test_ica_aroma():
+    conf = lc.Confounds(strategy=["ica_aroma"])
+    conf.load(file_confounds)
+    for col_name in conf.columns_:
+        assert re.match("aroma_motion_+", col_name)

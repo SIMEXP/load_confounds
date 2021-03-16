@@ -176,8 +176,14 @@ class AnatCompCor(Confounds):
     confounds_raw : Pandas Dataframe or path to tsv file(s), optionally as a list.
         Raw confounds from fmriprep
 
-    n_compcor : int, optional
+    n_compcor : int or "auto", optional
         The number of noise components to be extracted.
+        Default is "auto": select all components (50% variance explained by fMRIPrep defaults)
+
+    acompcor_combined: boolean, optional
+        If true, use components generated from the combined white matter and csf
+        masks. Otherwise, components are generated from each mask separately and then
+        concatenated.
 
     demean : boolean, optional
         If True, the confounds are standardized to a zero mean (over time).
@@ -192,13 +198,14 @@ class AnatCompCor(Confounds):
 
     """
 
-    def __init__(self, n_compcor=10, demean=True):
+    def __init__(self, n_compcor="auto", demean=True, acompcor_combined=True):
         """Default parameters."""
         self.strategy = ["high_pass", "motion", "compcor"]
         self.motion = "full"
         self.n_motion = 0
         self.compcor = "anat"
         self.n_compcor = n_compcor
+        self.acompcor_combined = acompcor_combined
         self.demean = demean
 
 
@@ -212,8 +219,9 @@ class TempCompCor(Confounds):
     confounds_raw : Pandas Dataframe or path to tsv file(s), optionally as a list.
         Raw confounds from fmriprep
 
-    n_compcor : int, optional
+    n_compcor : int or "auto", optional
         The number of noise components to be extracted.
+        Default is "auto": select all components (50% variance explained by fMRIPrep defaults)
 
     demean : boolean, optional
         If True, the confounds are standardized to a zero mean (over time).
@@ -228,9 +236,111 @@ class TempCompCor(Confounds):
 
     """
 
-    def __init__(self, n_compcor=6, demean=True):
+    def __init__(self, n_compcor="auto", demean=True):
         """Default parameters."""
         self.strategy = ["high_pass", "compcor"]
         self.compcor = "temp"
         self.n_compcor = n_compcor
+        self.acompcor_combined = None
+        self.demean = demean
+
+
+class ICAAROMA(Confounds):
+    """
+    Load confounds for post-non-aggresive ICA-AROMA strategy described in Prium et al. 2015 and Ciric et al. 2017.
+    This strategy can only be performed on output `*desc-smoothAROMAnonaggr_bold`.
+
+    The current implementation is inline with simulation results of fmriprep-notebooks 05.
+    https://github.com/nipreps/fmriprep-notebooks/
+
+    Parameters
+    ----------
+    confounds_raw : Pandas Dataframe or path to tsv file(s), optionally as a list.
+        Raw confounds from fmriprep
+
+    demean : boolean, optional
+        If True, the confounds are standardized to a zero mean (over time).
+        This step is critical if the confounds are regressed out of time series
+        using nilearn with no or zscore standardization, but should be turned off
+        with "spc" normalization.
+
+    Returns
+    -------
+    conf :  a Confounds object
+        conf.confounds_ is a reduced version of fMRIprep confounds.
+
+    """
+
+    def __init__(self, demean=True):
+        """Default parameters."""
+        self.strategy = ["wm_csf", "high_pass"]
+        self.demean = demean
+        self.wm_csf = "basic"
+
+
+class AROMAGSR(Confounds):
+    """
+    Load confounds for post-non-aggresive AROMA-GSR strategy from Ciric et al. 2017.
+    This strategy can only be performed on output `*desc-smoothAROMAnonaggr_bold`.
+
+    The current implementation is inline with simulation results of fmriprep-notebooks 05.
+    https://github.com/nipreps/fmriprep-notebooks/
+
+    Parameters
+    ----------
+    confounds_raw : Pandas Dataframe or path to tsv file(s), optionally as a list.
+        Raw confounds from fmriprep
+
+    demean : boolean, optional
+        If True, the confounds are standardized to a zero mean (over time).
+        This step is critical if the confounds are regressed out of time series
+        using nilearn with no or zscore standardization, but should be turned off
+        with "spc" normalization.
+
+    Returns
+    -------
+    conf :  a Confounds object
+        conf.confounds_ is a reduced version of fMRIprep confounds.
+
+    """
+
+    def __init__(self, demean=True):
+        """Default parameters."""
+        self.strategy = ["wm_csf", "high_pass", "global"]
+        self.global_signal = "basic"
+        self.wm_csf = "basic"
+        self.demean = demean
+
+
+class AggrICAAROMA(Confounds):
+    """
+    Load confounds for aggresive ICA-AROMA strategy described in Prium et al. 2015.
+    This strategy can only be performed on output `*desc-prepro_bold`.
+
+    The current implementation is inline with simulation results of fmriprep-notebooks 05.
+    https://github.com/nipreps/fmriprep-notebooks/
+
+    Parameters
+    ----------
+    confounds_raw : Pandas Dataframe or path to tsv file(s), optionally as a list.
+        Raw confounds from fmriprep
+
+    demean : boolean, optional
+        If True, the confounds are standardized to a zero mean (over time).
+        This step is critical if the confounds are regressed out of time series
+        using nilearn with no or zscore standardization, but should be turned off
+        with "spc" normalization.
+
+    Returns
+    -------
+    conf :  a Confounds object
+        conf.confounds_ is a reduced version of fMRIprep confounds.
+
+    """
+
+    def __init__(self, demean=True):
+        """Default parameters."""
+        self.strategy = ["wm_csf", "high_pass", "global", "ica_aroma"]
+        self.global_signal = "basic"
+        self.wm_csf = "basic"
         self.demean = demean
