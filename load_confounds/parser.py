@@ -388,8 +388,7 @@ class Confounds:
         return confounds_raw[ica_aroma_params]
 
     def _load_scrub(self, confounds_raw):
-        """Perform basic scrub - Remove volumes if framewise displacement exceeds threshold"""
-        """Power, Jonathan D., et al. "Steps toward optimizing motion artifact removal in functional connectivity MRI; a reply to Carp." Neuroimage 76 (2013)."""
+        """Perform basic scrub - Remove volumes if framewise displacement exceeds threshold."""
         n_scans = len(confounds_raw)
         # Get indices of fd outliers
         fd_outliers = np.where(
