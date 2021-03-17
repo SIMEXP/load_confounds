@@ -5,59 +5,61 @@
 [![collaborate brainhack](https://img.shields.io/badge/collaborate-brainhack-FF69A4.svg)](https://mattermost.brainhack.org/brainhack/channels/fmriprep_denoising) [![Pipy Badge](https://img.shields.io/pypi/v/load_confounds)](https://pypi.org/project/load-confounds/) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/1da186ba5c44489b8af6d96a9c50d3c7)](https://app.codacy.com/gh/SIMEXP/load_confounds?utm_source=github.com&utm_medium=referral&utm_content=SIMEXP/load_confounds&utm_campaign=Badge_Grade_Dashboard) [![Maintainability](https://api.codeclimate.com/v1/badges/ce6f2bf20aa87accaaa4/maintainability)](https://codeclimate.com/github/SIMEXP/load_confounds/maintainability) [![CircleCI](https://circleci.com/gh/SIMEXP/load_confounds.svg?style=svg)](https://circleci.com/gh/SIMEXP/load_confounds) [![codecov](https://codecov.io/gh/SIMEXP/load_confounds/branch/master/graph/badge.svg)](https://codecov.io/gh/SIMEXP/load_confounds)
 
 *Warning*: This package is at an alpha stage of development. The API may still be subject to changes.
-
-## Quickstart
-
-This package is used to easily load a sensible subset of variables from [fMRIprep](https://fmriprep.readthedocs.io/en/stable/) BOLD confounds in a python environment. `load_confounds` can be installed with `pip` (Python >=3.5) using:
+This package is used to load a sensible subset of fMRI confounds from [fMRIprep](https://fmriprep.readthedocs.io/en/stable/). Installed with `pip` (Python >=3.5):
 ```bash
 pip install load_confounds
 ```
-This example loads confounds using the `Params36`, i.e. the 36P denoising strategy of Ciric et al. 2017:
+
+## TL;DR
+
+Load confounds using the 36P denoising strategy of Ciric et al. 2017:
 ```python
 from load_confounds import Params36
+from nilearn.input_data import NiftiMasker 
+
 # load_confounds auto-detects the companion .tsv file (which needs to be in the same directory)
 file = "path/to/file/sub-01_ses-001_bold.nii.gz"
 confounds = Params36().load(file)
-```
-The `confounds` is a numpy ndarray ready to be plugged into a [nilearn](https://nilearn.github.io/) `masker`:
-```python
+
+# Use the confounds in a nilearn maker 
+masker = NiftiMasker(smoothing_fwhm=5, standardize=True)
 img = masker.transform(file, confounds=confounds)
 ```
-
-## Predefined denoising strategies
-The predefined strategies are all adapted from Ciric et al. 2017, and listed in the table below, with the following conventions. `COS` are discrete cosines; `Motion` are motion parameters; `WM` is white matter average; `CSF` is average of the cerebrospinal fluid mask; `GS` is the global signal; `aCompCor` is anatomical CompCor; `tCompCor` is temporal CompCor; `AROMA` is ICA AROMA; `B` is basic; `DS` is expanded with derivatives, squares and square derivatives; `F` means that the correction is applied by loading a specific `bold` file, rather than adding confound regressors.
-
-| Strategy       | COS | Motion | WM | CSF | GS | aCompCor | tCompCor | AROMA |
-| -------------- |:---:|:------:|:--:|:---:|:--:|:--------:|:--------:|:-----:|
-| `Params2`      | B   |        | B  | B   |    |          |          |       |
-| `Params6`      | B   | B      |    |     |    |          |          |       |
-| `Params9`      | B   | B      | B  | B   | B  |          |          |       |
-| `Params24`     | B   | DS     |    |     |    |          |          |       |
-| `Params36`     | B   | DS     | DS | DS  | DS |          |          |       |
-| `AnatCompCor`  | B   | DS     |    |     |    | B        |          |       |
-| `TempCompCor`  | B   |        |    |     |    |          | B        |       |
-| `ICAAROMA`     | B   |        | B  | B   |    |          |          | F     |
-| `AROMAGSR`     | B   |        | B  | B   | B  |          |          | F     |
-| `AggrICAAROMA` | B   |        | B  | B   | B  |          |          | B     |
-
-## Flexible denoising strategy
 It is also possible to fine-tune a subset of noise variables, and the type of these variables:
 ```python
 from load_confounds import Confounds
-conf = Confounds(strategy=['high_pass', 'motion', 'global'], motion="derivatives")
-confounds = conf.load('path/to/file/sub-01_ses-001.tsv')
+confounds = Confounds(strategy=['high_pass', 'motion', 'global'], motion="full").load(file)
 ```
 
+## Predefined denoising strategies
 Currently the following noise categories are supported:
-*  `motion` the motion parameters including 6 translation/rotation, and optionally derivatives, squares, and squared derivatives. Motion parameters can also be reduced through a PCA. Default: no PCA, and 24 motion model.
+*  `motion` the motion parameters including 6 translation/rotation (`basic`), and optionally derivatives, squares, and squared derivatives (`full`).
 *  `high_pass` basis of discrete cosines covering slow time drift frequency band.
-*  `wm_csf` the average signal of white matter and cerebrospinal fluid masks, and optionally derivatives, squares, and squared derivatives. Default: simple average, without squares or derivatives.
-*  `compcor` the results of a PCA applied on a mask based on either anatomy, temporal variance, or both. The number of components can be adjusted. Default: anat compcor with 6 components.
-*  ` global`  the global signal, and optionally derivatives, squares, and squared derivatives. Default: simple average without squares or derivatives.
+*  `wm_csf` the average signal of white matter and cerebrospinal fluid masks (`basic`), and optionally derivatives, squares, and squared derivatives (`full`). 
+*  `global`  the global signal (`basic`), and optionally derivatives, squares, and squared derivatives (`full`). 
+*  `compcor` the results of a PCA applied on a mask based on either anatomy (`anat`), temporal variance (`temp`), or both (`combined`).
+*  `ica_aroma` the results of an idependent component analysis (ICA) followed by identification of noise components. This can be implementing by incorporating ICA regressors (`basic`) or directly loading a denoised file (`full`).
+*  `scrub` regressors coding for time frames with excessive motion, using threshold on frame displacement and standardized DVARS (`basic`) and suppressing short time windows using the (Power et al., 2014) appreach (`full`).
 
-See the docstring of `Confounds` for a list of available tweaking parameters.
 
-## Nifti files and file collections
+The predefined strategies are all adapted from Ciric et al. 2017:
+
+| Strategy        | `high_pass` | `motion` | `wm_csf` | `global` | `compcor` | `ica_aroma` | `scrub` |
+| --------------- |:-----------:|:--------:|:--------:|:--------:|:---------:|:-----------:|:-------:|
+| `Params2`       | x           |          | `basic`  |          |           |             |         |
+| `Params6`       | x           | `basic`  |          |          |           |             |         |
+| `Params9`       | x           | `basic`  | `basic`  | `basic`  |           |             |         |
+| `Params9Scrub`  | x           | `basic`  | `basic`  |          |           |             | `full`  |
+| `Params24`      | x           | `full`   |          |          |           |             |         |
+| `Params36`      | x           | `full`   | `full`   | `full`   |           |             |         |
+| `Params36Scrub` | x           | `full`   | `full`   |          |           |             | `full`  |
+| `AnatCompCor`   | x           | `full`   |          |          | `anat`    |             |         |
+| `TempCompCor`   | x           |          |          |          | `temp`    |             |         |
+| `ICAAROMA`      | x           |          | `basic`  |          |           | `full`      |         |
+| `AROMAGSR`      | x           |          | `basic`  | `basic`  |           | `full`      |         |
+| `AggrICAAROMA`  | x           |          | `basic`  | `basic`  |           | `basic`     |         |
+
+## A note on nifti files and file collections
 Note that if a `.nii.gz` file is specified, `load_confounds` will automatically look for the companion `tsv`confound file generated by fMRIprep. A pandas DataFrame can also be entered instead of a file name. It is also possible to specify a list of confound (or imaging) files, in which case `load_confounds` will return a list of numpy ndarray.
 
 ## A note on demeaning confounds
@@ -70,6 +72,9 @@ conf = Params6(demean=False)
 ## Reference
 
 Ciric R, Wolf DH, Power JD, Roalf DR, Baum GL, Ruparel K, Shinohara RT, Elliott MA, Eickhoff SB, Davatzikos C., Gur RC, Gur RE, Bassett DS, Satterthwaite TD. Benchmarking of participant-level confound regression strategies for the control of motion artifact in studies of functional connectivity. Neuroimage. 2017. doi:[10.1016/j.neuroimage.2017.03.020](https://doi.org/10.1016/j.neuroimage.2017.03.020)
+
+
+Power JD, Mitra A, Laumann TO, Snyder AZ, Schlaggar BL, Petersen SE. Methods to detect, characterize, and remove motion artifact in resting state fMRI. Neuroimage 2014 84:320-41. doi: [10.1016/j.neuroimage.2013.08.048](https://doi.org/10.1016/j.neuroimage.2013.08.048)
 
 ## Contributors ✨
 
