@@ -14,8 +14,9 @@ all_confounds = [
     "global",
     "compcor",
     "ica_aroma",
-    "censoring",
+    "scrub",
 ]
+
 
 def _check_params(confounds_raw, params):
     """Check that specified parameters can be found in the confounds."""
@@ -46,7 +47,7 @@ def _find_confounds(confounds_raw, keywords):
 
 
 def _select_compcor(compcor_cols, n_compcor, compcor_mask):
-    """retain a specified number of compcor components."""
+    """Retain a specified number of compcor components."""
     # only select if not "auto", or less components are requested than there actually is
     if (n_compcor != "auto") and (n_compcor < len(compcor_cols)):
         compcor_cols = compcor_cols[0:n_compcor]
@@ -151,7 +152,7 @@ class Confounds:
         "wm_csf" confounds derived from white matter and cerebrospinal fluid.
         "global" confounds derived from the global signal.
         "ica_aroma" confounds derived from ICA-AROMA.
-        "censoring" regressors for Power 2014 scrubbing approach.
+        "scrub" regressors for Power 2014 scrubbing approach.
 
     motion : string, optional
         Type of confounds extracted from head motion estimates.
@@ -168,10 +169,10 @@ class Confounds:
         If the n_components = 0, then no PCA is performed.
 
     fd_thresh : float, optional
-        Framewise displacement threshold for censoring (default = 0.2 mm)
+        Framewise displacement threshold for scrub (default = 0.2 mm)
 
     std_dvars_thresh : float, optional
-        Standardized DVARS threshold for censoring (default = 3)
+        Standardized DVARS threshold for scrub (default = 3)
 
     wm_csf : string, optional
         Type of confounds extracted from masks of white matter and cerebrospinal fluids.
@@ -187,16 +188,17 @@ class Confounds:
         "derivatives" global signal and derivative (2 parameters)
         "full" global signal + derivatives + quadratic terms + power2d derivatives (4 parameters)
 
+    scrub : string, optional
+        Type of scrub of frames with excessive motion (Power et al. 2014)
+        "basic" remove time frames based on excessive FD and DVARS
+        "full" also remove time windows which are too short after scrubbing.
+        one-hot encoding vectors are added as regressors for each scrubbed frame.
+
     compcor : string, optional
         Type of confounds extracted from a component based noise correction method
         "anat" noise components calculated using anatomical compcor
         "temp" noise components calculated using temporal compcor
         "full" noise components calculated using both temporal and anatomical
-
-    censoring : string, optional
-        Type of censoring of frames with excessive motion (Power et al. 2014)
-        "basic" remove time frames based on excessive FD and DVARS
-        "optimized" also remove time windows which are too short after scrubbing.
 
     n_compcor : int or "auto", optional
         The number of noise components to be extracted.
@@ -223,10 +225,13 @@ class Confounds:
 
     Notes
     -----
-    The predefined strategies implemented in this class are from
+    The predefined strategies implemented in this class are
     adapted from (Ciric et al. 2017). Band-pass filter is replaced
-    by high-pass filter, as high frequencies have been shown to carry
-    meaningful signal for connectivity analysis.
+    by high-pass filter. Low-pass filters can be implemented, e.g., through
+    nilearn maskers. Scrubbing is implemented by introducing regressors in the
+    confounds, rather than eliminating time points. Other aspects of the
+    preprocessing listed in Ciric et al. (2017) are controlled through fMRIprep,
+    e.g. distortion correction.
 
     References
     ----------
@@ -241,7 +246,7 @@ class Confounds:
         strategy=["motion", "high_pass", "wm_csf"],
         motion="full",
         n_motion=0,
-        censoring="basic",
+        scrub="full",
         fd_thresh=0.2,
         std_dvars_thresh=3,
         wm_csf="basic",
@@ -255,7 +260,7 @@ class Confounds:
         self.strategy = _sanitize_strategy(strategy)
         self.motion = motion
         self.n_motion = n_motion
-        self.censoring = censoring
+        self.scrub = scrub
         self.fd_thresh = fd_thresh
         self.std_dvars_thresh = std_dvars_thresh
         self.wm_csf = wm_csf
@@ -264,7 +269,6 @@ class Confounds:
         self.acompcor_combined = acompcor_combined
         self.n_compcor = n_compcor
         self.demean = demean
-
 
     def load(self, confounds_raw):
         """
@@ -333,7 +337,9 @@ class Confounds:
 
         # Optionally apply PCA reduction
         if self.n_motion > 0:
-            confounds_motion = cf._pca_motion(confounds_motion, n_components=self.n_motion)
+            confounds_motion = cf._pca_motion(
+                confounds_motion, n_components=self.n_motion
+            )
         return confounds_motion
 
     def _load_high_pass(self, confounds_raw):
@@ -381,9 +387,8 @@ class Confounds:
         ica_aroma_params = _find_confounds(confounds_raw, ["aroma"])
         return confounds_raw[ica_aroma_params]
 
-    def _load_censoring(self, confounds_raw):
-        """Perform basic censoring - Remove volumes if framewise displacement exceeds threshold"""
-        """Power, Jonathan D., et al. "Steps toward optimizing motion artifact removal in functional connectivity MRI; a reply to Carp." Neuroimage 76 (2013)."""
+    def _load_scrub(self, confounds_raw):
+        """Perform basic scrub - Remove volumes if framewise displacement exceeds threshold."""
         n_scans = len(confounds_raw)
         # Get indices of fd outliers
         fd_outliers = np.where(
@@ -393,9 +398,9 @@ class Confounds:
         combined_outliers = np.sort(
             np.unique(np.concatenate((fd_outliers, dvars_outliers)))
         )
-        # Do optimized scrubbing if desired
-        if self.censoring == "optimized":
-            combined_outliers = cf._optimize_censoring(combined_outliers, n_scans)
+        # Do full scrubbing if desired, and motion outliers were detected
+        if self.scrub == "full" and len(combined_outliers) > 0:
+            combined_outliers = cf._optimize_scrub(combined_outliers, n_scans)
         # Make one-hot encoded motion outlier regressors
         motion_outlier_regressors = pd.DataFrame(
             np.transpose(np.eye(n_scans)[combined_outliers]).astype(int)

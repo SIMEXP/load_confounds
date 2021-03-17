@@ -10,6 +10,7 @@ import warnings
 import os
 import json
 
+
 def _add_suffix(params, model):
     """
     Add suffixes to a list of parameters.
@@ -45,9 +46,9 @@ def _pca_motion(confounds_motion, n_components):
     return motion_pca
 
 
-def _optimize_censoring(fd_outliers, n_scans):
+def _optimize_scrub(fd_outliers, n_scans):
     """
-    Perform optimized censoring. After censoring volumes, further remove
+    Perform optimized scrub. After scrub volumes, further remove
     continuous segments containing fewer than 5 volumes.
     Power, Jonathan D., et al. "Methods to detect, characterize, and remove
     motion artifact in resting state fMRI." Neuroimage 84 (2014): 320-341.
