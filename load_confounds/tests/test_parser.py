@@ -272,6 +272,25 @@ def test_n_motion():
         conf.load(file_confounds)
 
 
+def test_not_found_exception():
+
+    conf = lc.Confounds(strategy=["high_pass", "motion", "compcor"],
+                        compcor="anat", motion="full")
+
+    missing_params = ['trans_y', 'trans_x_derivative1', 'rot_z_power2']
+    missing_keywords = ['cosine']
+
+    file_missing_confounds = os.path.join(
+        path_data, "missing_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz"
+    )
+    with pytest.raises(ValueError) as exc_info:
+        conf.load(file_missing_confounds)
+    err_msg = ("The parameters {} and the keywords {} cannot be found in the ".format(missing_params, missing_keywords)
+              +"available confounds. You may want to use a different denoising "
+              +"strategy.")
+    assert exc_info.value.args[0] == err_msg
+
+
 def test_ica_aroma():
     conf = lc.Confounds(strategy=["ica_aroma"])
     conf.load(file_confounds)

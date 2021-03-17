@@ -43,18 +43,19 @@ def _add_suffix(params, model):
 
 def _check_params(confounds_raw, params):
     """Check that specified parameters can be found in the confounds."""
+    not_found_params = []
     for par in params:
         if not par in confounds_raw.columns:
-            raise ValueError(
-                f"The parameter {par} cannot be found in the available confounds. You may want to use a different denoising strategy'"
-            )
-
+            not_found_params.append(par)
+    if not_found_params:
+        raise ConfoundNotFoundException(params=not_found_params)
     return None
 
 
 def _find_confounds(confounds_raw, keywords):
     """Find confounds that contain certain keywords."""
     list_confounds = []
+    not_found_keys = []
     for key in keywords:
         key_found = False
         for col in confounds_raw.columns:
@@ -62,28 +63,10 @@ def _find_confounds(confounds_raw, keywords):
                 list_confounds.append(col)
                 key_found = True
         if not key_found:
-            raise ValueError(f"could not find any confound with the key {key}")
+            not_found_keys.append(key)
+    if not_found_keys:
+        raise ConfoundNotFoundException(keywords=not_found_keys)
     return list_confounds
-
-
-def _load_global(confounds_raw, global_signal):
-    """Load the regressors derived from the global signal."""
-    global_params = _add_suffix(["global_signal"], global_signal)
-    _check_params(confounds_raw, global_params)
-    return confounds_raw[global_params]
-
-
-def _load_wm_csf(confounds_raw, wm_csf):
-    """Load the regressors derived from the white matter and CSF masks."""
-    wm_csf_params = _add_suffix(["csf", "white_matter"], wm_csf)
-    _check_params(confounds_raw, wm_csf_params)
-    return confounds_raw[wm_csf_params]
-
-
-def _load_high_pass(confounds_raw):
-    """Load the high pass filter regressors."""
-    high_pass_params = _find_confounds(confounds_raw, ["cosine"])
-    return confounds_raw[high_pass_params]
 
 
 def _select_compcor(compcor_cols, n_compcor, compcor_mask):
@@ -94,7 +77,7 @@ def _select_compcor(compcor_cols, n_compcor, compcor_mask):
     return compcor_cols
 
 
-def _label_compcor(confounds_json, prefix, n_compcor, compcor_mask):
+def _find_compcor(confounds_json, prefix, n_compcor, compcor_mask):
     """Builds list for the number of compcor components."""
     # all possible compcor confounds, mixing different types of mask
     all_compcor = [
@@ -114,51 +97,14 @@ def _label_compcor(confounds_json, prefix, n_compcor, compcor_mask):
     return _select_compcor(compcor_cols, n_compcor, compcor_mask)
 
 
-def _load_acompcor(confounds_json, n_compcor, acompcor_combined):
+def _find_acompcor(confounds_json, n_compcor, acompcor_combined):
+    """Helper function dedicated to anat compcor."""
     if acompcor_combined:
-        compcor_cols = _label_compcor(confounds_json, "a", n_compcor, "combined")
+        compcor_cols = _find_compcor(confounds_json, "a", n_compcor, "combined")
     else:
-        compcor_cols = _label_compcor(confounds_json, "a", n_compcor, "WM")
-        compcor_cols.extend(_label_compcor(confounds_json, "a", n_compcor, "CSF"))
+        compcor_cols = _find_compcor(confounds_json, "a", n_compcor, "WM")
+        compcor_cols.extend(_find_compcor(confounds_json, "a", n_compcor, "CSF"))
     return compcor_cols
-
-def _load_compcor(confounds_raw, confounds_json, compcor, n_compcor, acompcor_combined):
-    """Load compcor regressors."""
-    if compcor == "anat":
-        compcor_cols = _load_acompcor(confounds_json, n_compcor, acompcor_combined)
-
-    if compcor == "temp":
-        compcor_cols = _label_compcor(confounds_json, "t", n_compcor, acompcor_combined)
-
-    if compcor == "full":
-        compcor_cols = _label_compcor(confounds_json, "a", n_compcor, acompcor_combined)
-        compcor_cols.extend(
-            _label_compcor(confounds_json, "t", n_compcor, acompcor_combined)
-        )
-
-    _check_params(confounds_raw, compcor_cols)
-    return confounds_raw[compcor_cols]
-
-
-def _load_motion(confounds_raw, motion, n_motion):
-    """Load the motion regressors."""
-    motion_params = _add_suffix(
-        ["trans_x", "trans_y", "trans_z", "rot_x", "rot_y", "rot_z"], motion
-    )
-    _check_params(confounds_raw, motion_params)
-    confounds_motion = confounds_raw[motion_params]
-
-    # Optionally apply PCA reduction
-    if n_motion > 0:
-        confounds_motion = _pca_motion(confounds_motion, n_components=n_motion)
-
-    return confounds_motion
-
-
-def _load_ica_aroma(confounds_raw):
-    """Load the ICA-AROMA regressors."""
-    ica_aroma_params = _find_confounds(confounds_raw, ["aroma"])
-    return confounds_raw[ica_aroma_params]
 
 
 def _pca_motion(confounds_motion, n_components):
@@ -178,34 +124,13 @@ def _pca_motion(confounds_motion, n_components):
     return motion_pca
 
 
-def _load_censoring(confounds_raw, censoring, fd_thresh, std_dvars_thresh):
-    """Perform basic censoring - Remove volumes if framewise displacement exceeds threshold"""
-    """Power, Jonathan D., et al. "Steps toward optimizing motion artifact removal in functional connectivity MRI; a reply to Carp." Neuroimage 76 (2013)."""
-    n_scans = len(confounds_raw)
-    # Get indices of fd outliers
-    fd_outliers = np.where(confounds_raw["framewise_displacement"] > fd_thresh)[0]
-    dvars_outliers = np.where(confounds_raw["std_dvars"] > std_dvars_thresh)[0]
-    combined_outliers = np.sort(
-        np.unique(np.concatenate((fd_outliers, dvars_outliers)))
-    )
-    # Do optimized scrubbing if desired
-    if censoring == "optimized":
-        combined_outliers = _optimize_censoring(combined_outliers, n_scans)
-    # Make one-hot encoded motion outlier regressors
-    motion_outlier_regressors = pd.DataFrame(
-        np.transpose(np.eye(n_scans)[combined_outliers]).astype(int)
-    )
-    column_names = [
-        "motion_outlier_" + str(num)
-        for num in range(np.shape(motion_outlier_regressors)[1])
-    ]
-    motion_outlier_regressors.columns = column_names
-    return motion_outlier_regressors
-
-
 def _optimize_censoring(fd_outliers, n_scans):
-    """Perform optimized censoring. After censoring volumes, further remove continuous segments containing fewer than 5 volumes"""
-    """Power, Jonathan D., et al. "Methods to detect, characterize, and remove motion artifact in resting state fMRI." Neuroimage 84 (2014): 320-341."""
+    """
+    Perform optimized censoring. After censoring volumes, further remove
+    continuous segments containing fewer than 5 volumes.
+    Power, Jonathan D., et al. "Methods to detect, characterize, and remove
+    motion artifact in resting state fMRI." Neuroimage 84 (2014): 320-341.
+    """
     # Start by checking if the beginning continuous segment is fewer than 5 volumes
     if fd_outliers[0] < 5:
         fd_outliers = np.asarray(list(range(fd_outliers[0])) + list(fd_outliers))
@@ -225,17 +150,6 @@ def _optimize_censoring(fd_outliers, n_scans):
         )
     fd_outliers = np.sort(np.unique(fd_outliers))
     return fd_outliers
-
-
-def _sanitize_strategy(strategy):
-    """Defines the supported denoising strategies."""
-    if isinstance(strategy, list):
-        for conf in strategy:
-            if not conf in all_confounds:
-                raise ValueError(f"{conf} is not a supported type of confounds.")
-    else:
-        raise ValueError("strategy needs to be a list of strings")
-    return strategy
 
 
 def _confounds_to_df(confounds_raw):
@@ -273,6 +187,17 @@ def _sanitize_confounds(confounds_raw):
     return confounds_raw, flag_single
 
 
+def _sanitize_strategy(strategy):
+    """Defines the supported denoising strategies."""
+    if isinstance(strategy, list):
+        for conf in strategy:
+            if not conf in all_confounds:
+                raise ValueError(f"{conf} is not a supported type of confounds.")
+    else:
+        raise ValueError("strategy needs to be a list of strings")
+    return strategy
+
+
 def _confounds_to_ndarray(confounds, demean):
     """Convert confounds from a pandas dataframe to a numpy array."""
     # Convert from DataFrame to numpy ndarray
@@ -292,6 +217,37 @@ def _confounds_to_ndarray(confounds, demean):
     return confounds, labels
 
 
+def _raise_conf_not_found_error(not_found_conf, not_found_keys):
+    """Consolidate a single error message across multiple missing confounds."""
+    conf_str = f"parameters {not_found_conf} " if not_found_conf else ""
+    and_str = "and the " if not_found_conf and not_found_keys else ""
+    keys_str = f"keywords {not_found_keys} " if not_found_keys else ""
+    error_msg = (
+        "The "
+        + conf_str
+        + and_str
+        + keys_str
+        + "cannot be found in the available confounds. You may "
+        + "want to use a different denoising strategy."
+    )
+    raise ValueError(error_msg)
+
+
+class ConfoundNotFoundException(Exception):
+    """
+    Exception raised when failing to find params in the confounds.
+
+    Parameters
+    ----------
+        params : list of not found params
+    """
+
+    def __init__(self, params=None, keywords=None):
+        """Default values are empty lists."""
+        self.params = params if params else []
+        self.keywords = keywords if keywords else []
+
+
 class Confounds:
     """
     Confounds from fmriprep
@@ -305,6 +261,7 @@ class Confounds:
         "wm_csf" confounds derived from white matter and cerebrospinal fluid.
         "global" confounds derived from the global signal.
         "ica_aroma" confounds derived from ICA-AROMA.
+        "censoring" regressors for Power 2014 scrubbing approach.
 
     motion : string, optional
         Type of confounds extracted from head motion estimates.
@@ -345,6 +302,11 @@ class Confounds:
         "anat" noise components calculated using anatomical compcor
         "temp" noise components calculated using temporal compcor
         "full" noise components calculated using both temporal and anatomical
+
+    censoring : string, optional
+        Type of censoring of frames with excessive motion (Power et al. 2014)
+        "basic" remove time frames based on excessive FD and DVARS
+        "optimized" also remove time windows which are too short after scrubbing.
 
     n_compcor : int or "auto", optional
         The number of noise components to be extracted.
@@ -413,6 +375,7 @@ class Confounds:
         self.n_compcor = n_compcor
         self.demean = demean
 
+
     def load(self, confounds_raw):
         """
         Load fMRIprep confounds
@@ -450,46 +413,106 @@ class Confounds:
     def _load_single(self, confounds_raw):
         """Load a single confounds file from fmriprep."""
         # Convert tsv file to pandas dataframe
-        confounds_raw, confounds_json = _confounds_to_df(confounds_raw)
+        confounds_raw, self.json_ = _confounds_to_df(confounds_raw)
 
         confounds = pd.DataFrame()
+        not_found_conf = []
+        not_found_keys = []
 
-        if "motion" in self.strategy:
-            confounds_motion = _load_motion(confounds_raw, self.motion, self.n_motion)
-            confounds = pd.concat([confounds, confounds_motion], axis=1)
+        for confound in self.strategy:
+            try:
+                loaded_confounds = getattr(self, f"_load_{confound}")(confounds_raw)
+                confounds = pd.concat([confounds, loaded_confounds], axis=1)
+            except ConfoundNotFoundException as exception:
+                not_found_conf += exception.params
+                not_found_keys += exception.keywords
 
-        if "censoring" in self.strategy:
-            confounds_censoring = _load_censoring(
-                confounds_raw, self.censoring, self.fd_thresh, self.std_dvars_thresh
-            )
-            confounds = pd.concat([confounds, confounds_censoring], axis=1)
-
-        if "high_pass" in self.strategy:
-            confounds_high_pass = _load_high_pass(confounds_raw)
-            confounds = pd.concat([confounds, confounds_high_pass], axis=1)
-
-        if "wm_csf" in self.strategy:
-            confounds_wm_csf = _load_wm_csf(confounds_raw, self.wm_csf)
-            confounds = pd.concat([confounds, confounds_wm_csf], axis=1)
-
-        if "global" in self.strategy:
-            confounds_global_signal = _load_global(confounds_raw, self.global_signal)
-            confounds = pd.concat([confounds, confounds_global_signal], axis=1)
-
-        if "compcor" in self.strategy:
-            confounds_compcor = _load_compcor(
-                confounds_raw,
-                confounds_json,
-                self.compcor,
-                self.n_compcor,
-                self.acompcor_combined,
-            )
-            confounds = pd.concat([confounds, confounds_compcor], axis=1)
-
-        if "ica_aroma" in self.strategy:
-            confounds_ica_aroma = _load_ica_aroma(confounds_raw)
-            confounds = pd.concat([confounds, confounds_ica_aroma], axis=1)
+        if not_found_conf or not_found_keys:
+            _raise_conf_not_found_error(not_found_conf, not_found_keys)
 
         confounds, labels = _confounds_to_ndarray(confounds, self.demean)
-
         return confounds, labels
+
+    def _load_motion(self, confounds_raw):
+        """Load the motion regressors."""
+        motion_params = _add_suffix(
+            ["trans_x", "trans_y", "trans_z", "rot_x", "rot_y", "rot_z"], self.motion
+        )
+        _check_params(confounds_raw, motion_params)
+        confounds_motion = confounds_raw[motion_params]
+
+        # Optionally apply PCA reduction
+        if self.n_motion > 0:
+            confounds_motion = _pca_motion(confounds_motion, n_components=self.n_motion)
+        return confounds_motion
+
+    def _load_high_pass(self, confounds_raw):
+        """Load the high pass filter regressors."""
+        high_pass_params = _find_confounds(confounds_raw, ["cosine"])
+        return confounds_raw[high_pass_params]
+
+    def _load_wm_csf(self, confounds_raw):
+        """Load the regressors derived from the white matter and CSF masks."""
+        wm_csf_params = _add_suffix(["csf", "white_matter"], self.wm_csf)
+        _check_params(confounds_raw, wm_csf_params)
+        return confounds_raw[wm_csf_params]
+
+    def _load_global(self, confounds_raw):
+        """Load the regressors derived from the global signal."""
+        global_params = _add_suffix(["global_signal"], self.global_signal)
+        _check_params(confounds_raw, global_params)
+        return confounds_raw[global_params]
+
+    def _load_compcor(self, confounds_raw):
+        """Load compcor regressors."""
+        if self.compcor == "anat":
+            compcor_cols = _find_acompcor(
+                self.json_, self.n_compcor, self.acompcor_combined
+            )
+
+        if self.compcor == "temp":
+            compcor_cols = _find_compcor(
+                self.json_, "t", self.n_compcor, self.acompcor_combined
+            )
+
+        if self.compcor == "full":
+            compcor_cols = _find_compcor(
+                self.json_, "a", self.n_compcor, self.acompcor_combined
+            )
+            compcor_cols.extend(
+                _find_compcor(self.json_, "t", self.n_compcor, self.acompcor_combined)
+            )
+
+        _check_params(confounds_raw, compcor_cols)
+        return confounds_raw[compcor_cols]
+
+    def _load_ica_aroma(self, confounds_raw):
+        """Load the ICA-AROMA regressors."""
+        ica_aroma_params = _find_confounds(confounds_raw, ["aroma"])
+        return confounds_raw[ica_aroma_params]
+
+    def _load_censoring(self, confounds_raw):
+        """Perform basic censoring - Remove volumes if framewise displacement exceeds threshold"""
+        """Power, Jonathan D., et al. "Steps toward optimizing motion artifact removal in functional connectivity MRI; a reply to Carp." Neuroimage 76 (2013)."""
+        n_scans = len(confounds_raw)
+        # Get indices of fd outliers
+        fd_outliers = np.where(
+            confounds_raw["framewise_displacement"] > self.fd_thresh
+        )[0]
+        dvars_outliers = np.where(confounds_raw["std_dvars"] > self.std_dvars_thresh)[0]
+        combined_outliers = np.sort(
+            np.unique(np.concatenate((fd_outliers, dvars_outliers)))
+        )
+        # Do optimized scrubbing if desired
+        if self.censoring == "optimized":
+            combined_outliers = _optimize_censoring(combined_outliers, n_scans)
+        # Make one-hot encoded motion outlier regressors
+        motion_outlier_regressors = pd.DataFrame(
+            np.transpose(np.eye(n_scans)[combined_outliers]).astype(int)
+        )
+        column_names = [
+            "motion_outlier_" + str(num)
+            for num in range(np.shape(motion_outlier_regressors)[1])
+        ]
+        motion_outlier_regressors.columns = column_names
+        return motion_outlier_regressors
