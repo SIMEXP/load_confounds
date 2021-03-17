@@ -134,9 +134,9 @@ class Params9Scrub(Confounds):
         self.motion = "basic"
         self.n_motion = 0
         self.wm_csf = "basic"
-        self.scrub="full",
-        self.fd_thresh=fd_thresh,
-        self.std_dvars_thresh=std_dvars_thresh,
+        self.scrub = ("full",)
+        self.fd_thresh = (fd_thresh,)
+        self.std_dvars_thresh = (std_dvars_thresh,)
         self.demean = demean
 
 
@@ -245,8 +245,8 @@ class Params36Scrub(Confounds):
         self.n_motion = 0
         self.wm_csf = "full"
         self.scrub = "full"
-        self.fd_thresh=fd_thresh,
-        self.std_dvars_thresh=std_dvars_thresh,
+        self.fd_thresh = (fd_thresh,)
+        self.std_dvars_thresh = (std_dvars_thresh,)
         self.demean = demean
 
 

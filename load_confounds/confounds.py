@@ -10,6 +10,7 @@ import warnings
 import os
 import json
 
+
 def _add_suffix(params, model):
     """
     Add suffixes to a list of parameters.

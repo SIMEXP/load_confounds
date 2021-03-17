@@ -17,6 +17,7 @@ all_confounds = [
     "scrub",
 ]
 
+
 def _check_params(confounds_raw, params):
     """Check that specified parameters can be found in the confounds."""
     not_found_params = []
@@ -46,7 +47,7 @@ def _find_confounds(confounds_raw, keywords):
 
 
 def _select_compcor(compcor_cols, n_compcor, compcor_mask):
-    """retain a specified number of compcor components."""
+    """Retain a specified number of compcor components."""
     # only select if not "auto", or less components are requested than there actually is
     if (n_compcor != "auto") and (n_compcor < len(compcor_cols)):
         compcor_cols = compcor_cols[0:n_compcor]
@@ -269,7 +270,6 @@ class Confounds:
         self.n_compcor = n_compcor
         self.demean = demean
 
-
     def load(self, confounds_raw):
         """
         Load fMRIprep confounds
@@ -337,7 +337,9 @@ class Confounds:
 
         # Optionally apply PCA reduction
         if self.n_motion > 0:
-            confounds_motion = cf._pca_motion(confounds_motion, n_components=self.n_motion)
+            confounds_motion = cf._pca_motion(
+                confounds_motion, n_components=self.n_motion
+            )
         return confounds_motion
 
     def _load_high_pass(self, confounds_raw):
@@ -398,7 +400,7 @@ class Confounds:
             np.unique(np.concatenate((fd_outliers, dvars_outliers)))
         )
         # Do full scrubbing if desired, and motion outliers were detected
-        if self.scrub == "full" and len(combined_outliers)>0:
+        if self.scrub == "full" and len(combined_outliers) > 0:
             combined_outliers = cf._optimize_scrub(combined_outliers, n_scans)
         # Make one-hot encoded motion outlier regressors
         motion_outlier_regressors = pd.DataFrame(

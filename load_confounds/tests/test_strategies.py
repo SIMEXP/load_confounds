@@ -14,7 +14,6 @@ def test_Params2():
     conf = lc.Params2()
     conf.load(file_confounds)
 
-
     assert isinstance(conf.confounds_, np.ndarray)
 
     # Check that all model categories have been successfully loaded
@@ -35,7 +34,6 @@ def test_Params6():
     # Try to load the confounds, whithout PCA reduction
     conf = lc.Params6()
     conf.load(file_confounds)
-
 
     assert isinstance(conf.confounds_, np.ndarray)
 
@@ -79,6 +77,7 @@ def test_Params9():
     ]
     for check in list_check:
         assert check in conf.columns_
+
 
 def test_Params9Scrub():
     """Test the Params9Scrub strategy."""
@@ -217,19 +216,18 @@ def test_Params36Scrub():
     for check in list_check:
         assert check in conf.columns_
 
-
     # also load confounds with very liberal scrubbing thresholds
     # this should not produce an error
     conf = lc.Params36Scrub(fd_thresh=1, std_dvars_thresh=5)
     conf.load(file_confounds)
     assert "motion_outlier_0" not in conf.columns_
 
+
 def test_AnatCompCor():
     """Test the AnatCompCor strategy."""
     # Try to load the confounds, whithout PCA reduction
     conf = lc.AnatCompCor()
     conf.load(file_confounds)
-
 
     assert isinstance(conf.confounds_, np.ndarray)
 
@@ -270,7 +268,6 @@ def test_AnatCompCor_not_combined():
     conf = lc.AnatCompCor(acompcor_combined=False)
     conf.load(file_confounds)
 
-
     assert isinstance(conf.confounds_, np.ndarray)
 
     list_check = [
@@ -310,7 +307,6 @@ def test_TempCompCor():
     conf = lc.TempCompCor()
     conf.load(file_confounds)
 
-
     assert isinstance(conf.confounds_, np.ndarray)
 
     list_check = [
@@ -334,7 +330,6 @@ def test_ICAAROMA():
     """Test the (non-aggressive) ICA-AROMA strategy."""
     conf = lc.ICAAROMA()
     conf.load(file_confounds)
-
 
     assert isinstance(conf.confounds_, np.ndarray)
 
