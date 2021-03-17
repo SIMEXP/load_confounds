@@ -13,7 +13,9 @@
       "contributions": [
         "infra",
         "code",
-        "review"
+        "review",
+        "test",
+        "data"
       ]
     },
     {
