@@ -1,6 +1,6 @@
 """Predefined denoising strategies.
 
-Authors: Hanad Sharmarke, Dr. Pierre Bellec, Francois Paugam
+Authors: load_confounds team
 """
 from .parser import Confounds
 
