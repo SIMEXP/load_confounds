@@ -59,38 +59,6 @@ def _simu_img(demean=True):
 
     return img, mask_conf, mask_rand, X
 
-def _simu_incomplete_confounds(params=None, keywords=None):
-    """Simulate a confounds dataframe without the specified params and keywords."""
-    params = params if params else []
-    keywords = keywords if keywords else []
-
-    complete_param_list = [
-        "csf", "csf_derivative1", "csf_derivative1_power2", "csf_power2",
-        "white_matter", "white_matter_derivative1", "white_matter_power2",
-        "white_matter_derivative1_power2", "global_signal",
-        "global_signal_derivative1", "global_signal_derivative1_power2",
-        "global_signal_power2", "std_dvars", "dvars", "framewise_displacement",
-        "t_comp_cor_00", "t_comp_cor_01", "t_comp_cor_02", "t_comp_cor_03",
-        "t_comp_cor_04", "a_comp_cor_00", "a_comp_cor_01", "a_comp_cor_02",
-        "a_comp_cor_03", "a_comp_cor_04", "cosine00", "cosine01", "cosine02",
-        "cosine03", "cosine04", "trans_x", "trans_x_derivative1",
-        "trans_x_derivative1_power2", "trans_x_power2", "trans_y",
-        "trans_y_derivative1", "trans_y_power2", "trans_y_derivative1_power2",
-        "trans_z", "trans_z_derivative1", "trans_z_derivative1_power2",
-        "trans_z_power2", "rot_x", "rot_x_derivative1",
-        "rot_x_derivative1_power2", "rot_x_power2", "rot_y",
-        "rot_y_derivative1", "rot_y_derivative1_power2", "rot_y_power2",
-        "rot_z", "rot_z_derivative1", "rot_z_derivative1_power2", "rot_z_power2"
-        ]
-
-    incomplete_param_list = [p for p in complete_param_list if not p in params]
-    for key in keywords:
-        incomplete_param_list = [p for p in incomplete_param_list if not key in p]
-
-    fake_data = np.random.randn(100, len(incomplete_param_list))
-    df = pd.DataFrame(columns=incomplete_param_list, data=fake_data)
-
-    return df
 
 def _tseries_std(img, mask_img, confounds, standardize):
     """Get the std of time series in a mask."""
@@ -309,33 +277,14 @@ def test_not_found_exception():
     conf = lc.Confounds(strategy=["high_pass", "motion", "compcor"],
                         compcor="anat", motion="full")
 
-    # test not found params
     missing_params = ['trans_y', 'trans_x_derivative1', 'rot_z_power2']
-    fake_confounds = _simu_incomplete_confounds(params=missing_params)
-    with pytest.raises(ValueError) as exc_info:
-        conf.load(fake_confounds)
-    err_msg = ("The parameters {} cannot be found in the ".format(missing_params)
-              +"available confounds. You may want to use a different denoising "
-              +"strategy.")
-    print(exc_info.value.args[0])
-    print(err_msg)
-    assert exc_info.value.args[0] == err_msg
-
-    # test not found keywords
     missing_keywords = ['cosine']
-    fake_confounds = _simu_incomplete_confounds(keywords=missing_keywords)
-    with pytest.raises(ValueError) as exc_info:
-        conf.load(fake_confounds)
-    err_msg = ("The keywords {} cannot be found in the ".format(missing_keywords)
-              +"available confounds. You may want to use a different denoising "
-              +"strategy.")
-    assert exc_info.value.args[0] == err_msg
 
-    # test not found params and keywords
-    fake_confounds = _simu_incomplete_confounds(params=missing_params,
-                                                keywords=missing_keywords)
+    file_missing_confounds = os.path.join(
+        path_data, "missing_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz"
+    )
     with pytest.raises(ValueError) as exc_info:
-        conf.load(fake_confounds)
+        conf.load(file_missing_confounds)
     err_msg = ("The parameters {} and the keywords {} cannot be found in the ".format(missing_params, missing_keywords)
               +"available confounds. You may want to use a different denoising "
               +"strategy.")
