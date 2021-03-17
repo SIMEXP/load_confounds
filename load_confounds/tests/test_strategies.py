@@ -14,7 +14,7 @@ def test_Params2():
     conf = lc.Params2()
     conf.load(file_confounds)
 
-    # Check that the confonds is a data frame
+
     assert isinstance(conf.confounds_, np.ndarray)
 
     # Check that all model categories have been successfully loaded
@@ -36,7 +36,7 @@ def test_Params6():
     conf = lc.Params6()
     conf.load(file_confounds)
 
-    # Check that the confonds is a data frame
+
     assert isinstance(conf.confounds_, np.ndarray)
 
     # Check that all model categories have been successfully loaded
@@ -65,7 +65,6 @@ def test_Params9():
     conf = lc.Params9()
     conf.load(file_confounds)
 
-    # Check that the confonds is a data frame
     assert isinstance(conf.confounds_, np.ndarray)
 
     # Check that all model categories have been successfully loaded
@@ -81,6 +80,34 @@ def test_Params9():
     for check in list_check:
         assert check in conf.columns_
 
+def test_Params9Scrub():
+    """Test the Params9Scrub strategy."""
+    # Try to load the confounds, whithout PCA reduction
+    conf = lc.Params9Scrub(fd_thresh=0.15)
+    conf.load(file_confounds)
+
+    assert isinstance(conf.confounds_, np.ndarray)
+
+    # Check that all model categories have been successfully loaded
+    list_check = [
+        "trans_y",
+        "trans_z",
+        "rot_z",
+        "cosine00",
+        "csf",
+        "white_matter",
+        "motion_outlier_0",
+        "motion_outlier_1",
+    ]
+    for check in list_check:
+        assert check in conf.columns_
+
+    # also load confounds with very liberal scrubbing thresholds
+    # this should not produce an error
+    conf = lc.Params9Scrub(fd_thresh=1, std_dvars_thresh=5)
+    conf.load(file_confounds)
+    assert "motion_outlier_0" not in conf.columns_
+
 
 def test_Params24():
     """Test the Params24 strategy."""
@@ -88,7 +115,6 @@ def test_Params24():
     conf = lc.Params24()
     conf.load(file_confounds)
 
-    # Check that the confonds is a data frame
     assert isinstance(conf.confounds_, np.ndarray)
 
     # Check that all model categories have been successfully loaded
@@ -113,11 +139,10 @@ def test_Params24():
 
 def test_Params36():
     """Test the Params36 strategy."""
-    # Try to load the confounds, whithout PCA reduction
+    # Try to load the confounds
     conf = lc.Params36()
     conf.load(file_confounds)
 
-    # Check that the confonds is a data frame
     assert isinstance(conf.confounds_, np.ndarray)
 
     # Check that all model categories have been successfully loaded
@@ -154,13 +179,58 @@ def test_Params36():
         assert check in conf.columns_
 
 
+def test_Params36Scrub():
+    """Test the Params36Scrub strategy."""
+    conf = lc.Params36Scrub(fd_thresh=0.15)
+    conf.load(file_confounds)
+
+    assert isinstance(conf.confounds_, np.ndarray)
+
+    # Check that all model categories have been successfully loaded
+    list_check = [
+        "trans_x",
+        "trans_y",
+        "rot_z",
+        "trans_x_derivative1",
+        "trans_x_power2",
+        "trans_x_derivative1_power2",
+        "trans_y_derivative1",
+        "trans_y_power2",
+        "trans_y_derivative1_power2",
+        "trans_z_derivative1",
+        "trans_z_power2",
+        "rot_z_derivative1",
+        "rot_z_power2",
+        "rot_z_derivative1_power2",
+        "cosine00",
+        "cosine01",
+        "csf",
+        "white_matter",
+        "csf_derivative1",
+        "csf_power2",
+        "csf_derivative1_power2",
+        "white_matter_derivative1",
+        "motion_outlier_0",
+        "motion_outlier_1",
+    ]
+
+    for check in list_check:
+        assert check in conf.columns_
+
+
+    # also load confounds with very liberal scrubbing thresholds
+    # this should not produce an error
+    conf = lc.Params36Scrub(fd_thresh=1, std_dvars_thresh=5)
+    conf.load(file_confounds)
+    assert "motion_outlier_0" not in conf.columns_
+
 def test_AnatCompCor():
     """Test the AnatCompCor strategy."""
     # Try to load the confounds, whithout PCA reduction
     conf = lc.AnatCompCor()
     conf.load(file_confounds)
 
-    # Check that the confonds is a data frame
+
     assert isinstance(conf.confounds_, np.ndarray)
 
     list_check = [
@@ -200,7 +270,7 @@ def test_AnatCompCor_not_combined():
     conf = lc.AnatCompCor(acompcor_combined=False)
     conf.load(file_confounds)
 
-    # Check that the confonds is a data frame
+
     assert isinstance(conf.confounds_, np.ndarray)
 
     list_check = [
@@ -240,7 +310,7 @@ def test_TempCompCor():
     conf = lc.TempCompCor()
     conf.load(file_confounds)
 
-    # Check that the confonds is a data frame
+
     assert isinstance(conf.confounds_, np.ndarray)
 
     list_check = [
@@ -265,7 +335,7 @@ def test_ICAAROMA():
     conf = lc.ICAAROMA()
     conf.load(file_confounds)
 
-    # Check that the confonds is a data frame
+
     assert isinstance(conf.confounds_, np.ndarray)
 
     # Check that all fixed name model categories have been successfully loaded

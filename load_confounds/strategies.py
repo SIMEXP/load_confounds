@@ -99,6 +99,47 @@ class Params9(Confounds):
         self.demean = demean
 
 
+class Params9Scrub(Confounds):
+    """
+    Load confounds using a variant of the 9P strategy from Ciric et al. 2017.
+    Basic motion parameters, WM/CSF signals, scrubbbing (full) and high pass filter.
+
+    Parameters
+    ----------
+    confounds_raw : Pandas Dataframe or path to tsv file(s), optionally as a list.
+        Raw confounds from fmriprep
+
+    fd_thresh : float, optional
+        Framewise displacement threshold for scrub (default = 0.2 mm)
+
+    std_dvars_thresh : float, optional
+        Standardized DVARS threshold for scrub (default = 3)
+
+    demean : boolean, optional
+        If True, the confounds are standardized to a zero mean (over time).
+        This step is critical if the confounds are regressed out of time series
+        using nilearn with no or zscore standardization, but should be turned off
+        with "spc" normalization.
+
+    Returns
+    -------
+    conf :  a Confounds object
+        conf.confounds_ is a reduced version of fMRIprep confounds.
+
+    """
+
+    def __init__(self, fd_thresh=0.2, std_dvars_thresh=3, demean=True):
+        """Default parameters."""
+        self.strategy = ["high_pass", "motion", "wm_csf", "scrub"]
+        self.motion = "basic"
+        self.n_motion = 0
+        self.wm_csf = "basic"
+        self.scrub="full",
+        self.fd_thresh=fd_thresh,
+        self.std_dvars_thresh=std_dvars_thresh,
+        self.demean = demean
+
+
 class Params24(Confounds):
     """
     Load confounds using the 24P strategy from Ciric et al. 2017.
@@ -163,6 +204,49 @@ class Params36(Confounds):
         self.n_motion = 0
         self.wm_csf = "full"
         self.global_signal = "full"
+        self.demean = demean
+
+
+class Params36Scrub(Confounds):
+    """
+    Load confounds using a variant of the 36P strategy from Ciric et al. 2017.
+    Motion parameters, WM/CSF signals, scrub (full), high pass filter.
+    All noise components are fully expanded (derivatives, squares and squared
+    derivatives).
+
+    Parameters
+    ----------
+    confounds_raw : Pandas Dataframe or path to tsv file(s), optionally as a list.
+        Raw confounds from fmriprep
+
+    fd_thresh : float, optional
+        Framewise displacement threshold for scrub (default = 0.2 mm)
+
+    std_dvars_thresh : float, optional
+        Standardized DVARS threshold for scrub (default = 3)
+
+    demean : boolean, optional
+        If True, the confounds are standardized to a zero mean (over time).
+        This step is critical if the confounds are regressed out of time series
+        using nilearn with no or zscore standardization, but should be turned off
+        with "spc" normalization.
+
+    Returns
+    -------
+    conf :  a Confounds object
+        conf.confounds_ is a reduced version of fMRIprep confounds.
+
+    """
+
+    def __init__(self, fd_thresh=0.2, std_dvars_thresh=3, demean=True):
+        """Default parameters."""
+        self.strategy = ["high_pass", "motion", "wm_csf", "scrub"]
+        self.motion = "full"
+        self.n_motion = 0
+        self.wm_csf = "full"
+        self.scrub = "full"
+        self.fd_thresh=fd_thresh,
+        self.std_dvars_thresh=std_dvars_thresh,
         self.demean = demean
 
 
