@@ -22,7 +22,7 @@ confounds = Params36().load(file)
 
 # Use the confounds in a nilearn maker 
 masker = NiftiMasker(smoothing_fwhm=5, standardize=True)
-img = masker.transform(file, confounds=confounds)
+img = masker.fit_transform(file, confounds=confounds)
 ```
 It is also possible to fine-tune a subset of noise components and their parameters:
 ```python
