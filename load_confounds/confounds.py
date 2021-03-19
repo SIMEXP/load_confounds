@@ -74,7 +74,7 @@ def _optimize_scrub(fd_outliers, n_scans):
     return fd_outliers
 
 
-def _confounds_to_df(confounds_raw):
+def _confounds_to_df(confounds_raw, flag_acompcor):
     """Load raw confounds as a pandas DataFrame."""
     if "nii" in confounds_raw[-6:]:
         suffix = "_space-" + confounds_raw.split("space-")[1]
@@ -88,8 +88,15 @@ def _confounds_to_df(confounds_raw):
             )
 
     # Load JSON file
-    with open(confounds_raw.replace("tsv", "json"), "rb") as f:
-        confounds_json = json.load(f)
+    confounds_json = confounds_raw.replace("tsv", "json")
+    try:
+        with open(confounds_json, "rb") as f:
+            confounds_json = json.load(f)
+    except:
+        if flag_acompcor:
+            raise ValueError(
+                f"Could not find a json file {confounds_json}. This is necessary for anat compcor"
+            )
 
     confounds_raw = pd.read_csv(confounds_raw, delimiter="\t", encoding="utf-8")
 

@@ -307,7 +307,8 @@ class Confounds:
     def _load_single(self, confounds_raw):
         """Load a single confounds file from fmriprep."""
         # Convert tsv file to pandas dataframe
-        confounds_raw, self.json_ = cf._confounds_to_df(confounds_raw)
+        flag_acompcor = ("compcor" in self.strategy) and (self.compcor == "anat")
+        confounds_raw, self.json_ = cf._confounds_to_df(confounds_raw, flag_acompcor)
 
         confounds = pd.DataFrame()
         not_found_conf = []
