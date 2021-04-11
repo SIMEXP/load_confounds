@@ -111,16 +111,11 @@ def _sanitize_strategy(strategy):
 def _check_error(missing_confounds, missing_keys):
     """Consolidate a single error message across multiple missing confounds."""
     if missing_confounds or missing_keys:
-        conf_str = f"parameters {missing_confounds} " if missing_confounds else ""
-        and_str = "and the " if missing_confounds and missing_keys else ""
-        keys_str = f"keywords {missing_keys} " if missing_keys else ""
         error_msg = (
-            "The "
-            + conf_str
-            + and_str
-            + keys_str
-            + "cannot be found in the available confounds. You may "
-            + "want to use a different denoising strategy."
+            "The following keys or parameters are missing: "
+            + f" {missing_confounds}"
+            + f" {missing_keys}"
+            + ". You may want to try a different denoising strategy."
         )
         raise ValueError(error_msg)
 
