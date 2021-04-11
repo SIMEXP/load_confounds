@@ -25,14 +25,14 @@ def _check_params(confounds_raw, params):
         if not par in confounds_raw.columns:
             not_found_params.append(par)
     if not_found_params:
-        raise ConfoundNotFoundException(params=not_found_params)
+        raise MissingConfound(params=not_found_params)
     return None
 
 
 def _find_confounds(confounds_raw, keywords):
     """Find confounds that contain certain keywords."""
     list_confounds = []
-    not_found_keys = []
+    missing_keys = []
     for key in keywords:
         key_found = False
         for col in confounds_raw.columns:
@@ -40,9 +40,9 @@ def _find_confounds(confounds_raw, keywords):
                 list_confounds.append(col)
                 key_found = True
         if not key_found:
-            not_found_keys.append(key)
-    if not_found_keys:
-        raise ConfoundNotFoundException(keywords=not_found_keys)
+            missing_keys.append(key)
+    if missing_keys:
+        raise MissingConfound(keywords=missing_keys)
     return list_confounds
 
 
@@ -108,23 +108,24 @@ def _sanitize_strategy(strategy):
     return strategy
 
 
-def _raise_conf_not_found_error(not_found_conf, not_found_keys):
+def _check_error(missing_confounds, missing_keys):
     """Consolidate a single error message across multiple missing confounds."""
-    conf_str = f"parameters {not_found_conf} " if not_found_conf else ""
-    and_str = "and the " if not_found_conf and not_found_keys else ""
-    keys_str = f"keywords {not_found_keys} " if not_found_keys else ""
-    error_msg = (
-        "The "
-        + conf_str
-        + and_str
-        + keys_str
-        + "cannot be found in the available confounds. You may "
-        + "want to use a different denoising strategy."
-    )
-    raise ValueError(error_msg)
+    if missing_confounds or missing_keys:
+        conf_str = f"parameters {missing_confounds} " if missing_confounds else ""
+        and_str = "and the " if missing_confounds and missing_keys else ""
+        keys_str = f"keywords {missing_keys} " if missing_keys else ""
+        error_msg = (
+            "The "
+            + conf_str
+            + and_str
+            + keys_str
+            + "cannot be found in the available confounds. You may "
+            + "want to use a different denoising strategy."
+        )
+        raise ValueError(error_msg)
 
 
-class ConfoundNotFoundException(Exception):
+class MissingConfound(Exception):
     """
     Exception raised when failing to find params in the confounds.
 
@@ -316,12 +317,9 @@ class Confounds:
 
         for confound in self.strategy:
             loaded_confounds = self._load_confound(confounds_raw, confound)
-            if not loaded_confounds.empty:
-                confounds = pd.concat([confounds, loaded_confounds], axis=1)
+            confounds = pd.concat([confounds, loaded_confounds], axis=1)
 
-        if self.missing_confounds_ or self.missing_keys_:
-            _raise_conf_not_found_error(self.missing_confounds_, self.missing_keys_)
-
+        _check_error(self.missing_confounds_, self.missing_keys_)
         confounds, labels = cf._confounds_to_ndarray(confounds, self.demean)
         return confounds, labels
 
@@ -329,7 +327,7 @@ class Confounds:
         """Load a single type of confound."""
         try:
             loaded_confounds = getattr(self, f"_load_{confound}")(confounds_raw)
-        except ConfoundNotFoundException as exception:
+        except MissingConfound as exception:
             self.missing_confounds_ += exception.params
             self.missing_keys_ += exception.keywords
             loaded_confounds = pd.DataFrame()
