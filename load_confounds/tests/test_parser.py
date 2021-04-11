@@ -275,7 +275,7 @@ def test_n_motion():
 def test_not_found_exception():
 
     conf = lc.Confounds(
-        strategy=["high_pass", "motion", "compcor"], compcor="anat", motion="full"
+        strategy=["high_pass", "motion", "global"], global_signal="full", motion="full"
     )
 
     missing_params = ["trans_y", "trans_x_derivative1", "rot_z_power2"]
@@ -286,14 +286,14 @@ def test_not_found_exception():
     )
     with pytest.raises(ValueError) as exc_info:
         conf.load(file_missing_confounds)
-    err_msg = (
-        "The parameters {} and the keywords {} cannot be found in the ".format(
-            missing_params, missing_keywords
-        )
-        + "available confounds. You may want to use a different denoising "
-        + "strategy."
-    )
-    assert exc_info.value.args[0] == err_msg
+    assert f"{missing_params}" in exc_info.value.args[0]
+    assert f"{missing_keywords}" in exc_info.value.args[0]
+
+    # loading anat compcor should also raise an error, because the json file is
+    # missing for that example dataset
+    with pytest.raises(ValueError):
+        conf = lc.Confounds(strategy=["compcor"], compcor="anat")
+        conf.load(file_missing_confounds)
 
 
 def test_ica_aroma():

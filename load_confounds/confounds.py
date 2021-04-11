@@ -74,8 +74,8 @@ def _optimize_scrub(fd_outliers, n_scans):
     return fd_outliers
 
 
-def _confounds_to_df(confounds_raw):
-    """Load raw confounds as a pandas DataFrame."""
+def _get_file_raw(confounds_raw):
+    """Get the name of the raw confound file."""
     if "nii" in confounds_raw[-6:]:
         suffix = "_space-" + confounds_raw.split("space-")[1]
         confounds_raw = confounds_raw.replace(suffix, "_desc-confounds_timeseries.tsv",)
@@ -86,13 +86,29 @@ def _confounds_to_df(confounds_raw):
             confounds_raw = confounds_raw.replace(
                 "_desc-confounds_timeseries.tsv", "_desc-confounds_regressors.tsv",
             )
+    return confounds_raw
 
+
+def _get_json(confounds_raw, flag_acompcor):
+    """Load json data companion to the confounds tsv file."""
     # Load JSON file
-    with open(confounds_raw.replace("tsv", "json"), "rb") as f:
-        confounds_json = json.load(f)
+    confounds_json = confounds_raw.replace("tsv", "json")
+    try:
+        with open(confounds_json, "rb") as f:
+            confounds_json = json.load(f)
+    except OSError:
+        if flag_acompcor:
+            raise ValueError(
+                f"Could not find a json file {confounds_json}. This is necessary for anat compcor"
+            )
+    return confounds_json
 
+
+def _confounds_to_df(confounds_raw, flag_acompcor):
+    """Load raw confounds as a pandas DataFrame."""
+    confounds_raw = _get_file_raw(confounds_raw)
+    confounds_json = _get_json(confounds_raw, flag_acompcor)
     confounds_raw = pd.read_csv(confounds_raw, delimiter="\t", encoding="utf-8")
-
     return confounds_raw, confounds_json
 
 
