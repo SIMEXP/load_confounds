@@ -92,7 +92,7 @@ def _confounds_to_df(confounds_raw, flag_acompcor):
     try:
         with open(confounds_json, "rb") as f:
             confounds_json = json.load(f)
-    except:
+    except OSError as e:
         if flag_acompcor:
             raise ValueError(
                 f"Could not find a json file {confounds_json}. This is necessary for anat compcor"
