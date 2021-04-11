@@ -289,6 +289,8 @@ class Confounds:
         confounds_raw, flag_single = _sanitize_confounds(confounds_raw)
         confounds_out = []
         columns_out = []
+        self.missing_confounds_ = []
+        self.missing_keys_ = []
         for file in confounds_raw:
             conf, col = self._load_single(file)
             confounds_out.append(conf)
@@ -311,22 +313,27 @@ class Confounds:
         confounds_raw, self.json_ = cf._confounds_to_df(confounds_raw, flag_acompcor)
 
         confounds = pd.DataFrame()
-        not_found_conf = []
-        not_found_keys = []
 
         for confound in self.strategy:
-            try:
-                loaded_confounds = getattr(self, f"_load_{confound}")(confounds_raw)
+            loaded_confounds = self._load_confound(confounds_raw, confound)
+            if not loaded_confounds.empty:
                 confounds = pd.concat([confounds, loaded_confounds], axis=1)
-            except ConfoundNotFoundException as exception:
-                not_found_conf += exception.params
-                not_found_keys += exception.keywords
 
-        if not_found_conf or not_found_keys:
-            _raise_conf_not_found_error(not_found_conf, not_found_keys)
+        if self.missing_confounds_ or self.missing_keys_:
+            _raise_conf_not_found_error(self.missing_confounds_, self.missing_keys_)
 
         confounds, labels = cf._confounds_to_ndarray(confounds, self.demean)
         return confounds, labels
+
+    def _load_confound(self, confounds_raw, confound):
+        """Load a single type of confound."""
+        try:
+            loaded_confounds = getattr(self, f"_load_{confound}")(confounds_raw)
+        except ConfoundNotFoundException as exception:
+            self.missing_confounds_ += exception.params
+            self.missing_keys_ += exception.keywords
+            loaded_confounds = pd.DataFrame()
+        return loaded_confounds
 
     def _load_motion(self, confounds_raw):
         """Load the motion regressors."""
