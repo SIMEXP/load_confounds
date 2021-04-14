@@ -377,7 +377,7 @@ class ICAAROMA(Confounds):
     Notes
     -----
     fMRIprep documentation on ICA-AROMA
-    https://fmriprep.org/en/latest/workflows.html?highlight=aggressive#ica-aroma
+    https://fmriprep.org/en/latest/workflows.html#ica-aroma
 
     For more discussion regarding choosing the nuisance regressors before or 
     after denoising with ICA-AROMA has a detriment on outcome measures, 
@@ -441,7 +441,7 @@ class AROMAGSR(Confounds):
     Notes
     -----
     fMRIprep documentation on ICA-AROMA
-    https://fmriprep.org/en/latest/workflows.html?highlight=aggressive#ica-aroma
+    https://fmriprep.org/en/latest/workflows.html#ica-aroma
 
     For more discussion regarding choosing the nuisance regressors before or 
     after denoising with ICA-AROMA has a detriment on outcome measures, 
@@ -496,12 +496,7 @@ class AggrICAAROMA(Confounds):
     Notes
     -----
     fMRIprep documentation on ICA-AROMA
-    https://fmriprep.org/en/latest/workflows.html?highlight=aggressive#ica-aroma
-
-    For more discussion regarding choosing the nuisance regressors before or 
-    after denoising with ICA-AROMA has a detriment on outcome measures, 
-    please see notebook 5.
-    https://github.com/nipreps/fmriprep-notebooks/
+    https://fmriprep.org/en/latest/workflows.html#ica-aroma
 
     """
 
