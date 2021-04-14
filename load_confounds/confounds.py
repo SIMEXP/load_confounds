@@ -11,6 +11,85 @@ import os
 import json
 
 
+def _check_params(confounds_raw, params):
+    """Check that specified parameters can be found in the confounds."""
+    not_found_params = []
+    for par in params:
+        if not par in confounds_raw.columns:
+            not_found_params.append(par)
+    if not_found_params:
+        raise MissingConfound(params=not_found_params)
+    return None
+
+
+def _find_confounds(confounds_raw, keywords):
+    """Find confounds that contain certain keywords."""
+    list_confounds = []
+    missing_keys = []
+    for key in keywords:
+        key_found = False
+        for col in confounds_raw.columns:
+            if key in col:
+                list_confounds.append(col)
+                key_found = True
+        if not key_found:
+            missing_keys.append(key)
+    if missing_keys:
+        raise MissingConfound(keywords=missing_keys)
+    return list_confounds
+
+
+def _select_compcor(compcor_cols, n_compcor, compcor_mask):
+    """Retain a specified number of compcor components."""
+    # only select if not "auto", or less components are requested than there actually is
+    if (n_compcor != "auto") and (n_compcor < len(compcor_cols)):
+        compcor_cols = compcor_cols[0:n_compcor]
+    return compcor_cols
+
+
+def _find_compcor(confounds_json, prefix, n_compcor, compcor_mask):
+    """Builds list for the number of compcor components."""
+    # all possible compcor confounds, mixing different types of mask
+    all_compcor = [
+        comp for comp in confounds_json.keys() if f"{prefix}_comp_cor" in comp
+    ]
+
+    # loop and only retain the relevant confounds
+    compcor_cols = []
+    for nn in range(len(all_compcor)):
+        nn_str = str(nn).zfill(2)
+        compcor_col = f"{prefix}_comp_cor_{nn_str}"
+        if (prefix == "t") or (
+            (prefix == "a") and (confounds_json[compcor_col]["Mask"] == compcor_mask)
+        ):
+            compcor_cols.append(compcor_col)
+
+    return _select_compcor(compcor_cols, n_compcor, compcor_mask)
+
+
+def _find_acompcor(confounds_json, n_compcor, acompcor_combined):
+    """Helper function dedicated to anat compcor."""
+    if acompcor_combined:
+        compcor_cols = _find_compcor(confounds_json, "a", n_compcor, "combined")
+    else:
+        compcor_cols = _find_compcor(confounds_json, "a", n_compcor, "WM")
+        compcor_cols.extend(_find_compcor(confounds_json, "a", n_compcor, "CSF"))
+    return compcor_cols
+
+
+def _sanitize_confounds(confounds_raw):
+    """Make sure the inputs are in the correct format."""
+    # we want to support loading a single set of confounds, instead of a list
+    # so we hack it
+    flag_single = isinstance(confounds_raw, str) or isinstance(
+        confounds_raw, pd.DataFrame
+    )
+    if flag_single:
+        confounds_raw = [confounds_raw]
+
+    return confounds_raw, flag_single
+
+
 def _add_suffix(params, model):
     """
     Add suffixes to a list of parameters.
@@ -129,3 +208,19 @@ def _confounds_to_ndarray(confounds, demean):
         confounds = scale(confounds, axis=0, with_std=False)
 
     return confounds, labels
+
+
+class MissingConfound(Exception):
+    """
+    Exception raised when failing to find params in the confounds.
+
+    Parameters
+    ----------
+        params : list of missing params
+        keywords: list of missing keywords
+    """
+
+    def __init__(self, params=None, keywords=None):
+        """Default values are empty lists."""
+        self.params = params if params else []
+        self.keywords = keywords if keywords else []
