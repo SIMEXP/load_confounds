@@ -11,7 +11,7 @@ from nilearn.input_data import NiftiMasker
 
 
 path_data = os.path.join(os.path.dirname(lc.__file__), "data")
-file_confounds = os.path.join(path_data, "test_desc-confounds_regressors.tsv")
+file_confounds = os.path.join(path_data, "test_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz")
 
 
 def _simu_img(demean=True):
@@ -284,16 +284,18 @@ def test_not_found_exception():
     file_missing_confounds = os.path.join(
         path_data, "missing_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz"
     )
+
     with pytest.raises(ValueError) as exc_info:
         conf.load(file_missing_confounds)
     assert f"{missing_params}" in exc_info.value.args[0]
     assert f"{missing_keywords}" in exc_info.value.args[0]
 
-    no_nifti = os.path.join(
-        path_data, "nonifti_desc-confounds_regressors.tsv"
+    # nifti with no associated confound file
+    no_confound = os.path.join(
+        path_data, "noconfound_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz"
     )
     with pytest.raises(ValueError):
-        conf.load(no_nifti)
+        conf.load(no_confound)
 
     # loading anat compcor should also raise an error, because the json file is
     # missing for that example dataset
@@ -306,13 +308,39 @@ def test_not_found_exception():
         conf = lc.Confounds(strategy=["ica_aroma"], ica_aroma="basic")
         conf.load(file_missing_confounds)
 
-    # Aggressive ICA-AROMA strategy requires nifti file
+    # non aggressive ICA-AROMA strategy requires desc-smoothAROMAnonaggr nifti file
     with pytest.raises(ValueError):
         conf = lc.Confounds(strategy=["ica_aroma"], ica_aroma="full")
         conf.load(file_missing_confounds)
 
 
+def test_invalid_input():
+    """test non-nifti and invalid file type as input"""
+    conf = lc.Confounds()
+    # invalid fmriprep version: contain confound files before and after v20.2.0
+    invalid_ver = os.path.join(
+        path_data, "invalid_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz"
+    )
+    with pytest.raises(ValueError):
+        conf.load(invalid_ver)
+
+    # tsv file
+    tsv = os.path.join(
+        path_data, "test_desc-confounds_regressors.tsv"
+    )
+    with pytest.raises(ValueError):
+        conf.load(tsv)
+
+    # cifti file should be supported
+    cifti = os.path.join(
+        path_data, "test_space-fsLR_den-91k_bold.dtseries.nii"
+    )
+    conf.load(cifti)
+    assert conf.confounds_.size != 0
+
+
 def test_ica_aroma():
+    """test ICA AROMA related file input"""
     # Agressive strategy
     conf = lc.Confounds(strategy=["ica_aroma"], ica_aroma="basic")
     conf.load(file_confounds)
@@ -320,8 +348,11 @@ def test_ica_aroma():
         assert re.match("aroma_motion_+", col_name)
 
     # Non-agressive strategy
+    aroma_nii = os.path.join(
+        path_data, "test_space-MNI152NLin2009cAsym_desc-smoothAROMAnonaggr_bold.nii.gz"
+    )
     conf = lc.Confounds(strategy=["ica_aroma"], ica_aroma="full")
-    conf.load(file_confounds)
+    conf.load(aroma_nii)
     assert conf.confounds_.size == 0
 
     # invalid combination of strategy and option

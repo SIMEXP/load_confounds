@@ -279,8 +279,8 @@ class Confounds:
 
         Parameters
         ----------
-        confounds_raw : path to tsv or nii file(s), optionally as a list.
-            Raw confounds from fmriprep. If a nii is provided, the companion
+        confounds_raw : path to nii file(s), optionally as a list.
+            Processed nifti/cifti file from fmriprep. The companion
             tsv will be automatically detected.
 
         Returns

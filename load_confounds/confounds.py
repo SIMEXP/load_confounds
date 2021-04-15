@@ -2,6 +2,7 @@
 
 Authors: load_confounds team
 """
+from _pytest.python_api import raises
 import numpy as np
 import pandas as pd
 from sklearn.decomposition import PCA
@@ -10,10 +11,11 @@ import warnings
 import os
 import json
 import glob
+import re
 
 
 img_file_patern = "_space-*_bold.*nii*"
-aroma_keword = "_desc-smoothAROMAnonaggr_bold.nii.gz"
+aroma_keword = "_desc-smoothAROMAnonaggr_bold"
 
 def _add_suffix(params, model):
     """
@@ -78,19 +80,27 @@ def _optimize_scrub(fd_outliers, n_scans):
     return fd_outliers
 
 
-def _get_file_raw(confounds_raw):
+def _get_file_raw(nii_file):
     """Get the name of the raw confound file."""
-    if "nii" in confounds_raw[-6:]:
-        suffix = "_space-" + confounds_raw.split("space-")[1]
-        confounds_raw = confounds_raw.replace(suffix, "_desc-confounds_timeseries.tsv",)
-        # fmriprep has changed the file suffix between v20.1.1 and v20.2.0 with respect to BEP 012.
-        # cf. https://neurostars.org/t/naming-change-confounds-regressors-to-confounds-timeseries/17637
-        # Check file with new naming scheme exists or replace, for backward compatibility.
-        if not os.path.exists(confounds_raw):
-            confounds_raw = confounds_raw.replace(
-                "_desc-confounds_timeseries.tsv", "_desc-confounds_regressors.tsv",
-            )
-    return confounds_raw
+    suffix = "_space-" + nii_file.split("space-")[1]
+    # fmriprep has changed the file suffix between v20.1.1 and v20.2.0 with respect to BEP 012.
+    # cf. https://neurostars.org/t/naming-change-confounds-regressors-to-confounds-timeseries/17637
+    # Check file with new naming scheme exists or replace, for backward compatibility.
+    confounds_raw_candidates = [
+        nii_file.replace(suffix, "_desc-confounds_timeseries.tsv",),
+        nii_file.replace(suffix, "_desc-confounds_regressors.tsv",)
+        ]
+
+    confounds_raw = []
+    for cr in confounds_raw_candidates:
+        if os.path.exists(cr):
+            confounds_raw.append(cr)
+    if not confounds_raw:
+        raise ValueError("Could not find associated confound file.")
+    elif len(confounds_raw) != 1:
+        raise ValueError("Found more than one confound file.")
+    else:
+        return confounds_raw[0]
 
 
 def _get_json(confounds_raw, flag_acompcor):
@@ -108,23 +118,20 @@ def _get_json(confounds_raw, flag_acompcor):
     return confounds_json
 
 
-def _check_images(confounds_raw, flag_full_aroma):
-    """Get names of the relevant nifti/cifti files and ICA AROMA related files"""
-    confounds_raw = _get_file_raw(confounds_raw)
-    specifiler = confounds_raw.split("_desc-confounds")[0]
-    pattern = f"{specifiler}{img_file_patern}"
-    files = glob.glob(pattern)
-    aroma_relevant = [f for f in files if aroma_keword in f]
-    if not files:
-        raise ValueError(f"Could not find any imaging files associated with {confounds_raw} in the same directory.")
+def _check_images(nii_file, flag_full_aroma):
+    """Validate input nifti/cifti files and ICA AROMA related files"""
+    aroma_relevant = (aroma_keword in nii_file)
     if flag_full_aroma and not aroma_relevant:
-        raise ValueError(f"Missing ~desc-smoothAROMAnonaggr_bold.nii.gz for ICA-AROMA based strategy.")
-    return confounds_raw
+        raise ValueError(f"Input must be ~desc-smoothAROMAnonaggr_bold for ICA-AROMA based strategy.")
+    valid_nii = re.search("_bold.*.nii.*", nii_file)
+    if not valid_nii:
+        raise ValueError(f"Input {nii_file} is not a fMRIprep processed functional image file.")
 
 
-def _confounds_to_df(confounds_raw, flag_acompcor, flag_full_aroma):
+def _confounds_to_df(nii_file, flag_acompcor, flag_full_aroma):
     """Load raw confounds as a pandas DataFrame."""
-    confounds_raw = _check_images(confounds_raw, flag_full_aroma)
+    _check_images(nii_file, flag_full_aroma)
+    confounds_raw = _get_file_raw(nii_file)
     confounds_json = _get_json(confounds_raw, flag_acompcor)
     confounds_raw = pd.read_csv(confounds_raw, delimiter="\t", encoding="utf-8")
     return confounds_raw, confounds_json

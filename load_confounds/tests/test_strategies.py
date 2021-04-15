@@ -5,7 +5,8 @@ import load_confounds.strategies as lc
 import numpy as np
 
 path_data = os.path.join(os.path.dirname(lc.__file__), "data")
-file_confounds = os.path.join(path_data, "test_desc-confounds_regressors.tsv")
+file_confounds = os.path.join(path_data, "test_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz")
+file_aroma = os.path.join(path_data, "test_space-MNI152NLin2009cAsym_desc-smoothAROMAnonaggr_bold.nii.gz")
 
 
 def test_Params2():
@@ -329,7 +330,7 @@ def test_TempCompCor():
 def test_ICAAROMA():
     """Test the (non-aggressive) ICA-AROMA strategy."""
     conf = lc.ICAAROMA()
-    conf.load(file_confounds)
+    conf.load(file_aroma)
 
     assert isinstance(conf.confounds_, np.ndarray)
 
@@ -350,7 +351,7 @@ def test_ICAAROMA():
 def test_AROMAGSR():
     """Test the (non-aggressive) AROMA-GSR strategy."""
     conf = lc.AROMAGSR()
-    conf.load(file_confounds)
+    conf.load(file_aroma)
 
     # Check that all fixed name model categories have been successfully loaded
     list_check = [
