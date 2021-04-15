@@ -108,28 +108,23 @@ def _get_json(confounds_raw, flag_acompcor):
     return confounds_json
 
 
-def _check_aroma(files):
-    """Check if the ICA-AROMA nifti output exist"""
-    aroma_relevant = [f for f in files if aroma_keword in f]
-    if not aroma_relevant:
-        raise ValueError(f"Missing ~desc-smoothAROMAnonaggr_bold.nii.gz for ICA-AROMA based strategy.")
-
-
 def _check_images(confounds_raw, flag_full_aroma):
     """Get names of the relevant nifti/cifti files and ICA AROMA related files"""
     confounds_raw = _get_file_raw(confounds_raw)
     specifiler = confounds_raw.split("_desc-confounds")[0]
     pattern = f"{specifiler}{img_file_patern}"
     files = glob.glob(pattern)
+    aroma_relevant = [f for f in files if aroma_keword in f]
     if not files:
         raise ValueError(f"Could not find any imaging files associated with {confounds_raw} in the same directory.")
-    if flag_full_aroma:
-        _check_aroma(files)
+    if flag_full_aroma and not aroma_relevant:
+        raise ValueError(f"Missing ~desc-smoothAROMAnonaggr_bold.nii.gz for ICA-AROMA based strategy.")
     return confounds_raw
 
 
-def _confounds_to_df(confounds_raw, flag_acompcor):
+def _confounds_to_df(confounds_raw, flag_acompcor, flag_full_aroma):
     """Load raw confounds as a pandas DataFrame."""
+    confounds_raw = _check_images(confounds_raw, flag_full_aroma)
     confounds_json = _get_json(confounds_raw, flag_acompcor)
     confounds_raw = pd.read_csv(confounds_raw, delimiter="\t", encoding="utf-8")
     return confounds_raw, confounds_json

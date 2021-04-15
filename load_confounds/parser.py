@@ -316,8 +316,7 @@ class Confounds:
         # Convert tsv file to pandas dataframe
         flag_acompcor = ("compcor" in self.strategy) and (self.compcor == "anat")
         flag_full_aroma = ("ica_aroma" in self.strategy) and (self.ica_aroma == "full")
-        confounds_raw = cf._check_images(confounds_raw, flag_full_aroma)
-        confounds_raw, self.json_ = cf._confounds_to_df(confounds_raw, flag_acompcor)
+        confounds_raw, self.json_ = cf._confounds_to_df(confounds_raw, flag_acompcor, flag_full_aroma)
 
         confounds = pd.DataFrame()
 
