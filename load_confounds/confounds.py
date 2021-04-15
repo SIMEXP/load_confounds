@@ -9,7 +9,11 @@ from sklearn.preprocessing import scale
 import warnings
 import os
 import json
+import glob
 
+
+img_file_patern = "_space-*_bold.*nii*"
+aroma_keword = "_desc-smoothAROMAnonaggr_bold.nii.gz"
 
 def _add_suffix(params, model):
     """
@@ -104,9 +108,28 @@ def _get_json(confounds_raw, flag_acompcor):
     return confounds_json
 
 
+def _check_aroma(files):
+    """Check if the ICA-AROMA nifti output exist"""
+    aroma_relevant = [f for f in files if aroma_keword in f]
+    if not aroma_relevant:
+        raise ValueError(f"Missing ~desc-smoothAROMAnonaggr_bold.nii.gz for ICA-AROMA based strategy.")
+
+
+def _check_images(confounds_raw, flag_full_aroma):
+    """Get names of the relevant nifti/cifti files and ICA AROMA related files"""
+    confounds_raw = _get_file_raw(confounds_raw)
+    specifiler = confounds_raw.split("_desc-confounds")[0]
+    pattern = f"{specifiler}{img_file_patern}"
+    files = glob.glob(pattern)
+    if not files:
+        raise ValueError(f"Could not find any imaging files associated with {confounds_raw} in the same directory.")
+    if flag_full_aroma:
+        _check_aroma(files)
+    return confounds_raw
+
+
 def _confounds_to_df(confounds_raw, flag_acompcor):
     """Load raw confounds as a pandas DataFrame."""
-    confounds_raw = _get_file_raw(confounds_raw)
     confounds_json = _get_json(confounds_raw, flag_acompcor)
     confounds_raw = pd.read_csv(confounds_raw, delimiter="\t", encoding="utf-8")
     return confounds_raw, confounds_json
@@ -121,11 +144,12 @@ def _confounds_to_ndarray(confounds, demean):
     # Derivatives have NaN on the first row
     # Replace them by estimates at second time point,
     # otherwise nilearn will crash.
-    mask_nan = np.isnan(confounds[0, :])
-    confounds[0, mask_nan] = confounds[1, mask_nan]
+    if confounds.size != 0:  # ica_aroma = "full" generate empty output
+        mask_nan = np.isnan(confounds[0, :])
+        confounds[0, mask_nan] = confounds[1, mask_nan]
 
-    # Optionally demean confounds
-    if demean:
-        confounds = scale(confounds, axis=0, with_std=False)
+        # Optionally demean confounds
+        if demean:
+            confounds = scale(confounds, axis=0, with_std=False)
 
     return confounds, labels

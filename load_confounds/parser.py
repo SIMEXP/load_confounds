@@ -205,6 +205,11 @@ class Confounds:
         masks. Otherwise, components are generated from each mask separately and then
         concatenated.
 
+    ica_aroma : None or string, optional
+        None: default, not using ICA-AROMA related strategy
+        "basic": use noise IC only.
+        "full": use fMRIprep output `~desc-smoothAROMAnonaggr_bold.nii.gz` .
+
     demean : boolean, optional
         If True, the confounds are standardized to a zero mean (over time).
         This step is critical if the confounds are regressed out of time series
@@ -250,6 +255,7 @@ class Confounds:
         compcor="anat",
         acompcor_combined=True,
         n_compcor="auto",
+        ica_aroma=None,
         demean=True,
     ):
         """Default parameters."""
@@ -264,6 +270,7 @@ class Confounds:
         self.compcor = compcor
         self.acompcor_combined = acompcor_combined
         self.n_compcor = n_compcor
+        self.ica_aroma = ica_aroma
         self.demean = demean
 
     def load(self, confounds_raw):
@@ -287,7 +294,9 @@ class Confounds:
         columns_out = []
         self.missing_confounds_ = []
         self.missing_keys_ = []
+
         for file in confounds_raw:
+            # check if relevant imaging files are present according to the strategy
             conf, col = self._load_single(file)
             confounds_out.append(conf)
             columns_out.append(col)
@@ -306,6 +315,8 @@ class Confounds:
         """Load a single confounds file from fmriprep."""
         # Convert tsv file to pandas dataframe
         flag_acompcor = ("compcor" in self.strategy) and (self.compcor == "anat")
+        flag_full_aroma = ("ica_aroma" in self.strategy) and (self.ica_aroma == "full")
+        confounds_raw = cf._check_images(confounds_raw, flag_full_aroma)
         confounds_raw, self.json_ = cf._confounds_to_df(confounds_raw, flag_acompcor)
 
         confounds = pd.DataFrame()
@@ -385,8 +396,14 @@ class Confounds:
 
     def _load_ica_aroma(self, confounds_raw):
         """Load the ICA-AROMA regressors."""
-        ica_aroma_params = _find_confounds(confounds_raw, ["aroma"])
-        return confounds_raw[ica_aroma_params]
+        if self.ica_aroma is None:
+            raise ValueError("Please select an option when using ICA-AROMA strategy")
+        if self.ica_aroma == "full":
+            return pd.DataFrame()
+        if self.ica_aroma == "basic":
+            ica_aroma_params = _find_confounds(confounds_raw, ["aroma"])
+            return confounds_raw[ica_aroma_params]
+
 
     def _load_scrub(self, confounds_raw):
         """Perform basic scrub - Remove volumes if framewise displacement exceeds threshold."""

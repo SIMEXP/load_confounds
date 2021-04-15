@@ -124,7 +124,7 @@ def test_nilearn_regress():
     _regression(confounds)
 
     # Regress ICA-AROMA
-    confounds = lc.Confounds(strategy=["ica_aroma"]).load(file_confounds)
+    confounds = lc.Confounds(strategy=["ica_aroma"], ica_aroma="basic").load(file_confounds)
     _regression(confounds)
 
 
@@ -289,15 +289,41 @@ def test_not_found_exception():
     assert f"{missing_params}" in exc_info.value.args[0]
     assert f"{missing_keywords}" in exc_info.value.args[0]
 
+    no_nifti = os.path.join(
+        path_data, "nonifti_desc-confounds_regressors.tsv"
+    )
+    with pytest.raises(ValueError):
+        conf.load(no_nifti)
+
     # loading anat compcor should also raise an error, because the json file is
     # missing for that example dataset
     with pytest.raises(ValueError):
         conf = lc.Confounds(strategy=["compcor"], compcor="anat")
         conf.load(file_missing_confounds)
 
+    # Aggressive ICA-AROMA strategy requires noise ICs in confound file
+    with pytest.raises(ValueError):
+        conf = lc.Confounds(strategy=["ica_aroma"], ica_aroma="basic")
+        conf.load(file_missing_confounds)
+
+    # Aggressive ICA-AROMA strategy requires nifti file
+    with pytest.raises(ValueError):
+        conf = lc.Confounds(strategy=["ica_aroma"], ica_aroma="full")
+        conf.load(file_missing_confounds)
 
 def test_ica_aroma():
-    conf = lc.Confounds(strategy=["ica_aroma"])
+    # Agressive strategy
+    conf = lc.Confounds(strategy=["ica_aroma"], ica_aroma="basic")
     conf.load(file_confounds)
     for col_name in conf.columns_:
         assert re.match("aroma_motion_+", col_name)
+
+    # Non-agressive strategy
+    conf = lc.Confounds(strategy=["ica_aroma"], ica_aroma="full")
+    conf.load(file_confounds)
+    assert conf.confounds_.size == 0
+
+    # invalid combination of strategy and option
+    with pytest.raises(ValueError):
+        conf = lc.Confounds(strategy=["ica_aroma"], ica_aroma=None)
+        conf.load(file_confounds)
