@@ -268,15 +268,7 @@ class Confounds:
 
     def _load_compcor(self, confounds_raw):
         """Load compcor regressors."""
-        if self.compcor == "full":
-            compcor_cols = cf._find_compcor(
-                self.json_, "anat", self.n_compcor, self.acompcor_combined
-            )
-            compcor_cols.extend(
-                cf.find_compcor(self.json_, "temp", self.n_compcor, self.acompcor_combined)
-            )
-        else:
-            compcor_cols = cf._find_compcor(
+        compcor_cols = cf._find_compcor(
                     self.json_, self.compcor, self.n_compcor, self.acompcor_combined
                 )
         cf._check_params(confounds_raw, compcor_cols)
