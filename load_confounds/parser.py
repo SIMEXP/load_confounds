@@ -296,7 +296,6 @@ class Confounds:
         self.missing_keys_ = []
 
         for file in confounds_raw:
-            # check if relevant imaging files are present according to the strategy
             conf, col = self._load_single(file)
             confounds_out.append(conf)
             columns_out.append(col)
@@ -314,6 +313,7 @@ class Confounds:
     def _load_single(self, confounds_raw):
         """Load a single confounds file from fmriprep."""
         # Convert tsv file to pandas dataframe
+        # check if relevant imaging files are present according to the strategy
         flag_acompcor = ("compcor" in self.strategy) and (self.compcor == "anat")
         flag_full_aroma = ("ica_aroma" in self.strategy) and (self.ica_aroma == "full")
         confounds_raw, self.json_ = cf._confounds_to_df(confounds_raw, flag_acompcor, flag_full_aroma)

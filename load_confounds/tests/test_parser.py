@@ -311,6 +311,7 @@ def test_not_found_exception():
         conf = lc.Confounds(strategy=["ica_aroma"], ica_aroma="full")
         conf.load(file_missing_confounds)
 
+
 def test_ica_aroma():
     # Agressive strategy
     conf = lc.Confounds(strategy=["ica_aroma"], ica_aroma="basic")
