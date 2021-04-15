@@ -295,6 +295,16 @@ def test_not_found_exception():
         conf = lc.Confounds(strategy=["compcor"], compcor="anat")
         conf.load(file_missing_confounds)
 
+    # catch invalid compcor option
+    with pytest.raises(KeyError):
+        conf = lc.Confounds(strategy=["compcor"], compcor="blah")
+        conf.load(file_confounds)
+
+    # catch invalid compcor option
+    with pytest.raises(KeyError):
+        conf = lc.Confounds(strategy=["compcor"], compcor="anat", acompcor_combined=None)
+        conf.load(file_confounds)
+
 
 def test_ica_aroma():
     conf = lc.Confounds(strategy=["ica_aroma"])
