@@ -14,7 +14,7 @@ import json
 prefix_compcor = {"full": ["t", "a"],
                    "temp": ["t"],
                    "anat": ["a"]}
-anat_masker = {True: ["combined"], False: ["WM", "CSF"]}
+anat_masker = {True: ["combined"], False: ["WM", "CSF"], None: None}
 
 
 def _check_params(confounds_raw, params):
@@ -53,12 +53,20 @@ def _select_compcor(compcor_cols, n_compcor):
     return compcor_cols
 
 
-def _find_compcor(confounds_json, compcor, n_compcor, acompcor_combined):
-    """Builds list for the number of compcor components."""
+def _check_compcor_method(compcor, acompcor_combined):
+    """load compcor options and check if method is acceptable"""
     # get relevant prefix from compcor strategy
     prefix_set = prefix_compcor[compcor]
     # get relevant compcore mask
     anat_mask = anat_masker[acompcor_combined]
+    if ("a" in prefix_set) and (anat_mask is None):
+        raise ValueError(f"acompcor_combined must set to True or False. Got {acompcor_combined}")
+    return prefix_set, anat_mask
+
+
+def _find_compcor(confounds_json, compcor, n_compcor, acompcor_combined):
+    """Builds list for the number of compcor components."""
+    prefix_set, anat_mask = _check_compcor_method(compcor, acompcor_combined)
 
     collector = []
     for prefix in prefix_set:
@@ -66,8 +74,10 @@ def _find_compcor(confounds_json, compcor, n_compcor, acompcor_combined):
         all_compcor_name = [
             comp for comp in confounds_json.keys() if f"{prefix}_comp_cor" in comp
         ]
-        # filter by prefix first and acompor mask option if relevant
-        compcor_cols_filt = _prefix_confound_filter(prefix, all_compcor_name, confounds_json, anat_mask)
+        # filter by prefix first and apply acompor mask option if relevant
+        compcor_cols_filt = _prefix_confound_filter(prefix, all_compcor_name)
+        if prefix == "a":
+            compcor_cols_filt = _acompcor_mask(confounds_json, anat_mask, compcor_cols_filt)
         collector += compcor_cols_filt
     return _select_compcor(collector, n_compcor)
 
@@ -81,17 +91,15 @@ def _acompcor_mask(confounds_json, anat_mask, compcor_cols_filt):
     return cols
 
 
-def _prefix_confound_filter(prefix, all_compcor_name, confounds_json, anat_mask):
+def _prefix_confound_filter(prefix, all_compcor_name):
     """get confound columns by prefix and acompcor mask"""
     compcor_cols_filt = []
     for nn in range(len(all_compcor_name)):
         nn_str = str(nn).zfill(2)
         compcor_col = f"{prefix}_comp_cor_{nn_str}"
         compcor_cols_filt.append(compcor_col)
-    if prefix == "t":
-        return compcor_cols_filt
-    else:
-        return _acompcor_mask(confounds_json, anat_mask, compcor_cols_filt)
+    return compcor_cols_filt
+
 
 
 def _sanitize_confounds(confounds_raw):

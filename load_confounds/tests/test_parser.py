@@ -301,8 +301,8 @@ def test_not_found_exception():
         conf.load(file_confounds)
 
     # catch invalid compcor option
-    with pytest.raises(KeyError):
-        conf = lc.Confounds(strategy=["compcor"], compcor="anat", acompcor_combined=None)
+    with pytest.raises(ValueError):
+        conf = lc.Confounds(strategy=["compcor"], compcor="full", acompcor_combined=None)
         conf.load(file_confounds)
 
 
