@@ -27,13 +27,11 @@ def _find_confounds(confounds_raw, keywords):
     list_confounds = []
     missing_keys = []
     for key in keywords:
-        key_found = False
-        for col in confounds_raw.columns:
-            if key in col:
-                list_confounds.append(col)
-                key_found = True
+        key_found = [col for col in confounds_raw.columns if key in col]
         if not key_found:
             missing_keys.append(key)
+        else:
+            list_confounds.extend(key_found)
     if missing_keys:
         raise MissingConfound(keywords=missing_keys)
     return list_confounds
