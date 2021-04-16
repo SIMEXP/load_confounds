@@ -1,9 +1,7 @@
-"""Helper function for _load_compcor"""
+"""Helper function for _load_compcor."""
 
 
-prefix_compcor = {"full": ["t", "a"],
-                   "temp": ["t"],
-                   "anat": ["a"]}
+prefix_compcor = {"full": ["t", "a"], "temp": ["t"], "anat": ["a"]}
 anat_masker = {True: ["combined"], False: ["WM", "CSF"], None: None}
 
 
@@ -20,7 +18,9 @@ def _find_compcor(confounds_json, compcor, n_compcor, acompcor_combined):
         # filter by prefix first and apply acompor mask option if relevant
         compcor_cols_filt = _prefix_confound_filter(prefix, all_compcor_name)
         if prefix == "a":
-            compcor_cols_filt = _acompcor_mask(confounds_json, anat_mask, compcor_cols_filt)
+            compcor_cols_filt = _acompcor_mask(
+                confounds_json, anat_mask, compcor_cols_filt
+            )
         collector += _select_compcor(compcor_cols_filt, n_compcor)
     return collector
 
@@ -34,18 +34,20 @@ def _select_compcor(compcor_cols, n_compcor):
 
 
 def _check_compcor_method(compcor, acompcor_combined):
-    """load compcor options and check if method is acceptable"""
+    """load compcor options and check if method is acceptable."""
     # get relevant prefix from compcor strategy
     prefix_set = prefix_compcor[compcor]
     # get relevant compcore mask
     anat_mask = anat_masker[acompcor_combined]
     if ("a" in prefix_set) and (anat_mask is None):
-        raise ValueError(f"acompcor_combined must set to True or False. Got {acompcor_combined}")
+        raise ValueError(
+            f"acompcor_combined must set to True or False. Got {acompcor_combined}"
+        )
     return prefix_set, anat_mask
 
 
 def _acompcor_mask(confounds_json, anat_mask, compcor_cols_filt):
-    """filter according to acompcor mask"""
+    """filter according to acompcor mask."""
     cols = []
     for compcor_col in compcor_cols_filt:
         if confounds_json[compcor_col]["Mask"] in anat_mask:
@@ -54,7 +56,7 @@ def _acompcor_mask(confounds_json, anat_mask, compcor_cols_filt):
 
 
 def _prefix_confound_filter(prefix, all_compcor_name):
-    """get confound columns by prefix and acompcor mask"""
+    """get confound columns by prefix and acompcor mask."""
     compcor_cols_filt = []
     for nn in range(len(all_compcor_name)):
         nn_str = str(nn).zfill(2)
