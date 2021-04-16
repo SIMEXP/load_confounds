@@ -21,8 +21,8 @@ def _find_compcor(confounds_json, compcor, n_compcor, acompcor_combined):
         compcor_cols_filt = _prefix_confound_filter(prefix, all_compcor_name)
         if prefix == "a":
             compcor_cols_filt = _acompcor_mask(confounds_json, anat_mask, compcor_cols_filt)
-        collector += compcor_cols_filt
-    return _select_compcor(collector, n_compcor)
+        collector += _select_compcor(compcor_cols_filt, n_compcor)
+    return collector
 
 
 def _select_compcor(compcor_cols, n_compcor):

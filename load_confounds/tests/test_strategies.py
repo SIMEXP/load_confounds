@@ -326,6 +326,28 @@ def test_TempCompCor():
     assert "a_comp_cor_" not in compcor_col_str_anat
 
 
+def test_FullCompCor():
+    """Test a full compcor strategy."""
+    # This is not a predefined strategy
+    # but can be implemented easily with flexible API
+    conf = lc.Confounds(["compcor"], compcor="full", acompcor_combined=False)
+    conf.load(file_confounds)
+
+    assert isinstance(conf.confounds_, np.ndarray)
+
+    list_check = [
+        "t_comp_cor_00",
+        "t_comp_cor_01",
+        "t_comp_cor_02",
+        "t_comp_cor_03",
+        "a_comp_cor_57",  # from CSF mask
+        "a_comp_cor_58",  # from CSF mask
+        "a_comp_cor_105",  # from WM mask
+    ]
+    for check in list_check:
+        assert check in conf.columns_
+
+
 def test_ICAAROMA():
     """Test the (non-aggressive) ICA-AROMA strategy."""
     conf = lc.ICAAROMA()
