@@ -34,7 +34,7 @@ def _select_compcor(compcor_cols, n_compcor):
 
 
 def _check_compcor_method(compcor, acompcor_combined):
-    """load compcor options and check if method is acceptable."""
+    """Load compcor options and check if method is acceptable."""
     # get relevant prefix from compcor strategy
     prefix_set = prefix_compcor[compcor]
     # get relevant compcore mask
@@ -47,7 +47,7 @@ def _check_compcor_method(compcor, acompcor_combined):
 
 
 def _acompcor_mask(confounds_json, anat_mask, compcor_cols_filt):
-    """filter according to acompcor mask."""
+    """Filter according to acompcor mask."""
     cols = []
     for compcor_col in compcor_cols_filt:
         if confounds_json[compcor_col]["Mask"] in anat_mask:
@@ -56,7 +56,7 @@ def _acompcor_mask(confounds_json, anat_mask, compcor_cols_filt):
 
 
 def _prefix_confound_filter(prefix, all_compcor_name):
-    """get confound columns by prefix and acompcor mask."""
+    """Get confound columns by prefix and acompcor mask."""
     compcor_cols_filt = []
     for nn in range(len(all_compcor_name)):
         nn_str = str(nn).zfill(2)
