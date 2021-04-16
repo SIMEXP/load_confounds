@@ -5,6 +5,7 @@ Authors: load_confounds team
 import numpy as np
 import pandas as pd
 from . import confounds as cf
+from .compcor import _find_compcor
 
 # Global variables listing the admissible types of noise components
 all_confounds = [
@@ -268,26 +269,9 @@ class Confounds:
 
     def _load_compcor(self, confounds_raw):
         """Load compcor regressors."""
-        if self.compcor == "anat":
-            compcor_cols = cf._find_acompcor(
-                self.json_, self.n_compcor, self.acompcor_combined
-            )
-
-        if self.compcor == "temp":
-            compcor_cols = cf._find_compcor(
-                self.json_, "t", self.n_compcor, self.acompcor_combined
-            )
-
-        if self.compcor == "full":
-            compcor_cols = cf._find_compcor(
-                self.json_, "a", self.n_compcor, self.acompcor_combined
-            )
-            compcor_cols.extend(
-                cf._find_compcor(
-                    self.json_, "t", self.n_compcor, self.acompcor_combined
+        compcor_cols = _find_compcor(
+                    self.json_, self.compcor, self.n_compcor, self.acompcor_combined
                 )
-            )
-
         cf._check_params(confounds_raw, compcor_cols)
         return confounds_raw[compcor_cols]
 

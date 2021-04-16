@@ -39,44 +39,6 @@ def _find_confounds(confounds_raw, keywords):
     return list_confounds
 
 
-def _select_compcor(compcor_cols, n_compcor, compcor_mask):
-    """Retain a specified number of compcor components."""
-    # only select if not "auto", or less components are requested than there actually is
-    if (n_compcor != "auto") and (n_compcor < len(compcor_cols)):
-        compcor_cols = compcor_cols[0:n_compcor]
-    return compcor_cols
-
-
-def _find_compcor(confounds_json, prefix, n_compcor, compcor_mask):
-    """Builds list for the number of compcor components."""
-    # all possible compcor confounds, mixing different types of mask
-    all_compcor = [
-        comp for comp in confounds_json.keys() if f"{prefix}_comp_cor" in comp
-    ]
-
-    # loop and only retain the relevant confounds
-    compcor_cols = []
-    for nn in range(len(all_compcor)):
-        nn_str = str(nn).zfill(2)
-        compcor_col = f"{prefix}_comp_cor_{nn_str}"
-        if (prefix == "t") or (
-            (prefix == "a") and (confounds_json[compcor_col]["Mask"] == compcor_mask)
-        ):
-            compcor_cols.append(compcor_col)
-
-    return _select_compcor(compcor_cols, n_compcor, compcor_mask)
-
-
-def _find_acompcor(confounds_json, n_compcor, acompcor_combined):
-    """Helper function dedicated to anat compcor."""
-    if acompcor_combined:
-        compcor_cols = _find_compcor(confounds_json, "a", n_compcor, "combined")
-    else:
-        compcor_cols = _find_compcor(confounds_json, "a", n_compcor, "WM")
-        compcor_cols.extend(_find_compcor(confounds_json, "a", n_compcor, "CSF"))
-    return compcor_cols
-
-
 def _sanitize_confounds(confounds_raw):
     """Make sure the inputs are in the correct format."""
     # we want to support loading a single set of confounds, instead of a list
