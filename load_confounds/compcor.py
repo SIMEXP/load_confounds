@@ -52,16 +52,22 @@ def _check_compcor_method(compcor, acompcor_combined):
 
 
 def _acompcor_mask(confounds_json, anat_mask, compcor_cols_filt, n_compcor):
-    """Filter according to acompcor mask."""
+    """Filter according to acompcor mask(s) and select top components."""
     collector = []
     for mask in anat_mask:
-        cols = []
-        for compcor_col in compcor_cols_filt:
-            if confounds_json[compcor_col]["Mask"] in mask:
-                cols.append(compcor_col)
+        cols = _json_mask(compcor_cols_filt, confounds_json, mask)
         cols = _select_compcor(cols, n_compcor)
         collector += cols
     return collector
+
+
+def _json_mask(compcor_cols_filt, confounds_json, mask):
+    """Extract anat compcor components from a given mask."""
+    cols = []
+    for compcor_col in compcor_cols_filt:
+        if confounds_json[compcor_col]["Mask"] in mask:
+            cols.append(compcor_col)
+    return cols
 
 
 def _prefix_confound_filter(prefix, all_compcor_name):

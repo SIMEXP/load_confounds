@@ -105,7 +105,7 @@ class Confounds:
 
     n_compcor : int or "auto", optional
         The number of noise components to be extracted. For acompcor_combined=False,
-        and/or compcor="full", this is the number of components per mask. 
+        and/or compcor="full", this is the number of components per mask.
         Default is "auto": select all components (50% variance explained by fMRIPrep defaults)
 
     acompcor_combined: boolean, optional
