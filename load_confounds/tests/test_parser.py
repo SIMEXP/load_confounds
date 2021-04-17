@@ -337,6 +337,15 @@ def test_invalid_input():
     )
     conf.load(cifti)
     assert conf.confounds_.size != 0
+    # catch invalid compcor option
+    with pytest.raises(KeyError):
+        conf = lc.Confounds(strategy=["compcor"], compcor="blah")
+        conf.load(file_confounds)
+
+    # catch invalid compcor option
+    with pytest.raises(ValueError):
+        conf = lc.Confounds(strategy=["compcor"], compcor="full", acompcor_combined=None)
+        conf.load(file_confounds)
 
 
 def test_ica_aroma():

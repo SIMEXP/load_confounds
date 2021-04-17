@@ -5,6 +5,7 @@ Authors: load_confounds team
 import numpy as np
 import pandas as pd
 from . import confounds as cf
+from .compcor import _find_compcor
 
 # Global variables listing the admissible types of noise components
 all_confounds = [
@@ -16,85 +17,6 @@ all_confounds = [
     "ica_aroma",
     "scrub",
 ]
-
-
-def _check_params(confounds_raw, params):
-    """Check that specified parameters can be found in the confounds."""
-    not_found_params = []
-    for par in params:
-        if not par in confounds_raw.columns:
-            not_found_params.append(par)
-    if not_found_params:
-        raise MissingConfound(params=not_found_params)
-    return None
-
-
-def _find_confounds(confounds_raw, keywords):
-    """Find confounds that contain certain keywords."""
-    list_confounds = []
-    missing_keys = []
-    for key in keywords:
-        key_found = False
-        for col in confounds_raw.columns:
-            if key in col:
-                list_confounds.append(col)
-                key_found = True
-        if not key_found:
-            missing_keys.append(key)
-    if missing_keys:
-        raise MissingConfound(keywords=missing_keys)
-    return list_confounds
-
-
-def _select_compcor(compcor_cols, n_compcor, compcor_mask):
-    """Retain a specified number of compcor components."""
-    # only select if not "auto", or less components are requested than there actually is
-    if (n_compcor != "auto") and (n_compcor < len(compcor_cols)):
-        compcor_cols = compcor_cols[0:n_compcor]
-    return compcor_cols
-
-
-def _find_compcor(confounds_json, prefix, n_compcor, compcor_mask):
-    """Builds list for the number of compcor components."""
-    # all possible compcor confounds, mixing different types of mask
-    all_compcor = [
-        comp for comp in confounds_json.keys() if f"{prefix}_comp_cor" in comp
-    ]
-
-    # loop and only retain the relevant confounds
-    compcor_cols = []
-    for nn in range(len(all_compcor)):
-        nn_str = str(nn).zfill(2)
-        compcor_col = f"{prefix}_comp_cor_{nn_str}"
-        if (prefix == "t") or (
-            (prefix == "a") and (confounds_json[compcor_col]["Mask"] == compcor_mask)
-        ):
-            compcor_cols.append(compcor_col)
-
-    return _select_compcor(compcor_cols, n_compcor, compcor_mask)
-
-
-def _find_acompcor(confounds_json, n_compcor, acompcor_combined):
-    """Helper function dedicated to anat compcor."""
-    if acompcor_combined:
-        compcor_cols = _find_compcor(confounds_json, "a", n_compcor, "combined")
-    else:
-        compcor_cols = _find_compcor(confounds_json, "a", n_compcor, "WM")
-        compcor_cols.extend(_find_compcor(confounds_json, "a", n_compcor, "CSF"))
-    return compcor_cols
-
-
-def _sanitize_confounds(confounds_raw):
-    """Make sure the inputs are in the correct format."""
-    # we want to support loading a single set of confounds, instead of a list
-    # so we hack it
-    flag_single = isinstance(confounds_raw, str) or isinstance(
-        confounds_raw, pd.DataFrame
-    )
-    if flag_single:
-        confounds_raw = [confounds_raw]
-
-    return confounds_raw, flag_single
 
 
 def _sanitize_strategy(strategy):
@@ -118,21 +40,6 @@ def _check_error(missing_confounds, missing_keys):
             + ". You may want to try a different denoising strategy."
         )
         raise ValueError(error_msg)
-
-
-class MissingConfound(Exception):
-    """
-    Exception raised when failing to find params in the confounds.
-
-    Parameters
-    ----------
-        params : list of not found params
-    """
-
-    def __init__(self, params=None, keywords=None):
-        """Default values are empty lists."""
-        self.params = params if params else []
-        self.keywords = keywords if keywords else []
 
 
 class Confounds:
@@ -197,7 +104,8 @@ class Confounds:
         "full" noise components calculated using both temporal and anatomical
 
     n_compcor : int or "auto", optional
-        The number of noise components to be extracted.
+        The number of noise components to be extracted. For acompcor_combined=False,
+        and/or compcor="full", this is the number of components per mask.
         Default is "auto": select all components (50% variance explained by fMRIPrep defaults)
 
     acompcor_combined: boolean, optional
@@ -289,7 +197,7 @@ class Confounds:
             A reduced version of fMRIprep confounds based on selected strategy and flags.
             An intercept is automatically added to the list of confounds.
         """
-        confounds_raw, flag_single = _sanitize_confounds(confounds_raw)
+        confounds_raw, flag_single = cf._sanitize_confounds(confounds_raw)
         confounds_out = []
         columns_out = []
         self.missing_confounds_ = []
@@ -332,7 +240,7 @@ class Confounds:
         """Load a single type of confound."""
         try:
             loaded_confounds = getattr(self, f"_load_{confound}")(confounds_raw)
-        except MissingConfound as exception:
+        except cf.MissingConfound as exception:
             self.missing_confounds_ += exception.params
             self.missing_keys_ += exception.keywords
             loaded_confounds = pd.DataFrame()
@@ -343,7 +251,7 @@ class Confounds:
         motion_params = cf._add_suffix(
             ["trans_x", "trans_y", "trans_z", "rot_x", "rot_y", "rot_z"], self.motion
         )
-        _check_params(confounds_raw, motion_params)
+        cf._check_params(confounds_raw, motion_params)
         confounds_motion = confounds_raw[motion_params]
 
         # Optionally apply PCA reduction
@@ -355,42 +263,27 @@ class Confounds:
 
     def _load_high_pass(self, confounds_raw):
         """Load the high pass filter regressors."""
-        high_pass_params = _find_confounds(confounds_raw, ["cosine"])
+        high_pass_params = cf._find_confounds(confounds_raw, ["cosine"])
         return confounds_raw[high_pass_params]
 
     def _load_wm_csf(self, confounds_raw):
         """Load the regressors derived from the white matter and CSF masks."""
         wm_csf_params = cf._add_suffix(["csf", "white_matter"], self.wm_csf)
-        _check_params(confounds_raw, wm_csf_params)
+        cf._check_params(confounds_raw, wm_csf_params)
         return confounds_raw[wm_csf_params]
 
     def _load_global(self, confounds_raw):
         """Load the regressors derived from the global signal."""
         global_params = cf._add_suffix(["global_signal"], self.global_signal)
-        _check_params(confounds_raw, global_params)
+        cf._check_params(confounds_raw, global_params)
         return confounds_raw[global_params]
 
     def _load_compcor(self, confounds_raw):
         """Load compcor regressors."""
-        if self.compcor == "anat":
-            compcor_cols = _find_acompcor(
-                self.json_, self.n_compcor, self.acompcor_combined
-            )
-
-        if self.compcor == "temp":
-            compcor_cols = _find_compcor(
-                self.json_, "t", self.n_compcor, self.acompcor_combined
-            )
-
-        if self.compcor == "full":
-            compcor_cols = _find_compcor(
-                self.json_, "a", self.n_compcor, self.acompcor_combined
-            )
-            compcor_cols.extend(
-                _find_compcor(self.json_, "t", self.n_compcor, self.acompcor_combined)
-            )
-
-        _check_params(confounds_raw, compcor_cols)
+        compcor_cols = _find_compcor(
+            self.json_, self.compcor, self.n_compcor, self.acompcor_combined
+        )
+        cf._check_params(confounds_raw, compcor_cols)
         return confounds_raw[compcor_cols]
 
     def _load_ica_aroma(self, confounds_raw):

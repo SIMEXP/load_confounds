@@ -155,3 +155,19 @@ def _confounds_to_ndarray(confounds, demean):
             confounds = scale(confounds, axis=0, with_std=False)
 
     return confounds, labels
+
+
+class MissingConfound(Exception):
+    """
+    Exception raised when failing to find params in the confounds.
+
+    Parameters
+    ----------
+        params : list of missing params
+        keywords: list of missing keywords
+    """
+
+    def __init__(self, params=None, keywords=None):
+        """Default values are empty lists."""
+        self.params = params if params else []
+        self.keywords = keywords if keywords else []

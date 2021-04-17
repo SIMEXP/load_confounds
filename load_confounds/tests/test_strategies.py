@@ -266,7 +266,7 @@ def test_AnatCompCor():
 def test_AnatCompCor_not_combined():
     """Test the AnatCompCor strategy without combined mask."""
     # Try to load the confounds, whithout PCA reduction
-    conf = lc.AnatCompCor(acompcor_combined=False)
+    conf = lc.AnatCompCor(acompcor_combined=False, n_compcor=5)
     conf.load(file_confounds)
 
     assert isinstance(conf.confounds_, np.ndarray)
@@ -288,8 +288,9 @@ def test_AnatCompCor_not_combined():
         "cosine00",
         "cosine01",
         "a_comp_cor_57",  # from CSF mask
-        "a_comp_cor_58",  # from CSF mask
-        "a_comp_cor_105",  # from WM mask
+        "a_comp_cor_61",  # from CSF mask
+        "a_comp_cor_70",  # from WM mask
+        "a_comp_cor_74",  # from WM mask
     ]
 
     for check in list_check:
@@ -300,6 +301,12 @@ def test_AnatCompCor_not_combined():
     assert (
         "a_comp_cor_00" not in compcor_col_str_anat
     )  # this one comes from the combined mask
+    assert (
+        "a_comp_cor_62" not in compcor_col_str_anat
+    )  # this one exceeds the number of requested components
+    assert (
+        "a_comp_cor_75" not in compcor_col_str_anat
+    )  # this one exceeds the number of requested components
 
 
 def test_TempCompCor():
@@ -325,6 +332,28 @@ def test_TempCompCor():
 
     compcor_col_str_anat = "".join(conf.columns_)
     assert "a_comp_cor_" not in compcor_col_str_anat
+
+
+def test_FullCompCor():
+    """Test a full compcor strategy."""
+    # This is not a predefined strategy
+    # but can be implemented easily with flexible API
+    conf = lc.Confounds(["compcor"], compcor="full", acompcor_combined=False)
+    conf.load(file_confounds)
+
+    assert isinstance(conf.confounds_, np.ndarray)
+
+    list_check = [
+        "t_comp_cor_00",
+        "t_comp_cor_01",
+        "t_comp_cor_02",
+        "t_comp_cor_03",
+        "a_comp_cor_57",  # from CSF mask
+        "a_comp_cor_58",  # from CSF mask
+        "a_comp_cor_105",  # from WM mask
+    ]
+    for check in list_check:
+        assert check in conf.columns_
 
 
 def test_ICAAROMA():
