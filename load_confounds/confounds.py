@@ -17,6 +17,44 @@ import re
 img_file_patern = "_space-*_bold.*nii*"
 aroma_keword = "_desc-smoothAROMAnonaggr_bold"
 
+def _check_params(confounds_raw, params):
+    """Check that specified parameters can be found in the confounds."""
+    not_found_params = []
+    for par in params:
+        if not par in confounds_raw.columns:
+            not_found_params.append(par)
+    if not_found_params:
+        raise MissingConfound(params=not_found_params)
+    return None
+
+
+def _find_confounds(confounds_raw, keywords):
+    """Find confounds that contain certain keywords."""
+    list_confounds = []
+    missing_keys = []
+    for key in keywords:
+        key_found = [col for col in confounds_raw.columns if key in col]
+        if not key_found:
+            missing_keys.append(key)
+        else:
+            list_confounds.extend(key_found)
+    if missing_keys:
+        raise MissingConfound(keywords=missing_keys)
+    return list_confounds
+
+
+def _sanitize_confounds(confounds_raw):
+    """Make sure the inputs are in the correct format."""
+    # we want to support loading a single set of confounds, instead of a list
+    # so we hack it
+    flag_single = isinstance(confounds_raw, str) or isinstance(
+        confounds_raw, pd.DataFrame
+    )
+    if flag_single:
+        confounds_raw = [confounds_raw]
+
+    return confounds_raw, flag_single
+
 def _add_suffix(params, model):
     """
     Add suffixes to a list of parameters.

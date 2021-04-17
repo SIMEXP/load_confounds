@@ -293,7 +293,7 @@ class Confounds:
         if self.ica_aroma == "full":
             return pd.DataFrame()
         if self.ica_aroma == "basic":
-            ica_aroma_params = _find_confounds(confounds_raw, ["aroma"])
+            ica_aroma_params = cf._find_confounds(confounds_raw, ["aroma"])
             return confounds_raw[ica_aroma_params]
 
 
