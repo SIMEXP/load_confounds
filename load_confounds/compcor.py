@@ -18,10 +18,13 @@ def _find_compcor(confounds_json, compcor, n_compcor, acompcor_combined):
         # filter by prefix first and apply acompor mask option if relevant
         compcor_cols_filt = _prefix_confound_filter(prefix, all_compcor_name)
         if prefix == "a":
-            compcor_cols_filt = _acompcor_mask(
-                confounds_json, anat_mask, compcor_cols_filt
-            )
-        collector += _select_compcor(compcor_cols_filt, n_compcor)
+            for mask in anat_mask:
+                compcor_cols_mask = _acompcor_mask(
+                    confounds_json, mask, compcor_cols_filt
+                )
+                collector += _select_compcor(compcor_cols_mask, n_compcor)
+        else:
+            collector += _select_compcor(compcor_cols_filt, n_compcor)
     return collector
 
 

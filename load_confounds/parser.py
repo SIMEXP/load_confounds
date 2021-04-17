@@ -104,7 +104,8 @@ class Confounds:
         "full" noise components calculated using both temporal and anatomical
 
     n_compcor : int or "auto", optional
-        The number of noise components to be extracted.
+        The number of noise components to be extracted. For acompcor_combined=False,
+        and/or compcor="full", this is the number of components per mask. 
         Default is "auto": select all components (50% variance explained by fMRIPrep defaults)
 
     acompcor_combined: boolean, optional
@@ -270,8 +271,8 @@ class Confounds:
     def _load_compcor(self, confounds_raw):
         """Load compcor regressors."""
         compcor_cols = _find_compcor(
-                    self.json_, self.compcor, self.n_compcor, self.acompcor_combined
-                )
+            self.json_, self.compcor, self.n_compcor, self.acompcor_combined
+        )
         cf._check_params(confounds_raw, compcor_cols)
         return confounds_raw[compcor_cols]
 

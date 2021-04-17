@@ -261,7 +261,8 @@ class AnatCompCor(Confounds):
         Raw confounds from fmriprep
 
     n_compcor : int or "auto", optional
-        The number of noise components to be extracted.
+        The number of noise components to be extracted. For acompcor_combined=False,
+        this is the number of components per mask.
         Default is "auto": select all components (50% variance explained by fMRIPrep defaults)
 
     acompcor_combined: boolean, optional

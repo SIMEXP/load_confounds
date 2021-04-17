@@ -265,7 +265,7 @@ def test_AnatCompCor():
 def test_AnatCompCor_not_combined():
     """Test the AnatCompCor strategy without combined mask."""
     # Try to load the confounds, whithout PCA reduction
-    conf = lc.AnatCompCor(acompcor_combined=False)
+    conf = lc.AnatCompCor(acompcor_combined=False, n_compcor=5)
     conf.load(file_confounds)
 
     assert isinstance(conf.confounds_, np.ndarray)
@@ -287,8 +287,9 @@ def test_AnatCompCor_not_combined():
         "cosine00",
         "cosine01",
         "a_comp_cor_57",  # from CSF mask
-        "a_comp_cor_58",  # from CSF mask
-        "a_comp_cor_105",  # from WM mask
+        "a_comp_cor_61",  # from CSF mask
+        "a_comp_cor_70",  # from WM mask
+        "a_comp_cor_74",  # from WM mask
     ]
 
     for check in list_check:
@@ -299,6 +300,12 @@ def test_AnatCompCor_not_combined():
     assert (
         "a_comp_cor_00" not in compcor_col_str_anat
     )  # this one comes from the combined mask
+    assert (
+        "a_comp_cor_62" not in compcor_col_str_anat
+    )  # this one exceeds the number of requested components
+    assert (
+        "a_comp_cor_75" not in compcor_col_str_anat
+    )  # this one exceeds the number of requested components
 
 
 def test_TempCompCor():
