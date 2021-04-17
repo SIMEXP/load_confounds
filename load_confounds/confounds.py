@@ -2,7 +2,6 @@
 
 Authors: load_confounds team
 """
-from _pytest.python_api import raises
 import numpy as np
 import pandas as pd
 from sklearn.decomposition import PCA
@@ -54,6 +53,7 @@ def _sanitize_confounds(confounds_raw):
         confounds_raw = [confounds_raw]
 
     return confounds_raw, flag_single
+
 
 def _add_suffix(params, model):
     """
