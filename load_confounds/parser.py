@@ -224,7 +224,9 @@ class Confounds:
         # check if relevant imaging files are present according to the strategy
         flag_acompcor = ("compcor" in self.strategy) and (self.compcor == "anat")
         flag_full_aroma = ("ica_aroma" in self.strategy) and (self.ica_aroma == "full")
-        confounds_raw, self.json_ = cf._confounds_to_df(confounds_raw, flag_acompcor, flag_full_aroma)
+        confounds_raw, self.json_ = cf._confounds_to_df(
+            confounds_raw, flag_acompcor, flag_full_aroma
+        )
 
         confounds = pd.DataFrame()
 
@@ -295,7 +297,6 @@ class Confounds:
         if self.ica_aroma == "basic":
             ica_aroma_params = cf._find_confounds(confounds_raw, ["aroma"])
             return confounds_raw[ica_aroma_params]
-
 
     def _load_scrub(self, confounds_raw):
         """Perform basic scrub - Remove volumes if framewise displacement exceeds threshold."""

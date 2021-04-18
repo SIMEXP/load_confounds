@@ -20,6 +20,7 @@ img_file_patterns = {
     "func.gii": "_space-.*_hemi-[LR]_bold.func.gii",
 }
 
+
 def _check_params(confounds_raw, params):
     """Check that specified parameters can be found in the confounds."""
     not_found_params = []
@@ -136,9 +137,15 @@ def _get_file_raw(nii_file):
     # cf. https://neurostars.org/t/naming-change-confounds-regressors-to-confounds-timeseries/17637
     # Check file with new naming scheme exists or replace, for backward compatibility.
     confounds_raw_candidates = [
-        nii_file.replace(suffix, "_desc-confounds_timeseries.tsv",),
-        nii_file.replace(suffix, "_desc-confounds_regressors.tsv",)
-        ]
+        nii_file.replace(
+            suffix,
+            "_desc-confounds_timeseries.tsv",
+        ),
+        nii_file.replace(
+            suffix,
+            "_desc-confounds_regressors.tsv",
+        ),
+    ]
 
     confounds_raw = [cr for cr in confounds_raw_candidates if os.path.exists(cr)]
 
@@ -169,15 +176,19 @@ def _check_images(image_file, flag_full_aroma):
     """Validate input file and ICA AROMA related file"""
     if len(image_file) == 2:
         # must be gifti
-        valid_img = all(bool(re.search(img_file_patterns["func.gii"], img)) for img in image_file)
-        error_message = "need fMRIprep output functional gifti files"
+        valid_img = all(
+            bool(re.search(img_file_patterns["func.gii"], img)) for img in image_file
+        )
+        error_message = "need fMRIprep output with extension func.gii"
     elif flag_full_aroma:
         valid_img = bool(re.search(img_file_patterns["aroma"], image_file))
-        error_message = f"Input must be ~desc-smoothAROMAnonaggr_bold for ICA-AROMA based strategy."
+        error_message = (
+            f"Input must be ~desc-smoothAROMAnonaggr_bold for ICA-AROMA based strategy."
+        )
     else:
         ext = ".".join(image_file.split(".")[-2:])
         valid_img = bool(re.search(img_file_patterns[ext], image_file))
-        error_message = "need fMRIprep output functional nifti files"
+        error_message = f"need fMRIprep output with extension {ext}"
 
     if not valid_img:
         raise ValueError(error_message)
