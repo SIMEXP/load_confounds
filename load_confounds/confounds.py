@@ -13,8 +13,12 @@ import glob
 import re
 
 
-img_file_patern = "_space-*_bold.*nii*"
-aroma_keword = "_desc-smoothAROMAnonaggr_bold"
+img_file_patterns = {
+    "aroma": "_desc-smoothAROMAnonaggr_bold",
+    "nii.gz": "_space-.*_desc-preproc_bold.nii.gz",
+    "dtseries.nii": "_space-.*_bold.dtseries.nii",
+    "func.gii": "_space-.*_hemi-[LR]_bold.func.gii",
+}
 
 def _check_params(confounds_raw, params):
     """Check that specified parameters can be found in the confounds."""
@@ -46,12 +50,17 @@ def _sanitize_confounds(confounds_raw):
     """Make sure the inputs are in the correct format."""
     # we want to support loading a single set of confounds, instead of a list
     # so we hack it
-    flag_single = isinstance(confounds_raw, str) or isinstance(
-        confounds_raw, pd.DataFrame
-    )
+    if isinstance(confounds_raw, list) and len(confounds_raw) == 2:
+        flag_giftis = []
+        for img in confounds_raw:
+            ext = ".".join(img.split(".")[-2:])
+            flag_giftis.append((ext == "func.gii"))
+        flag_single = all(flag_giftis)
+    else:
+        flag_single = isinstance(confounds_raw, str)
+
     if flag_single:
         confounds_raw = [confounds_raw]
-
     return confounds_raw, flag_single
 
 
@@ -120,6 +129,8 @@ def _optimize_scrub(fd_outliers, n_scans):
 
 def _get_file_raw(nii_file):
     """Get the name of the raw confound file."""
+    if isinstance(nii_file, list):  # catch gifti
+        nii_file = nii_file[0]
     suffix = "_space-" + nii_file.split("space-")[1]
     # fmriprep has changed the file suffix between v20.1.1 and v20.2.0 with respect to BEP 012.
     # cf. https://neurostars.org/t/naming-change-confounds-regressors-to-confounds-timeseries/17637
@@ -129,10 +140,8 @@ def _get_file_raw(nii_file):
         nii_file.replace(suffix, "_desc-confounds_regressors.tsv",)
         ]
 
-    confounds_raw = []
-    for cr in confounds_raw_candidates:
-        if os.path.exists(cr):
-            confounds_raw.append(cr)
+    confounds_raw = [cr for cr in confounds_raw_candidates if os.path.exists(cr)]
+
     if not confounds_raw:
         raise ValueError("Could not find associated confound file.")
     elif len(confounds_raw) != 1:
@@ -156,20 +165,28 @@ def _get_json(confounds_raw, flag_acompcor):
     return confounds_json
 
 
-def _check_images(nii_file, flag_full_aroma):
-    """Validate input nifti/cifti files and ICA AROMA related files"""
-    aroma_relevant = (aroma_keword in nii_file)
-    if flag_full_aroma and not aroma_relevant:
-        raise ValueError(f"Input must be ~desc-smoothAROMAnonaggr_bold for ICA-AROMA based strategy.")
-    valid_nii = re.search("_bold.*.nii.*", nii_file)
-    if not valid_nii:
-        raise ValueError(f"Input {nii_file} is not a fMRIprep processed functional image file.")
+def _check_images(image_file, flag_full_aroma):
+    """Validate input file and ICA AROMA related file"""
+    if len(image_file) == 2:
+        # must be gifti
+        valid_img = all(bool(re.search(img_file_patterns["func.gii"], img)) for img in image_file)
+        error_message = "need fMRIprep output functional gifti files"
+    elif flag_full_aroma:
+        valid_img = bool(re.search(img_file_patterns["aroma"], image_file))
+        error_message = f"Input must be ~desc-smoothAROMAnonaggr_bold for ICA-AROMA based strategy."
+    else:
+        ext = ".".join(image_file.split(".")[-2:])
+        valid_img = bool(re.search(img_file_patterns[ext], image_file))
+        error_message = "need fMRIprep output functional nifti files"
+
+    if not valid_img:
+        raise ValueError(error_message)
 
 
-def _confounds_to_df(nii_file, flag_acompcor, flag_full_aroma):
+def _confounds_to_df(image_file, flag_acompcor, flag_full_aroma):
     """Load raw confounds as a pandas DataFrame."""
-    _check_images(nii_file, flag_full_aroma)
-    confounds_raw = _get_file_raw(nii_file)
+    _check_images(image_file, flag_full_aroma)
+    confounds_raw = _get_file_raw(image_file)
     confounds_json = _get_json(confounds_raw, flag_acompcor)
     confounds_raw = pd.read_csv(confounds_raw, delimiter="\t", encoding="utf-8")
     return confounds_raw, confounds_json

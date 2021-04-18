@@ -290,18 +290,21 @@ def test_not_found_exception():
     assert f"{missing_params}" in exc_info.value.args[0]
     assert f"{missing_keywords}" in exc_info.value.args[0]
 
-    # nifti with no associated confound file
-    no_confound = os.path.join(
-        path_data, "noconfound_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz"
-    )
-    with pytest.raises(ValueError):
-        conf.load(no_confound)
-
     # loading anat compcor should also raise an error, because the json file is
     # missing for that example dataset
     with pytest.raises(ValueError):
         conf = lc.Confounds(strategy=["compcor"], compcor="anat")
         conf.load(file_missing_confounds)
+
+    # catch invalid compcor option
+    with pytest.raises(KeyError):
+        conf = lc.Confounds(strategy=["compcor"], compcor="blah")
+        conf.load(file_confounds)
+
+    # catch invalid compcor option
+    with pytest.raises(ValueError):
+        conf = lc.Confounds(strategy=["compcor"], compcor="full", acompcor_combined=None)
+        conf.load(file_confounds)
 
     # Aggressive ICA-AROMA strategy requires noise ICs in confound file
     with pytest.raises(ValueError):
@@ -314,21 +317,15 @@ def test_not_found_exception():
         conf.load(file_missing_confounds)
 
 
-def test_invalid_input():
+def test_load_non_nifti():
     """test non-nifti and invalid file type as input"""
     conf = lc.Confounds()
-    # invalid fmriprep version: contain confound files before and after v20.2.0
-    invalid_ver = os.path.join(
-        path_data, "invalid_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz"
-    )
-    with pytest.raises(ValueError):
-        conf.load(invalid_ver)
 
     # tsv file
     tsv = os.path.join(
         path_data, "test_desc-confounds_regressors.tsv"
     )
-    with pytest.raises(ValueError):
+    with pytest.raises(KeyError):
         conf.load(tsv)
 
     # cifti file should be supported
@@ -337,15 +334,33 @@ def test_invalid_input():
     )
     conf.load(cifti)
     assert conf.confounds_.size != 0
-    # catch invalid compcor option
-    with pytest.raises(KeyError):
-        conf = lc.Confounds(strategy=["compcor"], compcor="blah")
-        conf.load(file_confounds)
 
-    # catch invalid compcor option
+    # gifti support
+    gifti = [os.path.join(
+        path_data,
+        f"test_space-fsaverage5_hemi-{hemi}_bold.func.gii")
+        for hemi in ["L", "R"]]
+    conf.load(gifti)
+    assert conf.confounds_.size != 0
+
+
+def test_invalid_filetype():
+    """Invalid file types/associated files for load method"""
+    # invalid fmriprep version: contain confound files before and after v20.2.0
+    conf = lc.Confounds()
+
+    invalid_ver = os.path.join(
+        path_data, "invalid_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz"
+    )
     with pytest.raises(ValueError):
-        conf = lc.Confounds(strategy=["compcor"], compcor="full", acompcor_combined=None)
-        conf.load(file_confounds)
+        conf.load(invalid_ver)
+
+    # nifti with no associated confound file
+    no_confound = os.path.join(
+        path_data, "noconfound_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz"
+    )
+    with pytest.raises(ValueError):
+        conf.load(no_confound)
 
 
 def test_ica_aroma():
