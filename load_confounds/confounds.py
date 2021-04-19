@@ -61,8 +61,8 @@ def _sanitize_confounds(img_files):
         flag_single = isinstance(img_files, str)
 
     if flag_single:
-        confounds_raw = [img_files]
-    return confounds_raw, flag_single
+        img_files = [img_files]
+    return img_files, flag_single
 
 
 def _add_suffix(params, model):
@@ -187,8 +187,12 @@ def _check_images(image_file, flag_full_aroma):
         )
     else:
         ext = ".".join(image_file.split(".")[-2:])
-        valid_img = bool(re.search(img_file_patterns[ext], image_file))
-        error_message = f"need fMRIprep output with extension {ext}"
+        try:
+            valid_img = bool(re.search(img_file_patterns[ext], image_file))
+            error_message = f"need fMRIprep output with extension {ext}"
+        except KeyError:
+            valid_img = False
+            error_message = f"Unsupported type of input"
 
     if not valid_img:
         raise ValueError(error_message)

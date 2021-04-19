@@ -321,11 +321,11 @@ def test_load_non_nifti():
     """test non-nifti and invalid file type as input"""
     conf = lc.Confounds()
 
-    # tsv file
+    # tsv file - unsupported input
     tsv = os.path.join(
         path_data, "test_desc-confounds_regressors.tsv"
     )
-    with pytest.raises(KeyError):
+    with pytest.raises(ValueError):
         conf.load(tsv)
 
     # cifti file should be supported
