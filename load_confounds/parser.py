@@ -181,15 +181,17 @@ class Confounds:
         self.ica_aroma = ica_aroma
         self.demean = demean
 
-    def load(self, confounds_raw):
+    def load(self, img_files):
         """
         Load fMRIprep confounds
 
         Parameters
         ----------
-        confounds_raw : path to nii file(s), optionally as a list.
-            Processed nifti/cifti file from fmriprep. The companion
-            tsv will be automatically detected.
+        img_files : path to processed image files, optionally as a list.
+            Processed nii.gz/dtseries.nii/func.gii file from fmriprep.
+            `nii.gz` or `dtseries.nii`: path to files, optionally as a list.
+            `func.gii`: list of a pair of paths to files, optionally as a list of lists.
+            The companion tsv will be automatically detected.
 
         Returns
         -------
@@ -197,13 +199,13 @@ class Confounds:
             A reduced version of fMRIprep confounds based on selected strategy and flags.
             An intercept is automatically added to the list of confounds.
         """
-        confounds_raw, flag_single = cf._sanitize_confounds(confounds_raw)
+        img_files, flag_single = cf._sanitize_confounds(img_files)
         confounds_out = []
         columns_out = []
         self.missing_confounds_ = []
         self.missing_keys_ = []
 
-        for file in confounds_raw:
+        for file in img_files:
             conf, col = self._load_single(file)
             confounds_out.append(conf)
             columns_out.append(col)

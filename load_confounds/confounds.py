@@ -47,21 +47,21 @@ def _find_confounds(confounds_raw, keywords):
     return list_confounds
 
 
-def _sanitize_confounds(confounds_raw):
+def _sanitize_confounds(img_files):
     """Make sure the inputs are in the correct format."""
     # we want to support loading a single set of confounds, instead of a list
     # so we hack it
-    if isinstance(confounds_raw, list) and len(confounds_raw) == 2:
-        flag_giftis = []
-        for img in confounds_raw:
+    if isinstance(img_files, list) and len(img_files) == 2:
+        flag_single_gifti = []  # gifti in pairs
+        for img in img_files:
             ext = ".".join(img.split(".")[-2:])
-            flag_giftis.append((ext == "func.gii"))
-        flag_single = all(flag_giftis)
-    else:
-        flag_single = isinstance(confounds_raw, str)
+            flag_single_gifti.append((ext == "func.gii"))
+        flag_single = all(flag_single_gifti)
+    else:  # single file
+        flag_single = isinstance(img_files, str)
 
     if flag_single:
-        confounds_raw = [confounds_raw]
+        confounds_raw = [img_files]
     return confounds_raw, flag_single
 
 
