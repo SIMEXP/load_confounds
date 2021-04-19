@@ -54,7 +54,7 @@ def _find_confounds(confounds_raw, keywords):
 
 
 def _flag_single_gifti(img_files):
-    """make sure the paired input are giftis"""
+    """Make sure the paired input are giftis."""
     flag_single_gifti = []  # gifti in pairs
     for img in img_files:
         ext = ".".join(img.split(".")[-2:])
@@ -183,7 +183,7 @@ def _get_json(confounds_raw, flag_acompcor):
     return confounds_json
 
 def _ext_validator(image_file, ext):
-    """check image is valid based on extention."""
+    """Check image is valid based on extention."""
     try:
         valid_img = all(bool(re.search(img_file_patterns[ext], img)) for img in image_file)
         error_message = img_file_error[ext]
