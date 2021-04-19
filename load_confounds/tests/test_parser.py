@@ -306,12 +306,26 @@ def test_not_found_exception():
         conf = lc.Confounds(strategy=["compcor"], compcor="full", acompcor_combined=None)
         conf.load(file_confounds)
 
-    # Aggressive ICA-AROMA strategy requires noise ICs in confound file
-    with pytest.raises(ValueError):
+    # Aggressive ICA-AROMA strategy requires
+    # default nifti and noise ICs in confound file
+    # correct nifti but missing noise regressor
+    with pytest.raises(ValueError) as exc_info:
         conf = lc.Confounds(strategy=["ica_aroma"], ica_aroma="basic")
         conf.load(file_missing_confounds)
+    assert "aroma" in exc_info.value.args[0]
 
-    # non aggressive ICA-AROMA strategy requires desc-smoothAROMAnonaggr nifti file
+    # Aggressive ICA-AROMA strategy requires
+    # default nifti
+    aroma_nii = os.path.join(
+        path_data, "test_space-MNI152NLin2009cAsym_desc-smoothAROMAnonaggr_bold.nii.gz"
+    )
+    with pytest.raises(ValueError) as exc_info:
+        conf.load(aroma_nii)
+    assert "`_desc-preproc_bold.nii.gz`" in exc_info.value.args[0]
+
+
+    # non aggressive ICA-AROMA strategy requires
+    # desc-smoothAROMAnonaggr nifti file
     with pytest.raises(ValueError):
         conf = lc.Confounds(strategy=["ica_aroma"], ica_aroma="full")
         conf.load(file_missing_confounds)
@@ -365,6 +379,9 @@ def test_invalid_filetype():
 
 def test_ica_aroma():
     """test ICA AROMA related file input"""
+    aroma_nii = os.path.join(
+        path_data, "test_space-MNI152NLin2009cAsym_desc-smoothAROMAnonaggr_bold.nii.gz"
+    )
     # Agressive strategy
     conf = lc.Confounds(strategy=["ica_aroma"], ica_aroma="basic")
     conf.load(file_confounds)
@@ -372,14 +389,12 @@ def test_ica_aroma():
         assert re.match("aroma_motion_+", col_name)
 
     # Non-agressive strategy
-    aroma_nii = os.path.join(
-        path_data, "test_space-MNI152NLin2009cAsym_desc-smoothAROMAnonaggr_bold.nii.gz"
-    )
     conf = lc.Confounds(strategy=["ica_aroma"], ica_aroma="full")
     conf.load(aroma_nii)
     assert conf.confounds_.size == 0
 
     # invalid combination of strategy and option
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError) as exc_info:
         conf = lc.Confounds(strategy=["ica_aroma"], ica_aroma=None)
         conf.load(file_confounds)
+    assert "ICA-AROMA strategy" in exc_info.value.args[0]

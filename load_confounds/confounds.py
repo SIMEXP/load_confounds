@@ -189,10 +189,11 @@ def _check_images(image_file, flag_full_aroma):
         ext = ".".join(image_file.split(".")[-2:])
         try:
             valid_img = bool(re.search(img_file_patterns[ext], image_file))
-            error_message = f"need fMRIprep output with extension {ext}"
+            error_message = ("need default fMRIprep with suffix `_desc-preproc_bold.nii.gz` "
+                            + "for the selected method.")
         except KeyError:
             valid_img = False
-            error_message = f"Unsupported type of input"
+            error_message = f"Unsupported type of input."
 
     if not valid_img:
         raise ValueError(error_message)
