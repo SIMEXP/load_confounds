@@ -6,10 +6,8 @@ import numpy as np
 import pandas as pd
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import scale
-import warnings
 import os
 import json
-import glob
 import re
 
 
@@ -185,17 +183,17 @@ def _get_json(confounds_raw, flag_acompcor):
     return confounds_json
 
 def _ext_validator(image_file, ext):
-    """check image is valid based on extention"""
+    """check image is valid based on extention."""
     try:
         valid_img = all(bool(re.search(img_file_patterns[ext], img)) for img in image_file)
         error_message = img_file_error[ext]
     except KeyError:
         valid_img = False
-        error_message = f"Unsupported input."
+        error_message = "Unsupported input."
     return valid_img, error_message
 
 def _check_images(image_file, flag_full_aroma):
-    """Validate input file and ICA AROMA related file"""
+    """Validate input file and ICA AROMA related file."""
     if len(image_file) == 2:  # must be gifti
         valid_img, error_message = _ext_validator(image_file, "func.gii")
     elif flag_full_aroma:

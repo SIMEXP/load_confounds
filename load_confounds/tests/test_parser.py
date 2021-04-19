@@ -332,7 +332,7 @@ def test_not_found_exception():
 
 
 def test_load_non_nifti():
-    """test non-nifti and invalid file type as input"""
+    """Test non-nifti and invalid file type as input."""
     conf = lc.Confounds()
 
     # tsv file - unsupported input
@@ -359,7 +359,7 @@ def test_load_non_nifti():
 
 
 def test_invalid_filetype():
-    """Invalid file types/associated files for load method"""
+    """Invalid file types/associated files for load method."""
     # invalid fmriprep version: contain confound files before and after v20.2.0
     conf = lc.Confounds()
 
@@ -378,7 +378,7 @@ def test_invalid_filetype():
 
 
 def test_ica_aroma():
-    """test ICA AROMA related file input"""
+    """Test ICA AROMA related file input."""
     aroma_nii = os.path.join(
         path_data, "test_space-MNI152NLin2009cAsym_desc-smoothAROMAnonaggr_bold.nii.gz"
     )
