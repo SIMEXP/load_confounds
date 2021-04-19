@@ -20,6 +20,14 @@ img_file_patterns = {
     "func.gii": "_space-.*_hemi-[LR]_bold.func.gii",
 }
 
+img_file_error = {
+    "aroma": "Input must be ~desc-smoothAROMAnonaggr_bold for full ICA-AROMA strategy.",
+    "nii.gz": "Invalid file type for the selected method.",
+    "dtseries.nii": "Invalid file type for the selected method.",
+    "func.gii": "need fMRIprep output with extension func.gii",
+}
+
+
 
 def _check_params(confounds_raw, params):
     """Check that specified parameters can be found in the confounds."""
@@ -47,16 +55,21 @@ def _find_confounds(confounds_raw, keywords):
     return list_confounds
 
 
+def _flag_single_gifti(img_files):
+    """make sure the paired input are giftis"""
+    flag_single_gifti = []  # gifti in pairs
+    for img in img_files:
+        ext = ".".join(img.split(".")[-2:])
+        flag_single_gifti.append((ext == "func.gii"))
+    return all(flag_single_gifti)
+
+
 def _sanitize_confounds(img_files):
     """Make sure the inputs are in the correct format."""
     # we want to support loading a single set of confounds, instead of a list
     # so we hack it
     if isinstance(img_files, list) and len(img_files) == 2:
-        flag_single_gifti = []  # gifti in pairs
-        for img in img_files:
-            ext = ".".join(img.split(".")[-2:])
-            flag_single_gifti.append((ext == "func.gii"))
-        flag_single = all(flag_single_gifti)
+        flag_single = _flag_single_gifti(img_files)
     else:  # single file
         flag_single = isinstance(img_files, str)
 
@@ -171,30 +184,25 @@ def _get_json(confounds_raw, flag_acompcor):
             )
     return confounds_json
 
+def _ext_validator(image_file, ext):
+    """check image is valid based on extention"""
+    try:
+        valid_img = all(bool(re.search(img_file_patterns[ext], img)) for img in image_file)
+        error_message = img_file_error[ext]
+    except KeyError:
+        valid_img = False
+        error_message = f"Unsupported input."
+    return valid_img, error_message
 
 def _check_images(image_file, flag_full_aroma):
     """Validate input file and ICA AROMA related file"""
-    if len(image_file) == 2:
-        # must be gifti
-        valid_img = all(
-            bool(re.search(img_file_patterns["func.gii"], img)) for img in image_file
-        )
-        error_message = "need fMRIprep output with extension func.gii"
+    if len(image_file) == 2:  # must be gifti
+        valid_img, error_message = _ext_validator(image_file, "func.gii")
     elif flag_full_aroma:
-        valid_img = bool(re.search(img_file_patterns["aroma"], image_file))
-        error_message = (
-            f"Input must be ~desc-smoothAROMAnonaggr_bold for ICA-AROMA based strategy."
-        )
+        valid_img, error_message = _ext_validator([image_file], "aroma")
     else:
         ext = ".".join(image_file.split(".")[-2:])
-        try:
-            valid_img = bool(re.search(img_file_patterns[ext], image_file))
-            error_message = ("need default fMRIprep with suffix `_desc-preproc_bold.nii.gz` "
-                            + "for the selected method.")
-        except KeyError:
-            valid_img = False
-            error_message = f"Unsupported type of input."
-
+        valid_img, error_message = _ext_validator([image_file], ext)
     if not valid_img:
         raise ValueError(error_message)
 

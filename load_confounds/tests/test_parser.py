@@ -321,7 +321,7 @@ def test_not_found_exception():
     )
     with pytest.raises(ValueError) as exc_info:
         conf.load(aroma_nii)
-    assert "`_desc-preproc_bold.nii.gz`" in exc_info.value.args[0]
+    assert "Invalid file type" in exc_info.value.args[0]
 
 
     # non aggressive ICA-AROMA strategy requires
