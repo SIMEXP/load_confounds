@@ -6,9 +6,25 @@ import numpy as np
 import pandas as pd
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import scale
-import warnings
 import os
 import json
+import re
+
+
+img_file_patterns = {
+    "aroma": "_desc-smoothAROMAnonaggr_bold",
+    "nii.gz": "_space-.*_desc-preproc_bold.nii.gz",
+    "dtseries.nii": "_space-.*_bold.dtseries.nii",
+    "func.gii": "_space-.*_hemi-[LR]_bold.func.gii",
+}
+
+img_file_error = {
+    "aroma": "Input must be ~desc-smoothAROMAnonaggr_bold for full ICA-AROMA strategy.",
+    "nii.gz": "Invalid file type for the selected method.",
+    "dtseries.nii": "Invalid file type for the selected method.",
+    "func.gii": "need fMRIprep output with extension func.gii",
+}
+
 
 
 def _check_params(confounds_raw, params):
@@ -37,17 +53,27 @@ def _find_confounds(confounds_raw, keywords):
     return list_confounds
 
 
-def _sanitize_confounds(confounds_raw):
+def _flag_single_gifti(img_files):
+    """Test if the paired input files are giftis."""
+    flag_single_gifti = []  # gifti in pairs
+    for img in img_files:
+        ext = ".".join(img.split(".")[-2:])
+        flag_single_gifti.append((ext == "func.gii"))
+    return all(flag_single_gifti)
+
+
+def _sanitize_confounds(img_files):
     """Make sure the inputs are in the correct format."""
     # we want to support loading a single set of confounds, instead of a list
     # so we hack it
-    flag_single = isinstance(confounds_raw, str) or isinstance(
-        confounds_raw, pd.DataFrame
-    )
-    if flag_single:
-        confounds_raw = [confounds_raw]
+    if isinstance(img_files, list) and len(img_files) == 2:
+        flag_single = _flag_single_gifti(img_files)
+    else:  # single file
+        flag_single = isinstance(img_files, str)
 
-    return confounds_raw, flag_single
+    if flag_single:
+        img_files = [img_files]
+    return img_files, flag_single
 
 
 def _add_suffix(params, model):
@@ -113,19 +139,33 @@ def _optimize_scrub(fd_outliers, n_scans):
     return fd_outliers
 
 
-def _get_file_raw(confounds_raw):
+def _get_file_raw(nii_file):
     """Get the name of the raw confound file."""
-    if "nii" in confounds_raw[-6:]:
-        suffix = "_space-" + confounds_raw.split("space-")[1]
-        confounds_raw = confounds_raw.replace(suffix, "_desc-confounds_timeseries.tsv",)
-        # fmriprep has changed the file suffix between v20.1.1 and v20.2.0 with respect to BEP 012.
-        # cf. https://neurostars.org/t/naming-change-confounds-regressors-to-confounds-timeseries/17637
-        # Check file with new naming scheme exists or replace, for backward compatibility.
-        if not os.path.exists(confounds_raw):
-            confounds_raw = confounds_raw.replace(
-                "_desc-confounds_timeseries.tsv", "_desc-confounds_regressors.tsv",
-            )
-    return confounds_raw
+    if isinstance(nii_file, list):  # catch gifti
+        nii_file = nii_file[0]
+    suffix = "_space-" + nii_file.split("space-")[1]
+    # fmriprep has changed the file suffix between v20.1.1 and v20.2.0 with respect to BEP 012.
+    # cf. https://neurostars.org/t/naming-change-confounds-regressors-to-confounds-timeseries/17637
+    # Check file with new naming scheme exists or replace, for backward compatibility.
+    confounds_raw_candidates = [
+        nii_file.replace(
+            suffix,
+            "_desc-confounds_timeseries.tsv",
+        ),
+        nii_file.replace(
+            suffix,
+            "_desc-confounds_regressors.tsv",
+        ),
+    ]
+
+    confounds_raw = [cr for cr in confounds_raw_candidates if os.path.exists(cr)]
+
+    if not confounds_raw:
+        raise ValueError("Could not find associated confound file.")
+    elif len(confounds_raw) != 1:
+        raise ValueError("Found more than one confound file.")
+    else:
+        return confounds_raw[0]
 
 
 def _get_json(confounds_raw, flag_acompcor):
@@ -142,10 +182,33 @@ def _get_json(confounds_raw, flag_acompcor):
             )
     return confounds_json
 
+def _ext_validator(image_file, ext):
+    """Check image is valid based on extention."""
+    try:
+        valid_img = all(bool(re.search(img_file_patterns[ext], img)) for img in image_file)
+        error_message = img_file_error[ext]
+    except KeyError:
+        valid_img = False
+        error_message = "Unsupported input."
+    return valid_img, error_message
 
-def _confounds_to_df(confounds_raw, flag_acompcor):
+def _check_images(image_file, flag_full_aroma):
+    """Validate input file and ICA AROMA related file."""
+    if len(image_file) == 2:  # must be gifti
+        valid_img, error_message = _ext_validator(image_file, "func.gii")
+    elif flag_full_aroma:
+        valid_img, error_message = _ext_validator([image_file], "aroma")
+    else:
+        ext = ".".join(image_file.split(".")[-2:])
+        valid_img, error_message = _ext_validator([image_file], ext)
+    if not valid_img:
+        raise ValueError(error_message)
+
+
+def _confounds_to_df(image_file, flag_acompcor, flag_full_aroma):
     """Load raw confounds as a pandas DataFrame."""
-    confounds_raw = _get_file_raw(confounds_raw)
+    _check_images(image_file, flag_full_aroma)
+    confounds_raw = _get_file_raw(image_file)
     confounds_json = _get_json(confounds_raw, flag_acompcor)
     confounds_raw = pd.read_csv(confounds_raw, delimiter="\t", encoding="utf-8")
     return confounds_raw, confounds_json
@@ -160,12 +223,13 @@ def _confounds_to_ndarray(confounds, demean):
     # Derivatives have NaN on the first row
     # Replace them by estimates at second time point,
     # otherwise nilearn will crash.
-    mask_nan = np.isnan(confounds[0, :])
-    confounds[0, mask_nan] = confounds[1, mask_nan]
+    if confounds.size != 0:  # ica_aroma = "full" generate empty output
+        mask_nan = np.isnan(confounds[0, :])
+        confounds[0, mask_nan] = confounds[1, mask_nan]
 
-    # Optionally demean confounds
-    if demean:
-        confounds = scale(confounds, axis=0, with_std=False)
+        # Optionally demean confounds
+        if demean:
+            confounds = scale(confounds, axis=0, with_std=False)
 
     return confounds, labels
 
