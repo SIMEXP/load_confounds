@@ -54,7 +54,7 @@ def _find_confounds(confounds_raw, keywords):
 
 
 def _flag_single_gifti(img_files):
-    """Make sure the paired input are giftis."""
+    """Test if the paired input files are giftis."""
     flag_single_gifti = []  # gifti in pairs
     for img in img_files:
         ext = ".".join(img.split(".")[-2:])

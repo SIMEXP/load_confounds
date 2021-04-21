@@ -326,9 +326,10 @@ def test_not_found_exception():
 
     # non aggressive ICA-AROMA strategy requires
     # desc-smoothAROMAnonaggr nifti file
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError) as exc_info:
         conf = lc.Confounds(strategy=["ica_aroma"], ica_aroma="full")
         conf.load(file_missing_confounds)
+    assert "desc-smoothAROMAnonaggr_bold" in exc_info.value.args[0]
 
 
 def test_load_non_nifti():
