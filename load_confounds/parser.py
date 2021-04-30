@@ -177,6 +177,7 @@ class Confounds:
         n_compcor="auto",
         ica_aroma=None,
         demean=True,
+        sample_mask=True,
     ):
         """Default parameters."""
         self.strategy = _sanitize_strategy(strategy)
@@ -192,6 +193,7 @@ class Confounds:
         self.n_compcor = n_compcor
         self.ica_aroma = ica_aroma
         self.demean = demean
+        self.sample_mask = sample_mask
 
     def load(self, img_files):
         """
@@ -247,18 +249,14 @@ class Confounds:
         )
 
         confounds = pd.DataFrame()
-        outlier_flag = pd.DataFrame()
 
         for confound in self.strategy:
             loaded_confounds = self._load_confound(confounds_raw, confound)
-            if confound in ["scrub", "non_steady_state"]:
-                outlier_flag = pd.concat([outlier_flag, loaded_confounds], axis=1)
-            else:
-                confounds = pd.concat([confounds, loaded_confounds], axis=1)
+            confounds = pd.concat([confounds, loaded_confounds], axis=1)
 
         _check_error(self.missing_confounds_, self.missing_keys_)
         sample_mask, confounds, labels = cf._confounds_to_ndarray(
-            confounds, outlier_flag, self.demean
+            confounds, self.demean, self.sample_mask
         )
         return sample_mask, confounds, labels
 

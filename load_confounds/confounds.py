@@ -217,15 +217,45 @@ def _confounds_to_df(image_file, flag_acompcor, flag_full_aroma):
     return confounds_raw, confounds_json
 
 
-def _confounds_to_ndarray(confounds, outlier_flag, demean):
+def _extract_outlier_regressors(confounds, flag_sample_mask):
+    """Separate confounds and outlier regressors."""
+    original = confounds.copy()
+    outlier_cols, confounds_col = [], []
+    for col in original.columns:
+        if "motion_outlier" in col or "non_steady_state" in col:
+            outlier_cols.append(col)
+        else:
+            confounds_col.append(col)
+    outlier_flag = original[outlier_cols]
+    confounds = original[confounds_col]
+
+    sample_mask = _outlier_to_sample_mask(confounds.shape[0], outlier_flag)
+
+    # return original output if not applying sample_mask
+    if not flag_sample_mask:
+        return sample_mask, original
+
+    # mask confound to remove non-steady state and scrubbed volumes
+    if len(sample_mask) != confounds.shape[0]:
+        confounds = confounds[sample_mask, :]
+    return sample_mask, confounds
+
+
+def _outlier_to_sample_mask(n_scans, outlier_flag):
+    """Generate sample mask from outlier regressors."""
+    if outlier_flag.size != 0:
+        return _outlier_to_sample_index(outlier_flag)
+    else:
+        return list(range(n_scans))
+
+
+def _confounds_to_ndarray(confounds, demean, flag_sample_mask):
     """Convert confounds from a pandas dataframe to a numpy array."""
+    sample_mask, confounds = _extract_outlier_regressors(confounds, flag_sample_mask)
+
     # Convert from DataFrame to numpy ndarray
     labels = confounds.columns
     confounds = confounds.values
-    if outlier_flag.size != 0:
-        sample_mask = _outlier_to_sample_index(outlier_flag)
-    else:
-        sample_mask = list(range(confounds.shape[0]))
 
     # Derivatives have NaN on the first row
     # Replace them by estimates at second time point,
@@ -237,10 +267,6 @@ def _confounds_to_ndarray(confounds, outlier_flag, demean):
         # Optionally demean confounds
         if demean:
             confounds = scale(confounds, axis=0, with_std=False)
-
-        # mask confound to remove non-steady state and scrubbed volumes
-        if len(sample_mask) != confounds.shape[0]:
-            confounds = confounds[sample_mask, :]
     return sample_mask, confounds, labels
 
 

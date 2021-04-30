@@ -1,3 +1,4 @@
+import enum
 import os
 import re
 import load_confounds.parser as lc
@@ -31,8 +32,8 @@ def _simu_img(demean=True):
     # pad X to the original length with random numbers
     n_scans = 30
     X = np.random.rand(n_scans, _X.shape[1])
-    for n in _sm:
-        X[n, :] = _X[n, :]
+    for i, n in enumerate(_sm):
+        X[n, :] = _X[i, :]
 
     # repeat X in length (axis = 0) three times to increase the degree of freedom
     X = np.tile(X, (3, 1))
@@ -68,19 +69,23 @@ def _simu_img(demean=True):
     mask_conf = Nifti1Image(vol_conf, np.eye(4))
     mask_rand = Nifti1Image(vol_rand, np.eye(4))
 
-    return img, mask_conf, mask_rand, X, sample_mask
+    return img, mask_conf, mask_rand, X[sample_mask, :], sample_mask
 
 
-def _tseries_std(img, mask_img, confounds, standardize):
+def _tseries_std(img, mask_img, confounds, sample_mask, standardize):
     """Get the std of time series in a mask."""
-    masker = NiftiMasker(mask_img=mask_img, standardize=standardize)
+    masker = NiftiMasker(
+        mask_img=mask_img, standardize=standardize, sample_mask=sample_mask
+    )
     tseries = masker.fit_transform(img, confounds=confounds)
     return tseries.std(axis=0)
 
 
-def _denoise(img, mask_img, confounds, standardize):
+def _denoise(img, mask_img, confounds, sample_mask, standardize):
     """Extract time series with and without confounds."""
-    masker = NiftiMasker(mask_img=mask_img, standardize=standardize)
+    masker = NiftiMasker(
+        mask_img=mask_img, standardize=standardize, sample_mask=sample_mask
+    )
     tseries_raw = masker.fit_transform(img)
     tseries_clean = masker.fit_transform(img, confounds=confounds)
     return tseries_raw, tseries_clean
@@ -155,16 +160,16 @@ def test_nilearn_regress():
 def test_nilearn_standardize_false():
     """Test removing confounds in nilearn with no standardization."""
     # Simulate data
-    img, mask_conf, mask_rand, X, _ = _simu_img(demean=True)
+    img, mask_conf, mask_rand, X, sm = _simu_img(demean=True)
 
     # Check that most variance is removed
     # in voxels composed of pure confounds
-    tseries_std = _tseries_std(img, mask_conf, X, False)
+    tseries_std = _tseries_std(img, mask_conf, X, sm, False)
     assert np.mean(tseries_std < 0.0001)
 
     # Check that most variance is preserved
     # in voxels composed of random noise
-    tseries_std = _tseries_std(img, mask_rand, X, False)
+    tseries_std = _tseries_std(img, mask_rand, X, sm, False)
     assert np.mean(tseries_std > 0.9)
 
 
@@ -173,13 +178,13 @@ def test_nilearn_standardize_zscore():
     """Test removing confounds in nilearn with zscore standardization."""
     # Simulate data
 
-    img, mask_conf, mask_rand, X, _ = _simu_img(demean=True)
+    img, mask_conf, mask_rand, X, sm = _simu_img(demean=True)
 
     # We now load the time series with vs without confounds
     # in voxels composed of pure confounds
     # the correlation before and after denoising should be very low
     # as most of the variance is removed by denoising
-    tseries_raw, tseries_clean = _denoise(img, mask_conf, X, "zscore")
+    tseries_raw, tseries_clean = _denoise(img, mask_conf, X, sm, "zscore")
     corr = _corr_tseries(tseries_raw, tseries_clean)
     assert corr.mean() < 0.2
 
@@ -187,7 +192,7 @@ def test_nilearn_standardize_zscore():
     # with vs without confounds in voxels where the signal is uncorrelated
     # with confounds. The correlation before and after denoising should be very
     # high as very little of the variance is removed by denoising
-    tseries_raw, tseries_clean = _denoise(img, mask_rand, X, "zscore")
+    tseries_raw, tseries_clean = _denoise(img, mask_rand, X, sm, "zscore")
     corr = _corr_tseries(tseries_raw, tseries_clean)
     assert corr.mean() > 0.8
 
@@ -197,15 +202,15 @@ def test_nilearn_standardize_psc():
     # Similar test to test_nilearn_standardize_zscore, but with psc
     # Simulate data
 
-    img, mask_conf, mask_rand, X, _ = _simu_img(demean=False)
+    img, mask_conf, mask_rand, X, sm = _simu_img(demean=False)
 
     # Areas with confound
-    tseries_raw, tseries_clean = _denoise(img, mask_conf, X, "psc")
+    tseries_raw, tseries_clean = _denoise(img, mask_conf, X, sm, "psc")
     corr = _corr_tseries(tseries_raw, tseries_clean)
     assert corr.mean() < 0.2
 
     # Areas with random noise
-    tseries_raw, tseries_clean = _denoise(img, mask_rand, X, "psc")
+    tseries_raw, tseries_clean = _denoise(img, mask_rand, X, sm, "psc")
     corr = _corr_tseries(tseries_raw, tseries_clean)
     assert corr.mean() > 0.8
 
