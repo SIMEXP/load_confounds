@@ -103,8 +103,7 @@ def test_Params9Scrub():
     ]
     for check in list_check:
         assert check in conf.columns_
-
-    assert len(conf.sample_mask_) < 30
+    assert len(conf.sample_mask_) == 24
 
     # also load confounds with very liberal scrubbing thresholds
     # this should not produce an error
@@ -218,7 +217,7 @@ def test_Params36Scrub():
 
     for check in list_check:
         assert check in conf.columns_
-    assert len(conf.sample_mask_) < 30
+    assert len(conf.sample_mask_) == 24
 
     # also load confounds with very liberal scrubbing thresholds
     # this should not produce an error
