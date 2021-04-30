@@ -221,34 +221,31 @@ def _confounds_to_df(image_file, flag_acompcor, flag_full_aroma):
 
 def _extract_outlier_regressors(confounds, flag_sample_mask):
     """Separate confounds and outlier regressors."""
-    original = confounds.copy()
     outlier_cols, confounds_col = [], []
-    for col in original.columns:
+    for col in confounds.columns:
         if "motion_outlier" in col or "non_steady_state" in col:
             outlier_cols.append(col)
         else:
             confounds_col.append(col)
-    outlier_flag = original[outlier_cols]
-    confounds = original[confounds_col]
-
-    sample_mask = _outlier_to_sample_mask(confounds.shape[0], outlier_flag)
+    outliers = confounds[outlier_cols] if outlier_cols else pd.DataFrame()
+    sample_mask = _outlier_to_sample_mask(confounds.shape[0], outliers)
 
     # return original output if not applying sample_mask
     if not flag_sample_mask:
-        return sample_mask, original
-
+        return sample_mask, confounds
     # mask confound to remove non-steady state and scrubbed volumes
     if len(sample_mask) != confounds.shape[0]:
-        confounds = confounds[sample_mask, :]
-    return sample_mask, confounds
+        return sample_mask, confounds.loc[sample_mask, confounds_col]
+    else:
+        return sample_mask, confounds.loc[:, confounds_col]
 
 
 def _outlier_to_sample_mask(n_scans, outlier_flag):
     """Generate sample mask from outlier regressors."""
-    if outlier_flag.size != 0:
-        return _outlier_to_sample_index(outlier_flag)
-    else:
+    if outlier_flag.size == 0:
         return list(range(n_scans))
+    outlier_flag = outlier_flag.sum(axis=1).values
+    return np.where(outlier_flag == 0)[0].tolist()
 
 
 def _confounds_to_ndarray(confounds, demean, flag_sample_mask):
@@ -270,12 +267,6 @@ def _confounds_to_ndarray(confounds, demean, flag_sample_mask):
         if demean:
             confounds = scale(confounds, axis=0, with_std=False)
     return sample_mask, confounds, labels
-
-
-def _outlier_to_sample_index(outlier_flag):
-    """Conver regressor outlier flag to sample index (sample_mask)."""
-    outlier_flag = outlier_flag.sum(axis=1).values
-    return np.where(outlier_flag == 0)[0].tolist()
 
 
 class MissingConfound(Exception):

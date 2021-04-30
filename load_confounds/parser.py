@@ -128,6 +128,13 @@ class Confounds:
         using nilearn with no or zscore standardization, but should be turned off
         with "spc" normalization.
 
+    sample_mask : boolean, optional
+        If True, confounds will not include volumes identified as outliers. (Default)
+        This output can be directly applied to nilearn NifitMasker.
+        This is consistent with implementation of scrubbing/non-steady-state handling in Ciric 2017.
+        False to keep all outlier regressors in confounds.
+        Default to True.
+
     Attributes
     ----------
     `confounds_` : ndarray
