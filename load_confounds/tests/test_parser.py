@@ -25,18 +25,19 @@ def _simu_img(demean=True):
     # as we will stack slices with confounds on top of slices with noise
     nz = 2
     # Load a simple 6 parameters motion models as confounds
-    X, sm = lc.Confounds(strategy=["motion"], motion="basic", demean=demean).load(
+    _X, _sm = lc.Confounds(strategy=["motion"], motion="basic", demean=demean).load(
         file_confounds
     )
     # pad X to the original length with random numbers
     n_scans = 30
-    X_pad = np.random.rand(n_scans, X.shape[1])
-    for n in sm:
-        X_pad[n, :] = X[n, :]
+    X = np.random.rand(n_scans, _X.shape[1])
+    for n in _sm:
+        X[n, :] = _X[n, :]
 
     # repeat X in length (axis = 0) three times to increase the degree of freedom
     X = np.tile(X, (3, 1))
-    sample_mask = [np.array(sm) + (i * 30) for i in range(3)]
+    # expand the sample mask accordingly
+    sample_mask = [np.array(_sm) + (i * n_scans) for i in range(3)]
     sample_mask = np.squeeze(sample_mask).flatten()
 
     # the number of time points is based on the example confound file
@@ -97,9 +98,9 @@ def _regression(confounds, sample_mask):
     """Simple regression with nilearn."""
     # Simulate data
     img, mask_conf, _, _, _ = _simu_img(demean=True)
-    confounds = np.tile(confounds, (3, 1))  # matching L29 (_simu_img)
+    confounds = np.tile(confounds, (3, 1))  # matching L31-L38 (_simu_img)
     sample_mask = [np.array(sample_mask) + (i * 30) for i in range(3)]
-    sample_mask = np.squeeze(sample_mask).flatten()  # matching L29 (_simu_img)
+    sample_mask = np.squeeze(sample_mask).flatten()  # matching L39-L40 (_simu_img)
 
     # Do the regression
     masker = NiftiMasker(mask_img=mask_conf, standardize=True, sample_mask=sample_mask)
