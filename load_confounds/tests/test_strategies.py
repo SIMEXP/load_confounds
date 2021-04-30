@@ -5,8 +5,12 @@ import load_confounds.strategies as lc
 import numpy as np
 
 path_data = os.path.join(os.path.dirname(lc.__file__), "data")
-file_confounds = os.path.join(path_data, "test_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz")
-file_aroma = os.path.join(path_data, "test_space-MNI152NLin2009cAsym_desc-smoothAROMAnonaggr_bold.nii.gz")
+file_confounds = os.path.join(
+    path_data, "test_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz"
+)
+file_aroma = os.path.join(
+    path_data, "test_space-MNI152NLin2009cAsym_desc-smoothAROMAnonaggr_bold.nii.gz"
+)
 
 
 def test_Params2():
@@ -96,17 +100,17 @@ def test_Params9Scrub():
         "cosine00",
         "csf",
         "white_matter",
-        "motion_outlier_0",
-        "motion_outlier_1",
     ]
     for check in list_check:
         assert check in conf.columns_
+
+    assert len(conf.sample_mask_) < 30
 
     # also load confounds with very liberal scrubbing thresholds
     # this should not produce an error
     conf = lc.Params9Scrub(fd_thresh=1, std_dvars_thresh=5)
     conf.load(file_confounds)
-    assert "motion_outlier_0" not in conf.columns_
+    assert len(conf.sample_mask_) == 30
 
 
 def test_Params24():
@@ -210,18 +214,17 @@ def test_Params36Scrub():
         "csf_power2",
         "csf_derivative1_power2",
         "white_matter_derivative1",
-        "motion_outlier_0",
-        "motion_outlier_1",
     ]
 
     for check in list_check:
         assert check in conf.columns_
+    assert len(conf.sample_mask_) < 30
 
     # also load confounds with very liberal scrubbing thresholds
     # this should not produce an error
     conf = lc.Params36Scrub(fd_thresh=1, std_dvars_thresh=5)
     conf.load(file_confounds)
-    assert "motion_outlier_0" not in conf.columns_
+    assert len(conf.sample_mask_) == 30
 
 
 def test_AnatCompCor():

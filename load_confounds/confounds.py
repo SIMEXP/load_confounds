@@ -26,7 +26,6 @@ img_file_error = {
 }
 
 
-
 def _check_params(confounds_raw, params):
     """Check that specified parameters can be found in the confounds."""
     not_found_params = []
@@ -44,7 +43,7 @@ def _find_confounds(confounds_raw, keywords):
     missing_keys = []
     for key in keywords:
         key_found = [col for col in confounds_raw.columns if key in col]
-        if not key_found:
+        if not key_found and key != "non_steady_state":
             missing_keys.append(key)
         else:
             list_confounds.extend(key_found)
@@ -182,15 +181,19 @@ def _get_json(confounds_raw, flag_acompcor):
             )
     return confounds_json
 
+
 def _ext_validator(image_file, ext):
     """Check image is valid based on extention."""
     try:
-        valid_img = all(bool(re.search(img_file_patterns[ext], img)) for img in image_file)
+        valid_img = all(
+            bool(re.search(img_file_patterns[ext], img)) for img in image_file
+        )
         error_message = img_file_error[ext]
     except KeyError:
         valid_img = False
         error_message = "Unsupported input."
     return valid_img, error_message
+
 
 def _check_images(image_file, flag_full_aroma):
     """Validate input file and ICA AROMA related file."""
@@ -214,11 +217,15 @@ def _confounds_to_df(image_file, flag_acompcor, flag_full_aroma):
     return confounds_raw, confounds_json
 
 
-def _confounds_to_ndarray(confounds, demean):
+def _confounds_to_ndarray(confounds, outlier_flag, demean):
     """Convert confounds from a pandas dataframe to a numpy array."""
     # Convert from DataFrame to numpy ndarray
     labels = confounds.columns
     confounds = confounds.values
+    if outlier_flag.size != 0:
+        sample_mask = _outlier_to_sample_index(outlier_flag)
+    else:
+        sample_mask = list(range(confounds.shape[0]))
 
     # Derivatives have NaN on the first row
     # Replace them by estimates at second time point,
@@ -231,7 +238,16 @@ def _confounds_to_ndarray(confounds, demean):
         if demean:
             confounds = scale(confounds, axis=0, with_std=False)
 
-    return confounds, labels
+        # mask confound to remove non-steady state and scrubbed volumes
+        if len(sample_mask) != confounds.shape[0]:
+            confounds = confounds[sample_mask, :]
+    return sample_mask, confounds, labels
+
+
+def _outlier_to_sample_index(outlier_flag):
+    """Conver regressor outlier flag to sample index (sample_mask)."""
+    outlier_flag = outlier_flag.sum(axis=1).values
+    return np.where(outlier_flag == 0)[0].tolist()
 
 
 class MissingConfound(Exception):

@@ -11,7 +11,9 @@ from nilearn.input_data import NiftiMasker
 
 
 path_data = os.path.join(os.path.dirname(lc.__file__), "data")
-file_confounds = os.path.join(path_data, "test_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz")
+file_confounds = os.path.join(
+    path_data, "test_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz"
+)
 
 
 def _simu_img(demean=True):
@@ -23,11 +25,19 @@ def _simu_img(demean=True):
     # as we will stack slices with confounds on top of slices with noise
     nz = 2
     # Load a simple 6 parameters motion models as confounds
-    X = lc.Confounds(strategy=["motion"], motion="basic", demean=demean).load(
+    X, sm = lc.Confounds(strategy=["motion"], motion="basic", demean=demean).load(
         file_confounds
     )
+    # pad X to the original length with random numbers
+    n_scans = 30
+    X_pad = np.random.rand(n_scans, X.shape[1])
+    for n in sm:
+        X_pad[n, :] = X[n, :]
+
     # repeat X in length (axis = 0) three times to increase the degree of freedom
     X = np.tile(X, (3, 1))
+    sample_mask = [np.array(sm) + (i * 30) for i in range(3)]
+    sample_mask = np.squeeze(sample_mask).flatten()
 
     # the number of time points is based on the example confound file
     nt = X.shape[0]
@@ -57,7 +67,7 @@ def _simu_img(demean=True):
     mask_conf = Nifti1Image(vol_conf, np.eye(4))
     mask_rand = Nifti1Image(vol_rand, np.eye(4))
 
-    return img, mask_conf, mask_rand, X
+    return img, mask_conf, mask_rand, X, sample_mask
 
 
 def _tseries_std(img, mask_img, confounds, standardize):
@@ -83,15 +93,17 @@ def _corr_tseries(tseries1, tseries2):
     return corr
 
 
-def _regression(confounds):
+def _regression(confounds, sample_mask):
     """Simple regression with nilearn."""
     # Simulate data
-    img, mask_conf, _, _ = _simu_img(demean=True)
+    img, mask_conf, _, _, _ = _simu_img(demean=True)
     confounds = np.tile(confounds, (3, 1))  # matching L29 (_simu_img)
+    sample_mask = [np.array(sample_mask) + (i * 30) for i in range(3)]
+    sample_mask = np.squeeze(sample_mask).flatten()  # matching L29 (_simu_img)
 
     # Do the regression
-    masker = NiftiMasker(mask_img=mask_conf, standardize=True)
-    tseries_clean = masker.fit_transform(img, confounds)
+    masker = NiftiMasker(mask_img=mask_conf, standardize=True, sample_mask=sample_mask)
+    tseries_clean = masker.fit_transform(img, confounds[sample_mask, :])
     assert tseries_clean.shape[0] == confounds.shape[0]
 
 
@@ -99,40 +111,50 @@ def _regression(confounds):
 def test_nilearn_regress():
     """Try regressing out all motion types in nilearn."""
     # Regress full motion
-    confounds = lc.Confounds(strategy=["motion"], motion="full").load(file_confounds)
-    _regression(confounds)
-
-    # Regress high_pass
-    confounds = lc.Confounds(strategy=["high_pass"]).load(file_confounds)
-    _regression(confounds)
-
-    # Regress wm_csf
-    confounds = lc.Confounds(strategy=["wm_csf"], wm_csf="full").load(file_confounds)
-    _regression(confounds)
-    # Regress global
-    confounds = lc.Confounds(strategy=["global"], global_signal="full").load(
+    confounds, sample_mask = lc.Confounds(strategy=["motion"], motion="full").load(
         file_confounds
     )
-    _regression(confounds)
+    _regression(confounds, sample_mask)
+
+    # Regress high_pass
+    confounds, sample_mask = lc.Confounds(strategy=["high_pass"]).load(file_confounds)
+    _regression(confounds, sample_mask)
+
+    # Regress wm_csf
+    confounds, sample_mask = lc.Confounds(strategy=["wm_csf"], wm_csf="full").load(
+        file_confounds
+    )
+    _regression(confounds, sample_mask)
+    # Regress global
+    confounds, sample_mask = lc.Confounds(
+        strategy=["global"], global_signal="full"
+    ).load(file_confounds)
+    _regression(confounds, sample_mask)
 
     # Regress AnatCompCor
-    confounds = lc.Confounds(strategy=["compcor"], compcor="anat").load(file_confounds)
-    _regression(confounds)
+    confounds, sample_mask = lc.Confounds(strategy=["compcor"], compcor="anat").load(
+        file_confounds
+    )
+    _regression(confounds, sample_mask)
 
     # Regress TempCompCor
-    confounds = lc.Confounds(strategy=["compcor"], compcor="temp").load(file_confounds)
-    _regression(confounds)
+    confounds, sample_mask = lc.Confounds(strategy=["compcor"], compcor="temp").load(
+        file_confounds
+    )
+    _regression(confounds, sample_mask)
 
     # Regress ICA-AROMA
-    confounds = lc.Confounds(strategy=["ica_aroma"], ica_aroma="basic").load(file_confounds)
-    _regression(confounds)
+    confounds, sample_mask = lc.Confounds(
+        strategy=["ica_aroma"], ica_aroma="basic"
+    ).load(file_confounds)
+    _regression(confounds, sample_mask)
 
 
 @pytest.mark.filterwarnings("ignore")
 def test_nilearn_standardize_false():
     """Test removing confounds in nilearn with no standardization."""
     # Simulate data
-    img, mask_conf, mask_rand, X = _simu_img(demean=True)
+    img, mask_conf, mask_rand, X, _ = _simu_img(demean=True)
 
     # Check that most variance is removed
     # in voxels composed of pure confounds
@@ -150,7 +172,7 @@ def test_nilearn_standardize_zscore():
     """Test removing confounds in nilearn with zscore standardization."""
     # Simulate data
 
-    img, mask_conf, mask_rand, X = _simu_img(demean=True)
+    img, mask_conf, mask_rand, X, _ = _simu_img(demean=True)
 
     # We now load the time series with vs without confounds
     # in voxels composed of pure confounds
@@ -174,7 +196,7 @@ def test_nilearn_standardize_psc():
     # Similar test to test_nilearn_standardize_zscore, but with psc
     # Simulate data
 
-    img, mask_conf, mask_rand, X = _simu_img(demean=False)
+    img, mask_conf, mask_rand, X, _ = _simu_img(demean=False)
 
     # Areas with confound
     tseries_raw, tseries_clean = _denoise(img, mask_conf, X, "psc")
@@ -303,7 +325,9 @@ def test_not_found_exception():
 
     # catch invalid compcor option
     with pytest.raises(ValueError):
-        conf = lc.Confounds(strategy=["compcor"], compcor="full", acompcor_combined=None)
+        conf = lc.Confounds(
+            strategy=["compcor"], compcor="full", acompcor_combined=None
+        )
         conf.load(file_confounds)
 
     # Aggressive ICA-AROMA strategy requires
@@ -323,7 +347,6 @@ def test_not_found_exception():
         conf.load(aroma_nii)
     assert "Invalid file type" in exc_info.value.args[0]
 
-
     # non aggressive ICA-AROMA strategy requires
     # desc-smoothAROMAnonaggr nifti file
     with pytest.raises(ValueError) as exc_info:
@@ -337,24 +360,20 @@ def test_load_non_nifti():
     conf = lc.Confounds()
 
     # tsv file - unsupported input
-    tsv = os.path.join(
-        path_data, "test_desc-confounds_regressors.tsv"
-    )
+    tsv = os.path.join(path_data, "test_desc-confounds_regressors.tsv")
     with pytest.raises(ValueError):
         conf.load(tsv)
 
     # cifti file should be supported
-    cifti = os.path.join(
-        path_data, "test_space-fsLR_den-91k_bold.dtseries.nii"
-    )
+    cifti = os.path.join(path_data, "test_space-fsLR_den-91k_bold.dtseries.nii")
     conf.load(cifti)
     assert conf.confounds_.size != 0
 
     # gifti support
-    gifti = [os.path.join(
-        path_data,
-        f"test_space-fsaverage5_hemi-{hemi}_bold.func.gii")
-        for hemi in ["L", "R"]]
+    gifti = [
+        os.path.join(path_data, f"test_space-fsaverage5_hemi-{hemi}_bold.func.gii")
+        for hemi in ["L", "R"]
+    ]
     conf.load(gifti)
     assert conf.confounds_.size != 0
 
