@@ -118,6 +118,7 @@ def _optimize_scrub(fd_outliers, n_scans):
     motion artifact in resting state fMRI." Neuroimage 84 (2014): 320-341.
     """
     # Start by checking if the beginning continuous segment is fewer than 5 volumes
+    print(fd_outliers)
     if fd_outliers[0] < 5:
         fd_outliers = np.asarray(list(range(fd_outliers[0])) + list(fd_outliers))
     # Do the same for the ending segment of scans
@@ -135,6 +136,7 @@ def _optimize_scrub(fd_outliers, n_scans):
             list(fd_outliers) + list(range(fd_outliers[ind] + 1, fd_outliers[ind + 1]))
         )
     fd_outliers = np.sort(np.unique(fd_outliers))
+    print(fd_outliers)
     return fd_outliers
 
 
