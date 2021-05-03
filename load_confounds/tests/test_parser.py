@@ -1,4 +1,3 @@
-import enum
 import os
 import re
 import load_confounds.parser as lc

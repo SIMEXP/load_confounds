@@ -237,7 +237,7 @@ class Confounds:
         return self._parse(img_files, flag_sample_mask=True)
 
     def _parse(self, img_files, flag_sample_mask):
-        """Parse input image, find confound files and scrubbing etc. """
+        """Parse input image, find confound files and scrubbing etc."""
         img_files, flag_single = cf._sanitize_confounds(img_files)
         confounds_out = []
         columns_out = []
