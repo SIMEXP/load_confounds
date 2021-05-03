@@ -39,14 +39,13 @@ def _check_params(confounds_raw, params):
 
 def _find_confounds(confounds_raw, keywords):
     """Find confounds that contain certain keywords."""
-    list_confounds = []
-    missing_keys = []
+    list_confounds, missing_keys = [], []
     for key in keywords:
         key_found = [col for col in confounds_raw.columns if key in col]
-        if not key_found and key != "non_steady_state":
-            missing_keys.append(key)
-        else:
+        if key_found:
             list_confounds.extend(key_found)
+        elif key != "non_steady_state":
+            missing_keys.append(key)
     if missing_keys:
         raise MissingConfound(keywords=missing_keys)
     return list_confounds
@@ -221,12 +220,12 @@ def _confounds_to_df(image_file, flag_acompcor, flag_full_aroma):
 
 def _extract_outlier_regressors(confounds, flag_sample_mask):
     """Separate confounds and outlier regressors."""
-    outlier_cols, confounds_col = [], []
-    for col in confounds.columns:
-        if "motion_outlier" in col or "non_steady_state" in col:
-            outlier_cols.append(col)
-        else:
-            confounds_col.append(col)
+    outlier_cols = {
+        col
+        for col in confounds.columns
+        if "motion_outlier" in col or "non_steady_state" in col
+    }
+    confounds_col = set(confounds.columns) - outlier_cols
     outliers = confounds[outlier_cols] if outlier_cols else pd.DataFrame()
     sample_mask = _outlier_to_sample_mask(confounds.shape[0], outliers)
 
