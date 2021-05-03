@@ -20,7 +20,7 @@ from nilearn.input_data import NiftiMasker
 file = "path/to/file/sub-01_ses-001_bold.nii.gz"
 confounds = Params36().load(file)
 
-# Use the confounds in a nilearn maker 
+# Use the confounds to load preprocessed time series with nilearn
 masker = NiftiMasker(smoothing_fwhm=5, standardize=True)
 img = masker.fit_transform(file, confounds=confounds)
 ```
