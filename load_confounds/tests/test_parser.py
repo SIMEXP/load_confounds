@@ -413,4 +413,4 @@ def test_load_mask():
     reg_m, mask = conf.load_mask(file_confounds)
     assert len(mask) == reg_m.shape[0]
     # the current test data has 6 time points marked as motion outliers
-    assert reg.shape[1] - reg_m.shape[1] == 6
+    assert reg.shape[1] - reg_m.shape[1] == 8
