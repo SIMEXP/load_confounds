@@ -128,12 +128,6 @@ class Confounds:
         using nilearn with no or zscore standardization, but should be turned off
         with "spc" normalization.
 
-    sample_mask : boolean, optional
-        If True, confounds will not include volumes identified as outliers. (Default)
-        This output can be directly applied to nilearn NifitMasker.
-        This is consistent with implementation of scrubbing/non-steady-state handling in Ciric 2017.
-        False to keep all outlier regressors in confounds.
-        Default to True.
 
     Attributes
     ----------
@@ -184,7 +178,6 @@ class Confounds:
         n_compcor="auto",
         ica_aroma=None,
         demean=True,
-        sample_mask=True,
     ):
         """Default parameters."""
         self.strategy = _sanitize_strategy(strategy)
@@ -200,7 +193,6 @@ class Confounds:
         self.n_compcor = n_compcor
         self.ica_aroma = ica_aroma
         self.demean = demean
-        self.sample_mask = sample_mask
 
     def load(self, img_files):
         """
@@ -220,32 +212,61 @@ class Confounds:
             A reduced version of fMRIprep confounds based on selected strategy and flags.
             An intercept is automatically added to the list of confounds.
         """
+        return self._parse(img_files, flag_sample_mask=False)
+
+    def load_mask(self, img_files):
+        """
+        Load fMRIprep confounds and sample mask
+
+        Parameters
+        ----------
+        img_files : path to processed image files, optionally as a list.
+            Processed nii.gz/dtseries.nii/func.gii file from fmriprep.
+            `nii.gz` or `dtseries.nii`: path to files, optionally as a list.
+            `func.gii`: list of a pair of paths to files, optionally as a list of lists.
+            The companion tsv will be automatically detected.
+
+        Returns
+        -------
+        confounds :  ndarray or list of ndarray
+            A reduced version of fMRIprep confounds based on selected strategy and flags.
+            An intercept is automatically added to the list of confounds.
+        sample_masks : list or list of list
+            Index of time point to be preserved in the analysis
+        """
+        return self._parse(img_files, flag_sample_mask=True)
+
+    def _parse(self, img_files, flag_sample_mask):
+        """Parse input image, find confound files and scrubbing etc. """
         img_files, flag_single = cf._sanitize_confounds(img_files)
         confounds_out = []
         columns_out = []
-        sample_mask_out = []
+        sample_masks_out = []
         self.missing_confounds_ = []
         self.missing_keys_ = []
 
         for file in img_files:
-            samp_mask, conf, col = self._load_single(file)
-            sample_mask_out.append(samp_mask)
+            sample_mask, conf, col = self._load_single(file, flag_sample_mask)
             confounds_out.append(conf)
             columns_out.append(col)
+            sample_masks_out.append(sample_mask)
 
         # If a single input was provided,
         # send back a single output instead of a list
         if flag_single:
             confounds_out = confounds_out[0]
             columns_out = columns_out[0]
-            sample_mask_out = sample_mask_out[0]
+            sample_masks_out = sample_masks_out[0]
 
         self.confounds_ = confounds_out
         self.columns_ = columns_out
-        self.sample_mask_ = sample_mask_out
-        return confounds_out, sample_mask_out
+        if flag_sample_mask:
+            self.sample_masks_ = sample_masks_out
+            return confounds_out, sample_masks_out
+        else:
+            return confounds_out
 
-    def _load_single(self, confounds_raw):
+    def _load_single(self, confounds_raw, flag_sample_mask):
         """Load a single confounds file from fmriprep."""
         # Convert tsv file to pandas dataframe
         # check if relevant imaging files are present according to the strategy
@@ -263,7 +284,7 @@ class Confounds:
 
         _check_error(self.missing_confounds_, self.missing_keys_)
         sample_mask, confounds, labels = cf._confounds_to_ndarray(
-            confounds, self.demean, self.sample_mask
+            confounds, self.demean, flag_sample_mask
         )
         return sample_mask, confounds, labels
 

@@ -103,13 +103,16 @@ def test_Params9Scrub():
     ]
     for check in list_check:
         assert check in conf.columns_
-    assert len(conf.sample_mask_) == 24
+    # assert len(conf.sample_mask_) == 24
+    # should have six motion outliers from scrubbing
+    assert sum("motion_outlier_" in col for col in conf.columns_) == 6
 
     # also load confounds with very liberal scrubbing thresholds
     # this should not produce an error
     conf = lc.Params9Scrub(fd_thresh=1, std_dvars_thresh=5)
     conf.load(file_confounds)
-    assert len(conf.sample_mask_) == 30
+    # assert len(conf.sample_mask_) == 30
+    assert "motion_outlier_0" not in conf.columns_
 
 
 def test_Params24():
@@ -217,13 +220,16 @@ def test_Params36Scrub():
 
     for check in list_check:
         assert check in conf.columns_
-    assert len(conf.sample_mask_) == 24
+    # should have six motion outliers from scrubbing
+    assert sum("motion_outlier_" in col for col in conf.columns_) == 6
+    # assert len(conf.sample_mask_) == 24
 
     # also load confounds with very liberal scrubbing thresholds
     # this should not produce an error
     conf = lc.Params36Scrub(fd_thresh=1, std_dvars_thresh=5)
     conf.load(file_confounds)
-    assert len(conf.sample_mask_) == 30
+    assert "motion_outlier_0" not in conf.columns_
+    # assert len(conf.sample_mask_) == 30
 
 
 def test_AnatCompCor():

@@ -33,7 +33,6 @@ class Params2(Confounds):
         self.strategy = ["high_pass", "wm_csf"]
         self.wm_csf = "basic"
         self.demean = demean
-        self.sample_mask = sample_mask
 
 
 class Params6(Confounds):
@@ -65,7 +64,6 @@ class Params6(Confounds):
         self.motion = "basic"
         self.n_motion = 0
         self.demean = demean
-        self.sample_mask = sample_mask
 
 
 class Params9(Confounds):
@@ -99,7 +97,6 @@ class Params9(Confounds):
         self.wm_csf = "basic"
         self.global_signal = "basic"
         self.demean = demean
-        self.sample_mask = sample_mask
 
 
 class Params9Scrub(Confounds):
@@ -131,7 +128,9 @@ class Params9Scrub(Confounds):
 
     """
 
-    def __init__(self, fd_thresh=0.2, std_dvars_thresh=3, demean=True, sample_mask=True):
+    def __init__(
+        self, fd_thresh=0.2, std_dvars_thresh=3, demean=True, sample_mask=True
+    ):
         """Default parameters."""
         self.strategy = ["high_pass", "motion", "wm_csf", "scrub"]
         self.motion = "basic"
@@ -141,7 +140,6 @@ class Params9Scrub(Confounds):
         self.fd_thresh = fd_thresh
         self.std_dvars_thresh = std_dvars_thresh
         self.demean = demean
-        self.sample_mask = sample_mask
 
 
 class Params24(Confounds):
@@ -174,7 +172,6 @@ class Params24(Confounds):
         self.motion = "full"
         self.n_motion = 0
         self.demean = demean
-        self.sample_mask = sample_mask
 
 
 class Params36(Confounds):
@@ -210,7 +207,6 @@ class Params36(Confounds):
         self.wm_csf = "full"
         self.global_signal = "full"
         self.demean = demean
-        self.sample_mask = sample_mask
 
 
 class Params36Scrub(Confounds):
@@ -244,7 +240,9 @@ class Params36Scrub(Confounds):
 
     """
 
-    def __init__(self, fd_thresh=0.2, std_dvars_thresh=3, demean=True, sample_mask=True):
+    def __init__(
+        self, fd_thresh=0.2, std_dvars_thresh=3, demean=True, sample_mask=True
+    ):
         """Default parameters."""
         self.strategy = ["high_pass", "motion", "wm_csf", "scrub"]
         self.motion = "full"
@@ -254,7 +252,6 @@ class Params36Scrub(Confounds):
         self.fd_thresh = fd_thresh
         self.std_dvars_thresh = std_dvars_thresh
         self.demean = demean
-        self.sample_mask = sample_mask
 
 
 class AnatCompCor(Confounds):
@@ -290,7 +287,9 @@ class AnatCompCor(Confounds):
 
     """
 
-    def __init__(self, n_compcor="auto", demean=True, acompcor_combined=True, sample_mask=True):
+    def __init__(
+        self, n_compcor="auto", demean=True, acompcor_combined=True, sample_mask=True
+    ):
         """Default parameters."""
         self.strategy = ["high_pass", "motion", "compcor"]
         self.motion = "full"
@@ -299,7 +298,6 @@ class AnatCompCor(Confounds):
         self.n_compcor = n_compcor
         self.acompcor_combined = acompcor_combined
         self.demean = demean
-        self.sample_mask = sample_mask
 
 
 class TempCompCor(Confounds):
@@ -336,7 +334,6 @@ class TempCompCor(Confounds):
         self.n_compcor = n_compcor
         self.acompcor_combined = None
         self.demean = demean
-        self.sample_mask = sample_mask
 
 
 class ICAAROMA(Confounds):
@@ -402,7 +399,6 @@ class ICAAROMA(Confounds):
         self.demean = demean
         self.wm_csf = "basic"
         self.ica_aroma = "full"
-        self.sample_mask = sample_mask
 
 
 class AROMAGSR(Confounds):
@@ -469,7 +465,6 @@ class AROMAGSR(Confounds):
         self.wm_csf = "basic"
         self.demean = demean
         self.ica_aroma = "full"
-        self.sample_mask = sample_mask
 
 
 class AggrICAAROMA(Confounds):
@@ -521,4 +516,3 @@ class AggrICAAROMA(Confounds):
         self.wm_csf = "basic"
         self.demean = demean
         self.ica_aroma = "basic"
-        self.sample_mask = sample_mask
