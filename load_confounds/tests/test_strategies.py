@@ -5,8 +5,12 @@ import load_confounds.strategies as lc
 import numpy as np
 
 path_data = os.path.join(os.path.dirname(lc.__file__), "data")
-file_confounds = os.path.join(path_data, "test_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz")
-file_aroma = os.path.join(path_data, "test_space-MNI152NLin2009cAsym_desc-smoothAROMAnonaggr_bold.nii.gz")
+file_confounds = os.path.join(
+    path_data, "test_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz"
+)
+file_aroma = os.path.join(
+    path_data, "test_space-MNI152NLin2009cAsym_desc-smoothAROMAnonaggr_bold.nii.gz"
+)
 
 
 def test_Params2():

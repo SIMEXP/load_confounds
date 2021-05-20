@@ -226,7 +226,7 @@ class Confounds:
         # Convert tsv file to pandas dataframe
         # check if relevant imaging files are present according to the strategy
         flag_acompcor = ("compcor" in self.strategy) and (self.compcor == "anat")
-        flag_full_aroma =  ("ica_aroma" in self.strategy) and (self.ica_aroma == "full")
+        flag_full_aroma = ("ica_aroma" in self.strategy) and (self.ica_aroma == "full")
         confounds_raw, self.json_ = cf._confounds_to_df(
             confounds_raw, flag_acompcor, flag_full_aroma
         )

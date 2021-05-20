@@ -34,7 +34,9 @@ class Minimal(Confounds):
 
     """
 
-    def __init__(self, motion="basic", wm_csf="basic", global_signal=False, demean=True):
+    def __init__(
+        self, motion="basic", wm_csf="basic", global_signal=False, demean=True
+    ):
         """Default parameters."""
         self.strategy = ["high_pass", "motion", "wm_csf", "global"]
         self.motion = motion
@@ -83,9 +85,16 @@ class Scrubbing(Confounds):
 
     """
 
-    def __init__(self, motion="basic", wm_csf="basic", scrub="full",
-                 global_signal=False,
-                 fd_thresh=0.2, std_dvars_thresh=3, demean=True):
+    def __init__(
+        self,
+        motion="basic",
+        wm_csf="basic",
+        scrub="full",
+        global_signal=False,
+        fd_thresh=0.2,
+        std_dvars_thresh=3,
+        demean=True,
+    ):
         """Default parameters."""
         self.strategy = ["high_pass", "motion", "wm_csf", "scrub", "global"]
         self.motion = motion
@@ -131,7 +140,14 @@ class CompCor(Confounds):
 
     """
 
-    def __init__(self, motion="full", compcor="anat", n_compcor="auto", demean=True, acompcor_combined=True):
+    def __init__(
+        self,
+        motion="full",
+        compcor="anat",
+        n_compcor="auto",
+        demean=True,
+        acompcor_combined=True,
+    ):
         """Default parameters."""
         self.strategy = ["high_pass", "motion", "compcor"]
         self.motion = motion
