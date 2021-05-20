@@ -34,9 +34,7 @@ class Minimal(Confounds):
 
     """
 
-    def __init__(
-        self, motion="basic", wm_csf="basic", global_signal=False, demean=True
-    ):
+    def __init__(self, motion="full", wm_csf="basic", global_signal=False, demean=True):
         """Default parameters."""
         self.strategy = ["high_pass", "motion", "wm_csf", "global"]
         self.motion = motion
@@ -87,8 +85,8 @@ class Scrubbing(Confounds):
 
     def __init__(
         self,
-        motion="basic",
-        wm_csf="basic",
+        motion="full",
+        wm_csf="full",
         scrub="full",
         global_signal=False,
         fd_thresh=0.2,
