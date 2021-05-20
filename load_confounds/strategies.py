@@ -7,19 +7,37 @@ from .parser import Confounds
 
 class Minimal(Confounds):
     """
-    Load confounds using the 9P strategy from Ciric et al. 2017.
-    Basic motion parameters, WM/CSF signals, global signal and high pass filter.
+    Load confounds for a minimal denosing strategy commonly used
+    in resting state functional connectivitu, described in Fox et al., 2005.
+    Full motion parameters, WM/CSF signals, and high pass filter,
+    with an option to extract global signal confounds.
 
     Parameters
     ----------
     confounds_raw : Pandas Dataframe or path to tsv file(s), optionally as a list.
         Raw confounds from fmriprep
 
-    motion
+    motion : string, optional
+        Type of confounds extracted from head motion estimates.
+        "basic" translation/rotation (6 parameters)
+        "power2" translation/rotation + quadratic terms (12 parameters)
+        "derivatives" translation/rotation + derivatives (12 parameters)
+        "full" translation/rotation + derivatives + quadratic terms + power2d derivatives (24 parameters)
 
-    wm_csf
+    wm_csf : string, optional
+        Type of confounds extracted from masks of white matter and cerebrospinal fluids.
+        "basic" the averages in each mask (2 parameters)
+        "power2" averages and quadratic terms (4 parameters)
+        "derivatives" averages and derivatives (4 parameters)
+        "full" averages + derivatives + quadratic terms + power2d derivatives (8 parameters)
 
-    global_signal
+    global_signal : boolean, string, optional
+        Type of confounds extracted from the global signal.
+        False: do not perform global signal regression
+        "basic" just the global signal (1 parameter)
+        "power2" global signal and quadratic term (2 parameters)
+        "derivatives" global signal and derivative (2 parameters)
+        "full" global signal + derivatives + quadratic terms + power2d derivatives (4 parameters)
 
     demean : boolean, optional
         If True, the confounds are standardized to a zero mean (over time).
@@ -46,7 +64,7 @@ class Minimal(Confounds):
 
 class Scrubbing(Confounds):
     """
-    Load confounds using a variant of the 36P strategy from Ciric et al. 2017.
+    Load confounds for scrubbing describbed in Power et al., 2012.
     Motion parameters, WM/CSF signals, scrub (full), high pass filter.
     All noise components are fully expanded (derivatives, squares and squared
     derivatives).
@@ -56,13 +74,33 @@ class Scrubbing(Confounds):
     confounds_raw : Pandas Dataframe or path to tsv file(s), optionally as a list.
         Raw confounds from fmriprep
 
-    motion
+    motion : string, optional
+        Type of confounds extracted from head motion estimates.
+        "basic" translation/rotation (6 parameters)
+        "power2" translation/rotation + quadratic terms (12 parameters)
+        "derivatives" translation/rotation + derivatives (12 parameters)
+        "full" translation/rotation + derivatives + quadratic terms + power2d derivatives (24 parameters)
 
-    wm_csf
+    wm_csf : string, optional
+        Type of confounds extracted from masks of white matter and cerebrospinal fluids.
+        "basic" the averages in each mask (2 parameters)
+        "power2" averages and quadratic terms (4 parameters)
+        "derivatives" averages and derivatives (4 parameters)
+        "full" averages + derivatives + quadratic terms + power2d derivatives (8 parameters)
 
-    scrub
+    global_signal : boolean, string, optional
+        Type of confounds extracted from the global signal.
+        False: do not perform global signal regression
+        "basic" just the global signal (1 parameter)
+        "power2" global signal and quadratic term (2 parameters)
+        "derivatives" global signal and derivative (2 parameters)
+        "full" global signal + derivatives + quadratic terms + power2d derivatives (4 parameters)
 
-    global_signal
+    scrub : string, optional
+        Type of scrub of frames with excessive motion (Power et al. 2014)
+        "basic" remove time frames based on excessive FD and DVARS
+        "full" also remove time windows which are too short after scrubbing.
+        one-hot encoding vectors are added as regressors for each scrubbed frame.
 
     fd_thresh : float, optional
         Framewise displacement threshold for scrub (default = 0.2 mm)
@@ -107,13 +145,20 @@ class Scrubbing(Confounds):
 
 class CompCor(Confounds):
     """
-    Load confounds using the aCOMPCOR strategy from Ciric et al. 2017.
-    Motion parameters (fully expanded), high pass filter, and acompcor.
+    Load confounds using the CompCor strategy from Behzadi et al., 2007.
+    Default with motion parameters (fully expanded), high pass filter, and anatomical compcor.
 
     Parameters
     ----------
     confounds_raw : Pandas Dataframe or path to tsv file(s), optionally as a list.
         Raw confounds from fmriprep
+
+    motion : string, optional
+        Type of confounds extracted from head motion estimates.
+        "basic" translation/rotation (6 parameters)
+        "power2" translation/rotation + quadratic terms (12 parameters)
+        "derivatives" translation/rotation + derivatives (12 parameters)
+        "full" translation/rotation + derivatives + quadratic terms + power2d derivatives (24 parameters)
 
     n_compcor : int or "auto", optional
         The number of noise components to be extracted. For acompcor_combined=False,
@@ -158,11 +203,10 @@ class CompCor(Confounds):
 
 class ICAAROMA(Confounds):
     """
-    Load confounds for non-aggresive ICA-AROMA strategy described in
-    Ciric et al. 2017.
+    Load confounds for non-aggresive ICA-AROMA strategy from Pruim et al., 2015.
     The strategy requires fMRIprep outputs generated with `--use-aroma`.
 
-    ICA-AROMA in Ciric et al. 2017 (Model 13) is implemented in two steps:
+    ICA-AROMA is implemented in two steps:
     1. A non-aggressive denoising immediately after ICA classification.
         A linear regression estimates signals with all independent components
         as predictors.
@@ -190,9 +234,20 @@ class ICAAROMA(Confounds):
     confounds_raw : Pandas Dataframe or path to tsv file(s), optionally as a list.
         Raw confounds from fmriprep
 
-    wm_csf
+    wm_csf : string, optional
+        Type of confounds extracted from masks of white matter and cerebrospinal fluids.
+        "basic" the averages in each mask (2 parameters)
+        "power2" averages and quadratic terms (4 parameters)
+        "derivatives" averages and derivatives (4 parameters)
+        "full" averages + derivatives + quadratic terms + power2d derivatives (8 parameters)
 
-    global_signal
+    global_signal : boolean, string, optional
+        Type of confounds extracted from the global signal.
+        False: do not perform global signal regression
+        "basic" just the global signal (1 parameter)
+        "power2" global signal and quadratic term (2 parameters)
+        "derivatives" global signal and derivative (2 parameters)
+        "full" global signal + derivatives + quadratic terms + power2d derivatives (4 parameters)
 
     demean : boolean, optional
         If True, the confounds are standardized to a zero mean (over time).
