@@ -279,7 +279,7 @@ class Confounds:
 
     def _load_global(self, confounds_raw):
         """Load the regressors derived from the global signal."""
-        if self.global_signal:
+        if isinstance(self.global_signal, str):
             global_params = cf._add_suffix(["global_signal"], self.global_signal)
             cf._check_params(confounds_raw, global_params)
             return confounds_raw[global_params]

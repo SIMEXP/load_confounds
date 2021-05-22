@@ -191,8 +191,6 @@ def test_CompCor_temporal():
 
 def test_FullCompCor():
     """Test a full compcor strategy."""
-    # This is not a predefined strategy
-    # but can be implemented easily with flexible API
     conf = lc.CompCor(compcor="full", acompcor_combined=False)
     conf.load(file_confounds)
 

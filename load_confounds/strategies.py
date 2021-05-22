@@ -8,7 +8,7 @@ from .parser import Confounds
 class Minimal(Confounds):
     """
     Load confounds for a minimal denosing strategy commonly used
-    in resting state functional connectivitu, described in Fox et al., 2005.
+    in resting state functional connectivity, described in Fox et al., 2005.
     Full motion parameters, WM/CSF signals, and high pass filter,
     with an option to extract global signal confounds.
 
@@ -31,19 +31,19 @@ class Minimal(Confounds):
         "derivatives" averages and derivatives (4 parameters)
         "full" averages + derivatives + quadratic terms + power2d derivatives (8 parameters)
 
-    global_signal : boolean, string, optional
-        Type of confounds extracted from the global signal.
-        False: do not perform global signal regression
-        "basic" just the global signal (1 parameter)
-        "power2" global signal and quadratic term (2 parameters)
-        "derivatives" global signal and derivative (2 parameters)
-        "full" global signal + derivatives + quadratic terms + power2d derivatives (4 parameters)
-
     demean : boolean, optional
         If True, the confounds are standardized to a zero mean (over time).
         This step is critical if the confounds are regressed out of time series
         using nilearn with no or zscore standardization, but should be turned off
         with "spc" normalization.
+
+    global_signal : string, optional
+        Specify type of confounds extracted from the global signal.
+        Global signal regressors will not be retrieved if no arguments were applied.
+        "basic" just the global signal (1 parameter)
+        "power2" global signal and quadratic term (2 parameters)
+        "derivatives" global signal and derivative (2 parameters)
+        "full" global signal + derivatives + quadratic terms + power2d derivatives (4 parameters)
 
     Returns
     -------
@@ -52,13 +52,13 @@ class Minimal(Confounds):
 
     """
 
-    def __init__(self, motion="full", wm_csf="basic", global_signal=False, demean=True):
+    def __init__(self, motion="full", wm_csf="basic", demean=True, **args):
         """Default parameters."""
         self.strategy = ["high_pass", "motion", "wm_csf", "global"]
         self.motion = motion
         self.n_motion = 0
         self.wm_csf = wm_csf
-        self.global_signal = global_signal
+        self.global_signal = args.get("global", False)
         self.demean = demean
 
 
@@ -88,14 +88,6 @@ class Scrubbing(Confounds):
         "derivatives" averages and derivatives (4 parameters)
         "full" averages + derivatives + quadratic terms + power2d derivatives (8 parameters)
 
-    global_signal : boolean, string, optional
-        Type of confounds extracted from the global signal.
-        False: do not perform global signal regression
-        "basic" just the global signal (1 parameter)
-        "power2" global signal and quadratic term (2 parameters)
-        "derivatives" global signal and derivative (2 parameters)
-        "full" global signal + derivatives + quadratic terms + power2d derivatives (4 parameters)
-
     scrub : string, optional
         Type of scrub of frames with excessive motion (Power et al. 2014)
         "basic" remove time frames based on excessive FD and DVARS
@@ -114,6 +106,14 @@ class Scrubbing(Confounds):
         using nilearn with no or zscore standardization, but should be turned off
         with "spc" normalization.
 
+    global_signal : string, optional
+        Specify type of confounds extracted from the global signal.
+        Global signal regressors will not be retrieved if no arguments were applied.
+        "basic" just the global signal (1 parameter)
+        "power2" global signal and quadratic term (2 parameters)
+        "derivatives" global signal and derivative (2 parameters)
+        "full" global signal + derivatives + quadratic terms + power2d derivatives (4 parameters)
+
     Returns
     -------
     conf :  a Confounds object
@@ -126,10 +126,10 @@ class Scrubbing(Confounds):
         motion="full",
         wm_csf="full",
         scrub="full",
-        global_signal=False,
         fd_thresh=0.2,
         std_dvars_thresh=3,
         demean=True,
+        **args,
     ):
         """Default parameters."""
         self.strategy = ["high_pass", "motion", "wm_csf", "scrub", "global"]
@@ -137,7 +137,7 @@ class Scrubbing(Confounds):
         self.n_motion = 0
         self.wm_csf = wm_csf
         self.scrub = scrub
-        self.global_signal = global_signal
+        self.global_signal = args.get("global", False)
         self.fd_thresh = (fd_thresh,)
         self.std_dvars_thresh = (std_dvars_thresh,)
         self.demean = demean
@@ -241,19 +241,20 @@ class ICAAROMA(Confounds):
         "derivatives" averages and derivatives (4 parameters)
         "full" averages + derivatives + quadratic terms + power2d derivatives (8 parameters)
 
-    global_signal : boolean, string, optional
-        Type of confounds extracted from the global signal.
-        False: do not perform global signal regression
-        "basic" just the global signal (1 parameter)
-        "power2" global signal and quadratic term (2 parameters)
-        "derivatives" global signal and derivative (2 parameters)
-        "full" global signal + derivatives + quadratic terms + power2d derivatives (4 parameters)
-
     demean : boolean, optional
         If True, the confounds are standardized to a zero mean (over time).
         This step is critical if the confounds are regressed out of time series
         using nilearn with no or zscore standardization, but should be turned off
         with "spc" normalization.
+
+    global_signal : string, optional
+        Specify type of confounds extracted from the global signal.
+        Global signal regressors will not be retrieved if no arguments were applied.
+        "basic" just the global signal (1 parameter)
+        "power2" global signal and quadratic term (2 parameters)
+        "derivatives" global signal and derivative (2 parameters)
+        "full" global signal + derivatives + quadratic terms + power2d derivatives (4 parameters)
+
 
     Returns
     -------
@@ -272,10 +273,10 @@ class ICAAROMA(Confounds):
 
     """
 
-    def __init__(self, wm_csf="basic", global_signal=False, demean=True):
+    def __init__(self, wm_csf="basic", demean=True, **args):
         """Default parameters."""
         self.strategy = ["wm_csf", "high_pass", "ica_aroma", "global"]
         self.demean = demean
         self.wm_csf = "basic"
         self.ica_aroma = "full"
-        self.global_signal = global_signal
+        self.global_signal = args.get("global", False)
