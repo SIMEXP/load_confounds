@@ -290,13 +290,13 @@ class ICAAROMA(Confounds):
 
 
 def _check_invalid_parameter(kwargs, valid_keys=["global_signal"]):
-    """Raise warnings if kwargs contains invalid parameters"""
+    """Raise warnings if kwargs contains invalid parameters."""
     # supply extra parameter will not effect the behaviour
     # but it is good to inform the user
-    if len(kwargs) > len(valid_keys):
-        for key in valid_keys:
-            if key in kwargs:
-                kwargs.pop(key)
+    for key in valid_keys:
+        if key in kwargs:
+            kwargs.pop(key)
+    if len(kwargs) > 0:
         warnings.warn("Supplied paramerters not accepted in the current "
                       "strategy, hence not taking effect: "
                       f"{list(kwargs.keys())}. "
