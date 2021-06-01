@@ -2,6 +2,7 @@
 
 Authors: load_confounds team
 """
+import warnings
 from .parser import Confounds
 
 
@@ -52,14 +53,16 @@ class Minimal(Confounds):
 
     """
 
-    def __init__(self, motion="full", wm_csf="basic", demean=True, **args):
+    def __init__(self, motion="full", wm_csf="basic", demean=True, **kwargs):
         """Default parameters."""
         self.strategy = ["high_pass", "motion", "wm_csf", "global"]
         self.motion = motion
         self.n_motion = 0
         self.wm_csf = wm_csf
-        self.global_signal = args.get("global", False)
+        self.global_signal = kwargs.get("global_signal", False)
         self.demean = demean
+        # warn user for supplying useless parameter
+        _check_invalid_parameter(kwargs, valid_keys=["global_signal"])
 
 
 class Scrubbing(Confounds):
@@ -129,7 +132,7 @@ class Scrubbing(Confounds):
         fd_thresh=0.2,
         std_dvars_thresh=3,
         demean=True,
-        **args,
+        **kwargs,
     ):
         """Default parameters."""
         self.strategy = ["high_pass", "motion", "wm_csf", "scrub", "global"]
@@ -137,10 +140,12 @@ class Scrubbing(Confounds):
         self.n_motion = 0
         self.wm_csf = wm_csf
         self.scrub = scrub
-        self.global_signal = args.get("global", False)
+        self.global_signal = kwargs.get("global_signal", False)
         self.fd_thresh = (fd_thresh,)
         self.std_dvars_thresh = (std_dvars_thresh,)
         self.demean = demean
+        # warn user for supplying useless parameter
+        _check_invalid_parameter(kwargs, valid_keys=["global_signal"])
 
 
 class CompCor(Confounds):
@@ -273,10 +278,28 @@ class ICAAROMA(Confounds):
 
     """
 
-    def __init__(self, wm_csf="basic", demean=True, **args):
+    def __init__(self, wm_csf="basic", demean=True, **kwargs):
         """Default parameters."""
         self.strategy = ["wm_csf", "high_pass", "ica_aroma", "global"]
         self.demean = demean
-        self.wm_csf = "basic"
+        self.wm_csf = wm_csf
         self.ica_aroma = "full"
-        self.global_signal = args.get("global", False)
+        self.global_signal = kwargs.get("global_signal", False)
+        # warn user for supplying useless parameter
+        _check_invalid_parameter(kwargs, valid_keys=["global_signal"])
+
+
+def _check_invalid_parameter(kwargs, valid_keys=["global_signal"]):
+    """Raise warnings if kwargs contains invalid parameters"""
+    # supply extra parameter will not effect the behaviour
+    # but it is good to inform the user
+    if len(kwargs) > len(valid_keys):
+        for key in valid_keys:
+            if key in kwargs:
+                kwargs.pop(key)
+        warnings.warn("Supplied paramerters not accepted in the current "
+                      "strategy, hence not taking effect: "
+                      f"{list(kwargs.keys())}. "
+                      "Please consider customising strategy with using "
+                      "the `Confounds` module."
+                      )

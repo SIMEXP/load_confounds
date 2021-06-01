@@ -3,6 +3,8 @@ import os
 import re
 import load_confounds.strategies as lc
 import numpy as np
+import pytest
+
 
 path_data = os.path.join(os.path.dirname(lc.__file__), "data")
 file_confounds = os.path.join(
@@ -211,7 +213,7 @@ def test_FullCompCor():
 
 def test_ICAAROMA():
     """Test the (non-aggressive) ICA-AROMA strategy."""
-    conf = lc.ICAAROMA()
+    conf = lc.ICAAROMA(global_signal="basic")
     conf.load(file_aroma)
 
     # Check that all fixed name model categories have been successfully loaded
@@ -224,4 +226,11 @@ def test_ICAAROMA():
         # Check that all fixed name model categories
         fixed = c in list_check
         cosines = re.match("cosine+", c)
-        assert fixed or cosines
+        assert fixed or (cosines is not None)
+
+
+def test_invalid():
+    """Test warning raised for invalid keywors."""
+    with pytest.warns(UserWarning) as record:
+        lc.ICAAROMA(compcor="anat", global_signal="full")
+    assert "not taking effect: ['compcor']" in record[0].message.args[0]
