@@ -289,17 +289,17 @@ class ICAAROMA(Confounds):
         _check_invalid_parameter(kwargs, valid_keys=["global_signal"])
 
 
-def _check_invalid_parameter(kwargs, valid_keys=["global_signal"]):
+def _check_invalid_parameter(keyword_args=None, valid_keys=["global_signal"]):
     """Raise warnings if kwargs contains invalid parameters."""
     # supply extra parameter will not effect the behaviour
     # but it is good to inform the user
     for key in valid_keys:
-        if key in kwargs:
-            kwargs.pop(key)
-    if len(kwargs) > 0:
+        if isinstance(keyword_args, dict) and key in keyword_args:
+            keyword_args.pop(key)
+    if isinstance(keyword_args, dict) and len(keyword_args) > 0:
         warnings.warn("Supplied paramerters not accepted in the current "
                       "strategy, hence not taking effect: "
-                      f"{list(kwargs.keys())}. "
+                      f"{list(keyword_args.keys())}. "
                       "Please consider customising strategy with using "
                       "the `Confounds` module."
                       )
