@@ -317,7 +317,6 @@ class ICAAROMA(Confounds):
         self.ica_aroma = "full"
 
 
-
 def _check_invalid_parameter(keyword_args=None, valid_keys=["global_signal"]):
     """Raise warnings if kwargs contains invalid parameters."""
     # supply extra parameter will not effect the behaviour
@@ -326,9 +325,10 @@ def _check_invalid_parameter(keyword_args=None, valid_keys=["global_signal"]):
         if isinstance(keyword_args, dict) and key in keyword_args:
             keyword_args.pop(key)
     if isinstance(keyword_args, dict) and len(keyword_args) > 0:
-        warnings.warn("Supplied paramerters not accepted in the current "
-                      "strategy, hence not taking effect: "
-                      f"{list(keyword_args.keys())}. "
-                      "Please consider customising strategy with using "
-                      "the `Confounds` module."
-                      )
+        warnings.warn(
+            "Supplied paramerters not accepted in the current "
+            "strategy, hence not taking effect: "
+            f"{list(keyword_args.keys())}. "
+            "Please consider customising strategy with using "
+            "the `Confounds` module."
+        )

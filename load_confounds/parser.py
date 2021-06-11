@@ -282,7 +282,6 @@ class Confounds:
         cf._check_params(confounds_raw, global_params)
         return confounds_raw[global_params]
 
-
     def _load_compcor(self, confounds_raw):
         """Load compcor regressors."""
         compcor_cols = _find_compcor(
