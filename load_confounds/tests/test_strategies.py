@@ -214,6 +214,7 @@ def test_FullCompCor():
 def test_ICAAROMA():
     """Test the (non-aggressive) ICA-AROMA strategy."""
     conf = lc.ICAAROMA(global_signal="basic")
+    assert conf.strategy == ["wm_csf", "high_pass", "ica_aroma", "global"]
     conf.load(file_aroma)
 
     # Check that all fixed name model categories have been successfully loaded

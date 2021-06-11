@@ -59,10 +59,7 @@ class Minimal(Confounds):
         # if so, add to strategy
         global_signal = kwargs.get("global_signal", False)
         strategy = ["high_pass", "motion", "wm_csf"]
-        if global_signal:
-            strategy.append("global")
-            self.global_signal = global_signal
-
+        strategy, global_signal = _update_strategy(strategy, global_signal)
         # warn user for supplying useless parameter
         _check_invalid_parameter(kwargs, valid_keys=["global_signal"])
 
@@ -72,6 +69,8 @@ class Minimal(Confounds):
         self.n_motion = 0
         self.wm_csf = wm_csf
         self.demean = demean
+        if global_signal:
+            self.global_signal = global_signal
 
 
 class Scrubbing(Confounds):
@@ -148,10 +147,7 @@ class Scrubbing(Confounds):
         # if so, add to strategy
         global_signal = kwargs.get("global_signal", False)
         strategy = ["high_pass", "motion", "wm_csf", "scrub"]
-        if global_signal:
-            strategy.append("global")
-            self.global_signal = global_signal
-
+        strategy, global_signal = _update_strategy(strategy, global_signal)
         # warn user for supplying useless parameter
         _check_invalid_parameter(kwargs, valid_keys=["global_signal"])
 
@@ -164,6 +160,8 @@ class Scrubbing(Confounds):
         self.fd_thresh = (fd_thresh,)
         self.std_dvars_thresh = (std_dvars_thresh,)
         self.demean = demean
+        if global_signal:
+            self.global_signal = global_signal
 
 
 class CompCor(Confounds):
@@ -299,14 +297,9 @@ class ICAAROMA(Confounds):
 
     def __init__(self, wm_csf="basic", demean=True, **kwargs):
         """Default parameters."""
-        # check if global signal is supplied as a parameter
-        # if so, add to strategy
-        global_signal = kwargs.get("global_signal", False)
         strategy = ["wm_csf", "high_pass", "ica_aroma"]
-        if global_signal:
-            strategy.append("global")
-            self.global_signal = global_signal
-
+        global_signal = kwargs.get("global_signal", False)
+        strategy, global_signal = _update_strategy(strategy, global_signal)
         # warn user for supplying useless parameter
         _check_invalid_parameter(kwargs, valid_keys=["global_signal"])
 
@@ -315,6 +308,8 @@ class ICAAROMA(Confounds):
         self.demean = demean
         self.wm_csf = wm_csf
         self.ica_aroma = "full"
+        if global_signal:
+            self.global_signal = global_signal
 
 
 def _check_invalid_parameter(keyword_args=None, valid_keys=["global_signal"]):
@@ -332,3 +327,11 @@ def _check_invalid_parameter(keyword_args=None, valid_keys=["global_signal"]):
             "Please consider customising strategy with using "
             "the `Confounds` module."
         )
+
+
+def _update_strategy(strategy, global_signal):
+    # check if global signal is supplied as a parameter
+    # if so, add to strategy
+    if global_signal:
+        strategy.append("global")
+    return strategy, global_signal
