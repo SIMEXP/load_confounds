@@ -19,6 +19,8 @@ def test_Minimal():
     """Test the Minimal strategy."""
     # Try to load the confounds, whithout PCA reduction
     conf = lc.Minimal()
+    assert conf.strategy == ["high_pass", "motion", "wm_csf"]
+    assert hasattr(conf, "global_signal") == False
     conf.load(file_confounds)
 
     assert isinstance(conf.confounds_, np.ndarray)
@@ -35,10 +37,18 @@ def test_Minimal():
     for check in list_check:
         assert check in conf.columns_
 
+    # maker sure global signal works
+    conf = lc.Minimal(global_signal="basic")
+    assert conf.strategy == ["high_pass", "motion", "wm_csf", "global"]
+    assert conf.global_signal == "basic"
+
 
 def test_Scrubbing():
     """Test the Scrubbing strategy."""
     conf = lc.Scrubbing(fd_thresh=0.15)
+    # make sure global signal is not there
+    assert conf.strategy == ["high_pass", "motion", "wm_csf", "scrub"]
+    assert hasattr(conf, "global_signal") == False
     conf.load(file_confounds)
 
     assert isinstance(conf.confounds_, np.ndarray)
@@ -79,6 +89,12 @@ def test_Scrubbing():
     conf = lc.Scrubbing(fd_thresh=1, std_dvars_thresh=5)
     conf.load(file_confounds)
     assert "motion_outlier_0" not in conf.columns_
+
+    # maker sure global signal works
+    conf = lc.Scrubbing(global_signal="full")
+    assert conf.strategy == ["high_pass", "motion", "wm_csf", "scrub", "global"]
+    assert conf.global_signal == "full"
+
 
 
 def test_CompCor_anatomical():
@@ -214,6 +230,7 @@ def test_FullCompCor():
 def test_ICAAROMA():
     """Test the (non-aggressive) ICA-AROMA strategy."""
     conf = lc.ICAAROMA(global_signal="basic")
+    assert conf.global_signal == "basic"
     assert conf.strategy == ["wm_csf", "high_pass", "ica_aroma", "global"]
     conf.load(file_aroma)
 

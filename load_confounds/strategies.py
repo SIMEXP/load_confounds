@@ -333,6 +333,7 @@ def _update_strategy(strategy, global_signal):
     """Check if global signal is supplied as a parameter.
     If so, add to strategy.
     """
-    if global_signal:
-        strategy.append("global")
-    return strategy, global_signal
+    strat = strategy.copy()
+    if isinstance(global_signal, str):
+        strat.append("global")
+    return strat, global_signal
