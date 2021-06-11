@@ -108,9 +108,13 @@ Development of this library was supported in part by the Canadian Consortium on 
 
 ## References
 
+Behzadi Y, Restom K, Liau J, Liu TT. A component based noise correction method (CompCor) for BOLD and perfusion based fMRI. Neuroimage. 2007. doi:[10.1016/j.neuroimage.2007.04.042](https://doi.org/10.1016/j.neuroimage.2007.04.042)
+
 Ciric R, Wolf DH, Power JD, Roalf DR, Baum GL, Ruparel K, Shinohara RT, Elliott MA, Eickhoff SB, Davatzikos C., Gur RC, Gur RE, Bassett DS, Satterthwaite TD. Benchmarking of participant-level confound regression strategies for the control of motion artifact in studies of functional connectivity. Neuroimage. 2017. doi:[10.1016/j.neuroimage.2017.03.020](https://doi.org/10.1016/j.neuroimage.2017.03.020)
 
-Esteban O, Markiewicz CJ, Blair RW, Moodie CA, Isik AI, Erramuzpe A, Kent JD, Goncalves M, DuPre E, Snyder M, Oya H, Ghosh SS, Wright J, Durnez J, Poldrack RA, Gorgolewski KJ. fMRIPrep: a robust preprocessing pipeline for functional MRI. Nat Meth. 2018; doi: [10.1038/s41592-018-0235-4](https://doi.org/10.1038/s41592-018-0235-4)
+Esteban O, Markiewicz CJ, Blair RW, Moodie CA, Isik AI, Erramuzpe A, Kent JD, Goncalves M, DuPre E, Snyder M, Oya H, Ghosh SS, Wright J, Durnez J, Poldrack RA, Gorgolewski KJ. fMRIPrep: a robust preprocessing pipeline for functional MRI. Nat Meth. 2018. doi: [10.1038/s41592-018-0235-4](https://doi.org/10.1038/s41592-018-0235-4)
+
+Fox MD, Snyder AZ, Vincent JL, Corbetta M, Van Essen DC, Raichle ME. The human brain is intrinsically organized into dynamic, anticorrelated functional networks. Proceedings of the National Academy of Sciences. 2005; doi: [10.1073/pnas.0504136102](https://doi.org/10.1073/pnas.0504136102).
 
 Mascali, D, Moraschi, M, DiNuzzo, M, et al. Evaluation of denoising strategies for task‐based functional connectivity: Equalizing residual motion artifacts between rest and cognitively demanding tasks. Hum Brain Mapp. 2020; 1– 24. doi: [10.1002/hbm.25332](https://doi.org/10.1002/hbm.25332)
 
