@@ -55,14 +55,23 @@ class Minimal(Confounds):
 
     def __init__(self, motion="full", wm_csf="basic", demean=True, **kwargs):
         """Default parameters."""
-        self.strategy = ["high_pass", "motion", "wm_csf", "global"]
+        # check if global signal is supplied as a parameter
+        # if so, add to strategy
+        global_signals = kwargs.get("global_signal", False)
+        strategy = ["high_pass", "motion", "wm_csf"]
+        if global_signals:
+            strategy.append("global")
+
+        # warn user for supplying useless parameter
+        _check_invalid_parameter(kwargs, valid_keys=["global_signal"])
+
+        # set attributes
+        self.strategy = strategy
         self.motion = motion
         self.n_motion = 0
         self.wm_csf = wm_csf
-        self.global_signal = kwargs.get("global_signal", False)
+        self.global_signal = global_signals
         self.demean = demean
-        # warn user for supplying useless parameter
-        _check_invalid_parameter(kwargs, valid_keys=["global_signal"])
 
 
 class Scrubbing(Confounds):
@@ -135,17 +144,26 @@ class Scrubbing(Confounds):
         **kwargs,
     ):
         """Default parameters."""
-        self.strategy = ["high_pass", "motion", "wm_csf", "scrub", "global"]
+        # check if global signal is supplied as a parameter
+        # if so, add to strategy
+        global_signals = kwargs.get("global_signal", False)
+        strategy = ["high_pass", "motion", "wm_csf", "scrub"]
+        if global_signals:
+            strategy.append("global")
+
+        # warn user for supplying useless parameter
+        _check_invalid_parameter(kwargs, valid_keys=["global_signal"])
+
+        # set attributes
+        self.strategy = strategy
         self.motion = motion
         self.n_motion = 0
         self.wm_csf = wm_csf
         self.scrub = scrub
-        self.global_signal = kwargs.get("global_signal", False)
+        self.global_signal = global_signals
         self.fd_thresh = (fd_thresh,)
         self.std_dvars_thresh = (std_dvars_thresh,)
         self.demean = demean
-        # warn user for supplying useless parameter
-        _check_invalid_parameter(kwargs, valid_keys=["global_signal"])
 
 
 class CompCor(Confounds):
@@ -197,6 +215,7 @@ class CompCor(Confounds):
         acompcor_combined=True,
     ):
         """Default parameters."""
+        # set attributes
         self.strategy = ["high_pass", "motion", "compcor"]
         self.motion = motion
         self.n_motion = 0
@@ -280,13 +299,23 @@ class ICAAROMA(Confounds):
 
     def __init__(self, wm_csf="basic", demean=True, **kwargs):
         """Default parameters."""
-        self.strategy = ["wm_csf", "high_pass", "ica_aroma", "global"]
+        # check if global signal is supplied as a parameter
+        # if so, add to strategy
+        global_signals = kwargs.get("global_signal", False)
+        strategy = ["wm_csf", "high_pass", "ica_aroma"]
+        if global_signals:
+            strategy.append("global")
+
+        # warn user for supplying useless parameter
+        _check_invalid_parameter(kwargs, valid_keys=["global_signal"])
+
+        # set attributes
+        self.strategy = strategy
+        self.global_signal = global_signals
         self.demean = demean
         self.wm_csf = wm_csf
         self.ica_aroma = "full"
-        self.global_signal = kwargs.get("global_signal", False)
-        # warn user for supplying useless parameter
-        _check_invalid_parameter(kwargs, valid_keys=["global_signal"])
+
 
 
 def _check_invalid_parameter(keyword_args=None, valid_keys=["global_signal"]):
