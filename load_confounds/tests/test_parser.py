@@ -417,5 +417,9 @@ def test_load_mask():
     assert reg.shape[1] - reg_m.shape[1] == 8
     # the difference between the two method is in wheather motion outliers
     # are kept in the confound regressors
-    for item in list(set(conf_m.columns_) - set(conf.columns_)):
+    print(set(conf_m.columns_))
+    print(set(conf.columns_))
+
+    for item in list(set(conf.columns_) - set(conf_m.columns_)):
+        print(item)
         assert "motion" in item
