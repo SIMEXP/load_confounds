@@ -405,7 +405,7 @@ def test_ica_aroma():
         conf.load(file_confounds)
     assert "ICA-AROMA strategy" in exc_info.value.args[0]
 
-    
+
 def test_load_mask():
     """Test load_mask method."""
     conf = lc.Confounds(strategy=["scrub"], scrub="full", fd_thresh=0.15)
