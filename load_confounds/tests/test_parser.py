@@ -408,9 +408,14 @@ def test_ica_aroma():
 
 def test_load_mask():
     """Test load_mask method."""
-    conf = lc.Confounds(strategy=["scrub"], scrub="full", fd_thresh=0.15)
+    conf = lc.Confounds(strategy=["motion", "scrub"], scrub="full", fd_thresh=0.15)
     reg = conf.load(file_confounds)
-    reg_m, mask = conf.load_mask(file_confounds)
-    assert len(mask) == reg_m.shape[0]
-    # the current test data has 6 time points marked as motion outliers
+    conf_m = lc.Confounds(strategy=["motion", "scrub"], scrub="full", fd_thresh=0.15)
+    reg_m, mask = conf_m.load_mask(file_confounds)
+    # the current test data has 8 time points marked as motion outliers
+    assert reg.shape[0] - len(mask) == 8
     assert reg.shape[1] - reg_m.shape[1] == 8
+    # the difference between the two method is in wheather motion outliers
+    # are kept in the confound regressors
+    for item in list(set(conf_m.columns_) - set(conf.columns_)):
+        assert "motion" in item

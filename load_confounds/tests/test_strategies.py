@@ -98,7 +98,6 @@ def test_Scrubbing():
     assert conf.global_signal == "full"
 
 
-
 def test_CompCor_anatomical():
     """Test the anatomical CompCor strategy."""
     # Try to load the confounds, whithout PCA reduction

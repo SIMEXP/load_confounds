@@ -230,9 +230,9 @@ def _extract_outlier_regressors(confounds, flag_sample_mask):
     # return original output if not applying sample_mask
     if not flag_sample_mask:
         return sample_mask, confounds
-    # mask confound to remove non-steady state and scrubbed volumes
+    # mask confound to remove non-steady state and scrubbed regressors
     else:
-        return sample_mask, confounds.loc[sample_mask, confounds_col]
+        return sample_mask, confounds.loc[:, confounds_col]
 
 
 def _outlier_to_sample_mask(n_scans, outlier_flag):
