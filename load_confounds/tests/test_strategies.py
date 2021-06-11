@@ -36,9 +36,6 @@ def test_Minimal():
     ]
     for check in list_check:
         assert check in conf.columns_
-    # assert len(conf.sample_mask_) == 24
-    # should have six motion outliers from scrubbing
-    assert sum("motion_outlier_" in col for col in conf.columns_) == 8
 
     # maker sure global signal works
     conf = lc.Minimal(global_signal="basic")
