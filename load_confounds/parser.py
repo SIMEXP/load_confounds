@@ -84,7 +84,7 @@ class Confounds:
         "derivatives" averages and derivatives (4 parameters)
         "full" averages + derivatives + quadratic terms + power2d derivatives (8 parameters)
 
-    global_signal : boolean, string, optional
+    global_signal : string, optional
         Type of confounds extracted from the global signal.
         "basic" just the global signal (1 parameter)
         "power2" global signal and quadratic term (2 parameters)
