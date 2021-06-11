@@ -3,65 +3,24 @@ import os
 import re
 import load_confounds.strategies as lc
 import numpy as np
+import pytest
+
 
 path_data = os.path.join(os.path.dirname(lc.__file__), "data")
-file_confounds = os.path.join(path_data, "test_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz")
-file_aroma = os.path.join(path_data, "test_space-MNI152NLin2009cAsym_desc-smoothAROMAnonaggr_bold.nii.gz")
+file_confounds = os.path.join(
+    path_data, "test_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz"
+)
+file_aroma = os.path.join(
+    path_data, "test_space-MNI152NLin2009cAsym_desc-smoothAROMAnonaggr_bold.nii.gz"
+)
 
 
-def test_Params2():
-    """Test the Params2 strategy."""
+def test_Minimal():
+    """Test the Minimal strategy."""
     # Try to load the confounds, whithout PCA reduction
-    conf = lc.Params2()
-    conf.load(file_confounds)
-
-    assert isinstance(conf.confounds_, np.ndarray)
-
-    # Check that all model categories have been successfully loaded
-    list_check = [
-        "cosine00",
-        "cosine01",
-        "cosine02",
-        "cosine03",
-        "csf",
-        "white_matter",
-    ]
-    for check in list_check:
-        assert check in conf.columns_
-
-
-def test_Params6():
-    """Test the Params6 strategy."""
-    # Try to load the confounds, whithout PCA reduction
-    conf = lc.Params6()
-    conf.load(file_confounds)
-
-    assert isinstance(conf.confounds_, np.ndarray)
-
-    # Check that all model categories have been successfully loaded
-    list_check = [
-        "trans_x",
-        "trans_y",
-        "trans_z",
-        "rot_x",
-        "rot_y",
-        "rot_z",
-        "cosine00",
-    ]
-    for check in list_check:
-        assert check in conf.columns_
-
-    # Load the confounds in a list
-    conf.load([file_confounds, file_confounds])
-    assert isinstance(conf.confounds_, list)
-    assert isinstance(conf.confounds_[0], np.ndarray)
-    assert len(conf.confounds_) == 2
-
-
-def test_Params9():
-    """Test the Params9 strategy."""
-    # Try to load the confounds, whithout PCA reduction
-    conf = lc.Params9()
+    conf = lc.Minimal()
+    assert conf.strategy == ["high_pass", "motion", "wm_csf"]
+    assert hasattr(conf, "global_signal") == False
     conf.load(file_confounds)
 
     assert isinstance(conf.confounds_, np.ndarray)
@@ -74,114 +33,22 @@ def test_Params9():
         "cosine00",
         "csf",
         "white_matter",
-        "global_signal",
     ]
     for check in list_check:
         assert check in conf.columns_
 
-
-def test_Params9Scrub():
-    """Test the Params9Scrub strategy."""
-    # Try to load the confounds, whithout PCA reduction
-    conf = lc.Params9Scrub(fd_thresh=0.15)
-    conf.load(file_confounds)
-
-    assert isinstance(conf.confounds_, np.ndarray)
-
-    # Check that all model categories have been successfully loaded
-    list_check = [
-        "trans_y",
-        "trans_z",
-        "rot_z",
-        "cosine00",
-        "csf",
-        "white_matter",
-        "motion_outlier_0",
-        "motion_outlier_1",
-    ]
-    for check in list_check:
-        assert check in conf.columns_
-
-    # also load confounds with very liberal scrubbing thresholds
-    # this should not produce an error
-    conf = lc.Params9Scrub(fd_thresh=1, std_dvars_thresh=5)
-    conf.load(file_confounds)
-    assert "motion_outlier_0" not in conf.columns_
+    # maker sure global signal works
+    conf = lc.Minimal(global_signal="basic")
+    assert conf.strategy == ["high_pass", "motion", "wm_csf", "global"]
+    assert conf.global_signal == "basic"
 
 
-def test_Params24():
-    """Test the Params24 strategy."""
-    # Try to load the confounds, whithout PCA reduction
-    conf = lc.Params24()
-    conf.load(file_confounds)
-
-    assert isinstance(conf.confounds_, np.ndarray)
-
-    # Check that all model categories have been successfully loaded
-    list_check = [
-        "trans_x",
-        "trans_y",
-        "rot_z",
-        "trans_x_derivative1",
-        "trans_x_power2",
-        "trans_x_derivative1_power2",
-        "trans_z_derivative1",
-        "trans_z_power2",
-        "rot_x_power2",
-        "rot_y_power2",
-        "rot_y_derivative1_power2",
-        "rot_z_derivative1",
-        "cosine00",
-    ]
-    for check in list_check:
-        assert check in conf.columns_
-
-
-def test_Params36():
-    """Test the Params36 strategy."""
-    # Try to load the confounds
-    conf = lc.Params36()
-    conf.load(file_confounds)
-
-    assert isinstance(conf.confounds_, np.ndarray)
-
-    # Check that all model categories have been successfully loaded
-    list_check = [
-        "trans_x",
-        "trans_y",
-        "rot_z",
-        "trans_x_derivative1",
-        "trans_x_power2",
-        "trans_x_derivative1_power2",
-        "trans_y_derivative1",
-        "trans_y_power2",
-        "trans_y_derivative1_power2",
-        "trans_z_derivative1",
-        "trans_z_power2",
-        "rot_z_derivative1",
-        "rot_z_power2",
-        "rot_z_derivative1_power2",
-        "cosine00",
-        "cosine01",
-        "csf",
-        "white_matter",
-        "csf_derivative1",
-        "csf_power2",
-        "csf_derivative1_power2",
-        "white_matter_derivative1",
-        "global_signal",
-        "global_signal_derivative1",
-        "global_signal_power2",
-        "global_signal_derivative1_power2",
-    ]
-
-    for check in list_check:
-        assert check in conf.columns_
-
-
-def test_Params36Scrub():
-    """Test the Params36Scrub strategy."""
-    conf = lc.Params36Scrub(fd_thresh=0.15)
+def test_Scrubbing():
+    """Test the Scrubbing strategy."""
+    conf = lc.Scrubbing(fd_thresh=0.15)
+    # make sure global signal is not there
+    assert conf.strategy == ["high_pass", "motion", "wm_csf", "scrub"]
+    assert hasattr(conf, "global_signal") == False
     conf.load(file_confounds)
 
     assert isinstance(conf.confounds_, np.ndarray)
@@ -219,15 +86,21 @@ def test_Params36Scrub():
 
     # also load confounds with very liberal scrubbing thresholds
     # this should not produce an error
-    conf = lc.Params36Scrub(fd_thresh=1, std_dvars_thresh=5)
+    conf = lc.Scrubbing(fd_thresh=1, std_dvars_thresh=5)
     conf.load(file_confounds)
     assert "motion_outlier_0" not in conf.columns_
 
+    # maker sure global signal works
+    conf = lc.Scrubbing(global_signal="full")
+    assert conf.strategy == ["high_pass", "motion", "wm_csf", "scrub", "global"]
+    assert conf.global_signal == "full"
 
-def test_AnatCompCor():
-    """Test the AnatCompCor strategy."""
+
+
+def test_CompCor_anatomical():
+    """Test the anatomical CompCor strategy."""
     # Try to load the confounds, whithout PCA reduction
-    conf = lc.AnatCompCor()
+    conf = lc.CompCor()
     conf.load(file_confounds)
 
     assert isinstance(conf.confounds_, np.ndarray)
@@ -263,10 +136,10 @@ def test_AnatCompCor():
     )  # this one comes from the WW mask
 
 
-def test_AnatCompCor_not_combined():
-    """Test the AnatCompCor strategy without combined mask."""
+def test_CompCor_anatomical_not_combined():
+    """Test the anatomical CompCor strategy without combined mask."""
     # Try to load the confounds, whithout PCA reduction
-    conf = lc.AnatCompCor(acompcor_combined=False, n_compcor=5)
+    conf = lc.CompCor(acompcor_combined=False, n_compcor=5)
     conf.load(file_confounds)
 
     assert isinstance(conf.confounds_, np.ndarray)
@@ -309,10 +182,10 @@ def test_AnatCompCor_not_combined():
     )  # this one exceeds the number of requested components
 
 
-def test_TempCompCor():
-    """Test the TempCompCor strategy."""
+def test_CompCor_temporal():
+    """Test the temporal ompCor strategy."""
     # Try to load the confounds, whithout PCA reduction
-    conf = lc.TempCompCor()
+    conf = lc.CompCor(compcor="temp")
     conf.load(file_confounds)
 
     assert isinstance(conf.confounds_, np.ndarray)
@@ -336,9 +209,7 @@ def test_TempCompCor():
 
 def test_FullCompCor():
     """Test a full compcor strategy."""
-    # This is not a predefined strategy
-    # but can be implemented easily with flexible API
-    conf = lc.Confounds(["compcor"], compcor="full", acompcor_combined=False)
+    conf = lc.CompCor(compcor="full", acompcor_combined=False)
     conf.load(file_confounds)
 
     assert isinstance(conf.confounds_, np.ndarray)
@@ -358,28 +229,9 @@ def test_FullCompCor():
 
 def test_ICAAROMA():
     """Test the (non-aggressive) ICA-AROMA strategy."""
-    conf = lc.ICAAROMA()
-    conf.load(file_aroma)
-
-    assert isinstance(conf.confounds_, np.ndarray)
-
-    # Check that all fixed name model categories have been successfully loaded
-    list_check = [
-        "csf",
-        "white_matter",
-        "global_signal",
-    ]
-
-    for c in conf.columns_:
-        # Check that all fixed name model categories
-        fixed = c in list_check
-        cosines = re.match("cosine+", c)
-        assert fixed or cosines
-
-
-def test_AROMAGSR():
-    """Test the (non-aggressive) AROMA-GSR strategy."""
-    conf = lc.AROMAGSR()
+    conf = lc.ICAAROMA(global_signal="basic")
+    assert conf.global_signal == "basic"
+    assert conf.strategy == ["wm_csf", "high_pass", "ica_aroma", "global"]
     conf.load(file_aroma)
 
     # Check that all fixed name model categories have been successfully loaded
@@ -392,23 +244,11 @@ def test_AROMAGSR():
         # Check that all fixed name model categories
         fixed = c in list_check
         cosines = re.match("cosine+", c)
-        assert fixed or cosines
+        assert fixed or (cosines is not None)
 
 
-def test_AggrICAAROMA():
-    """Test the aggressive ICA-AROMA strategy."""
-    conf = lc.AggrICAAROMA()
-    conf.load(file_confounds)
-
-    # Check that all fixed name model categories have been successfully loaded
-    list_check = [
-        "csf",
-        "white_matter",
-        "global_signal",
-    ]
-    for c in conf.columns_:
-        # Check that all fixed name model categories
-        fixed = c in list_check
-        cosines = re.match("cosine+", c)
-        aroma = re.match("aroma_motion_+", c)
-        assert fixed or cosines or aroma
+def test_invalid():
+    """Test warning raised for invalid keywors."""
+    with pytest.warns(UserWarning) as record:
+        lc.ICAAROMA(compcor="anat", global_signal="full")
+    assert "not taking effect: ['compcor']" in record[0].message.args[0]
