@@ -61,8 +61,7 @@ class Minimal(Confounds):
         strategy = ["high_pass", "motion", "wm_csf"]
         strategy, global_signal = _update_strategy(strategy, global_signal)
         # warn user for supplying useless parameter
-        if kwargs:
-            _check_invalid_parameter(kwargs, valid_keys=["global_signal"])
+        _check_invalid_parameter(kwargs, valid_keys=["global_signal"])
 
         # set attributes
         self.strategy = strategy
@@ -150,8 +149,7 @@ class Scrubbing(Confounds):
         strategy = ["high_pass", "motion", "wm_csf", "scrub"]
         strategy, global_signal = _update_strategy(strategy, global_signal)
         # warn user for supplying useless parameter
-        if kwargs:
-            _check_invalid_parameter(kwargs, valid_keys=["global_signal"])
+        _check_invalid_parameter(kwargs, valid_keys=["global_signal"])
 
         # set attributes
         self.strategy = strategy
@@ -303,8 +301,7 @@ class ICAAROMA(Confounds):
         global_signal = kwargs.get("global_signal", False)
         strategy, global_signal = _update_strategy(strategy, global_signal)
         # warn user for supplying useless parameter
-        if kwargs:
-            _check_invalid_parameter(kwargs, valid_keys=["global_signal"])
+        _check_invalid_parameter(kwargs, valid_keys=["global_signal"])
 
         # set attributes
         self.strategy = strategy
@@ -315,7 +312,7 @@ class ICAAROMA(Confounds):
             self.global_signal = global_signal
 
 
-def _check_invalid_parameter(keyword_args, valid_keys=["global_signal"]):
+def _check_invalid_parameter(keyword_args, valid_keys):
     """Raise warnings if kwargs contains invalid parameters."""
     # supply extra parameter will not effect the behaviour
     # but it is good to inform the user
