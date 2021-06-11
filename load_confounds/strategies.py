@@ -61,7 +61,8 @@ class Minimal(Confounds):
         strategy = ["high_pass", "motion", "wm_csf"]
         strategy, global_signal = _update_strategy(strategy, global_signal)
         # warn user for supplying useless parameter
-        _check_invalid_parameter(kwargs, valid_keys=["global_signal"])
+        if kwargs:
+            _check_invalid_parameter(kwargs, valid_keys=["global_signal"])
 
         # set attributes
         self.strategy = strategy
@@ -149,7 +150,8 @@ class Scrubbing(Confounds):
         strategy = ["high_pass", "motion", "wm_csf", "scrub"]
         strategy, global_signal = _update_strategy(strategy, global_signal)
         # warn user for supplying useless parameter
-        _check_invalid_parameter(kwargs, valid_keys=["global_signal"])
+        if kwargs:
+            _check_invalid_parameter(kwargs, valid_keys=["global_signal"])
 
         # set attributes
         self.strategy = strategy
@@ -301,7 +303,8 @@ class ICAAROMA(Confounds):
         global_signal = kwargs.get("global_signal", False)
         strategy, global_signal = _update_strategy(strategy, global_signal)
         # warn user for supplying useless parameter
-        _check_invalid_parameter(kwargs, valid_keys=["global_signal"])
+        if kwargs:
+            _check_invalid_parameter(kwargs, valid_keys=["global_signal"])
 
         # set attributes
         self.strategy = strategy
@@ -330,9 +333,7 @@ def _check_invalid_parameter(keyword_args, valid_keys=["global_signal"]):
 
 
 def _update_strategy(strategy, global_signal):
-    """Check if global signal is supplied as a parameter.
-    If so, add to strategy.
-    """
+    """Update strategy if global signal is supplied as a parameter."""
     strat = strategy.copy()
     if isinstance(global_signal, str):
         strat.append("global")
