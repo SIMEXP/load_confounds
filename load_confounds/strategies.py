@@ -312,7 +312,7 @@ class ICAAROMA(Confounds):
             self.global_signal = global_signal
 
 
-def _check_invalid_parameter(keyword_args=None, valid_keys=["global_signal"]):
+def _check_invalid_parameter(keyword_args, valid_keys=["global_signal"]):
     """Raise warnings if kwargs contains invalid parameters."""
     # supply extra parameter will not effect the behaviour
     # but it is good to inform the user
@@ -330,8 +330,9 @@ def _check_invalid_parameter(keyword_args=None, valid_keys=["global_signal"]):
 
 
 def _update_strategy(strategy, global_signal):
-    # check if global signal is supplied as a parameter
-    # if so, add to strategy
+    """Check if global signal is supplied as a parameter.
+    If so, add to strategy.
+    """
     if global_signal:
         strategy.append("global")
     return strategy, global_signal
