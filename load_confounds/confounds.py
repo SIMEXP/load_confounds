@@ -39,14 +39,13 @@ def _check_params(confounds_raw, params):
 
 def _find_confounds(confounds_raw, keywords):
     """Find confounds that contain certain keywords."""
-    list_confounds = []
-    missing_keys = []
+    list_confounds, missing_keys = [], []
     for key in keywords:
         key_found = [col for col in confounds_raw.columns if key in col]
-        if not key_found:
-            missing_keys.append(key)
-        else:
+        if key_found:
             list_confounds.extend(key_found)
+        elif key != "non_steady_state":
+            missing_keys.append(key)
     if missing_keys:
         raise MissingConfound(keywords=missing_keys)
     return list_confounds
@@ -217,8 +216,37 @@ def _confounds_to_df(image_file, flag_acompcor, flag_full_aroma):
     return confounds_raw, confounds_json
 
 
-def _confounds_to_ndarray(confounds, demean):
+def _extract_outlier_regressors(confounds, flag_sample_mask):
+    """Separate confounds and outlier regressors."""
+    outlier_cols = {
+        col
+        for col in confounds.columns
+        if "motion_outlier" in col or "non_steady_state" in col
+    }
+    confounds_col = set(confounds.columns) - outlier_cols
+    outliers = confounds[outlier_cols] if outlier_cols else pd.DataFrame()
+    sample_mask = _outlier_to_sample_mask(confounds.shape[0], outliers)
+
+    # return original output if not applying sample_mask
+    if not flag_sample_mask:
+        return sample_mask, confounds
+    # mask confound to remove non-steady state and scrubbed volumes
+    else:
+        return sample_mask, confounds.loc[sample_mask, confounds_col]
+
+
+def _outlier_to_sample_mask(n_scans, outlier_flag):
+    """Generate sample mask from outlier regressors."""
+    if outlier_flag.size == 0:
+        return list(range(n_scans))
+    outlier_flag = outlier_flag.sum(axis=1).values
+    return np.where(outlier_flag == 0)[0].tolist()
+
+
+def _confounds_to_ndarray(confounds, demean, flag_sample_mask):
     """Convert confounds from a pandas dataframe to a numpy array."""
+    sample_mask, confounds = _extract_outlier_regressors(confounds, flag_sample_mask)
+
     # Convert from DataFrame to numpy ndarray
     labels = confounds.columns
     confounds = confounds.values
@@ -233,8 +261,7 @@ def _confounds_to_ndarray(confounds, demean):
         # Optionally demean confounds
         if demean:
             confounds = scale(confounds, axis=0, with_std=False)
-
-    return confounds, labels
+    return sample_mask, confounds, labels
 
 
 class MissingConfound(Exception):

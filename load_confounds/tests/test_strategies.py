@@ -36,6 +36,9 @@ def test_Minimal():
     ]
     for check in list_check:
         assert check in conf.columns_
+    # assert len(conf.sample_mask_) == 24
+    # should have six motion outliers from scrubbing
+    assert sum("motion_outlier_" in col for col in conf.columns_) == 8
 
     # maker sure global signal works
     conf = lc.Minimal(global_signal="basic")
@@ -77,18 +80,20 @@ def test_Scrubbing():
         "csf_power2",
         "csf_derivative1_power2",
         "white_matter_derivative1",
-        "motion_outlier_0",
-        "motion_outlier_1",
     ]
 
     for check in list_check:
         assert check in conf.columns_
+    # should have six motion outliers from scrubbing
+    assert sum("motion_outlier_" in col for col in conf.columns_) == 8
+    # assert len(conf.sample_mask_) == 24
 
     # also load confounds with very liberal scrubbing thresholds
     # this should not produce an error
     conf = lc.Scrubbing(fd_thresh=1, std_dvars_thresh=5)
     conf.load(file_confounds)
     assert "motion_outlier_0" not in conf.columns_
+    # assert len(conf.sample_mask_) == 30
 
     # maker sure global signal works
     conf = lc.Scrubbing(global_signal="full")

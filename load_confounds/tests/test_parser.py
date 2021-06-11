@@ -30,7 +30,6 @@ def _simu_img(demean=True):
     )
     # repeat X in length (axis = 0) three times to increase the degree of freedom
     X = np.tile(X, (3, 1))
-
     # the number of time points is based on the example confound file
     nt = X.shape[0]
     # initialize an empty 4D volume
@@ -62,16 +61,20 @@ def _simu_img(demean=True):
     return img, mask_conf, mask_rand, X
 
 
-def _tseries_std(img, mask_img, confounds, standardize):
+def _tseries_std(img, mask_img, confounds, sample_mask, standardize):
     """Get the std of time series in a mask."""
-    masker = NiftiMasker(mask_img=mask_img, standardize=standardize)
+    masker = NiftiMasker(
+        mask_img=mask_img, standardize=standardize, sample_mask=sample_mask
+    )
     tseries = masker.fit_transform(img, confounds=confounds)
     return tseries.std(axis=0)
 
 
-def _denoise(img, mask_img, confounds, standardize):
+def _denoise(img, mask_img, confounds, sample_mask, standardize):
     """Extract time series with and without confounds."""
-    masker = NiftiMasker(mask_img=mask_img, standardize=standardize)
+    masker = NiftiMasker(
+        mask_img=mask_img, standardize=standardize, sample_mask=sample_mask
+    )
     tseries_raw = masker.fit_transform(img)
     tseries_clean = masker.fit_transform(img, confounds=confounds)
     return tseries_raw, tseries_clean
@@ -85,14 +88,14 @@ def _corr_tseries(tseries1, tseries2):
     return corr
 
 
-def _regression(confounds):
+def _regression(confounds, sample_mask):
     """Simple regression with nilearn."""
     # Simulate data
     img, mask_conf, _, _ = _simu_img(demean=True)
     confounds = np.tile(confounds, (3, 1))  # matching L29 (_simu_img)
 
     # Do the regression
-    masker = NiftiMasker(mask_img=mask_conf, standardize=True)
+    masker = NiftiMasker(mask_img=mask_conf, standardize=True, sample_mask=sample_mask)
     tseries_clean = masker.fit_transform(img, confounds)
     assert tseries_clean.shape[0] == confounds.shape[0]
 
@@ -102,34 +105,35 @@ def test_nilearn_regress():
     """Try regressing out all motion types in nilearn."""
     # Regress full motion
     confounds = lc.Confounds(strategy=["motion"], motion="full").load(file_confounds)
-    _regression(confounds)
+    sample_mask = None
+    _regression(confounds, sample_mask)
 
     # Regress high_pass
     confounds = lc.Confounds(strategy=["high_pass"]).load(file_confounds)
-    _regression(confounds)
+    _regression(confounds, sample_mask)
 
     # Regress wm_csf
     confounds = lc.Confounds(strategy=["wm_csf"], wm_csf="full").load(file_confounds)
-    _regression(confounds)
+    _regression(confounds, sample_mask)
     # Regress global
     confounds = lc.Confounds(strategy=["global"], global_signal="full").load(
         file_confounds
     )
-    _regression(confounds)
+    _regression(confounds, sample_mask)
 
     # Regress AnatCompCor
     confounds = lc.Confounds(strategy=["compcor"], compcor="anat").load(file_confounds)
-    _regression(confounds)
+    _regression(confounds, sample_mask)
 
     # Regress TempCompCor
     confounds = lc.Confounds(strategy=["compcor"], compcor="temp").load(file_confounds)
-    _regression(confounds)
+    _regression(confounds, sample_mask)
 
     # Regress ICA-AROMA
     confounds = lc.Confounds(strategy=["ica_aroma"], ica_aroma="basic").load(
         file_confounds
     )
-    _regression(confounds)
+    _regression(confounds, sample_mask)
 
 
 @pytest.mark.filterwarnings("ignore")
@@ -140,12 +144,12 @@ def test_nilearn_standardize_false():
 
     # Check that most variance is removed
     # in voxels composed of pure confounds
-    tseries_std = _tseries_std(img, mask_conf, X, False)
+    tseries_std = _tseries_std(img, mask_conf, X, None, False)
     assert np.mean(tseries_std < 0.0001)
 
     # Check that most variance is preserved
     # in voxels composed of random noise
-    tseries_std = _tseries_std(img, mask_rand, X, False)
+    tseries_std = _tseries_std(img, mask_rand, X, None, False)
     assert np.mean(tseries_std > 0.9)
 
 
@@ -160,7 +164,7 @@ def test_nilearn_standardize_zscore():
     # in voxels composed of pure confounds
     # the correlation before and after denoising should be very low
     # as most of the variance is removed by denoising
-    tseries_raw, tseries_clean = _denoise(img, mask_conf, X, "zscore")
+    tseries_raw, tseries_clean = _denoise(img, mask_conf, X, None, "zscore")
     corr = _corr_tseries(tseries_raw, tseries_clean)
     assert corr.mean() < 0.2
 
@@ -168,7 +172,7 @@ def test_nilearn_standardize_zscore():
     # with vs without confounds in voxels where the signal is uncorrelated
     # with confounds. The correlation before and after denoising should be very
     # high as very little of the variance is removed by denoising
-    tseries_raw, tseries_clean = _denoise(img, mask_rand, X, "zscore")
+    tseries_raw, tseries_clean = _denoise(img, mask_rand, X, None, "zscore")
     corr = _corr_tseries(tseries_raw, tseries_clean)
     assert corr.mean() > 0.8
 
@@ -181,12 +185,12 @@ def test_nilearn_standardize_psc():
     img, mask_conf, mask_rand, X = _simu_img(demean=False)
 
     # Areas with confound
-    tseries_raw, tseries_clean = _denoise(img, mask_conf, X, "psc")
+    tseries_raw, tseries_clean = _denoise(img, mask_conf, X, None, "psc")
     corr = _corr_tseries(tseries_raw, tseries_clean)
     assert corr.mean() < 0.2
 
     # Areas with random noise
-    tseries_raw, tseries_clean = _denoise(img, mask_rand, X, "psc")
+    tseries_raw, tseries_clean = _denoise(img, mask_rand, X, None, "psc")
     corr = _corr_tseries(tseries_raw, tseries_clean)
     assert corr.mean() > 0.8
 
@@ -400,3 +404,13 @@ def test_ica_aroma():
         conf = lc.Confounds(strategy=["ica_aroma"], ica_aroma=None)
         conf.load(file_confounds)
     assert "ICA-AROMA strategy" in exc_info.value.args[0]
+
+    
+def test_load_mask():
+    """Test load_mask method."""
+    conf = lc.Confounds(strategy=["scrub"], scrub="full", fd_thresh=0.15)
+    reg = conf.load(file_confounds)
+    reg_m, mask = conf.load_mask(file_confounds)
+    assert len(mask) == reg_m.shape[0]
+    # the current test data has 6 time points marked as motion outliers
+    assert reg.shape[1] - reg_m.shape[1] == 8

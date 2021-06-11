@@ -277,7 +277,6 @@ class ICAAROMA(Confounds):
         "derivatives" global signal and derivative (2 parameters)
         "full" global signal + derivatives + quadratic terms + power2d derivatives (4 parameters)
 
-
     Returns
     -------
     conf :  a Confounds object
