@@ -86,7 +86,6 @@ class Confounds:
 
     global_signal : boolean, string, optional
         Type of confounds extracted from the global signal.
-        False: do not perform global signal regression
         "basic" just the global signal (1 parameter)
         "power2" global signal and quadratic term (2 parameters)
         "derivatives" global signal and derivative (2 parameters)
@@ -279,12 +278,10 @@ class Confounds:
 
     def _load_global(self, confounds_raw):
         """Load the regressors derived from the global signal."""
-        if isinstance(self.global_signal, str):
-            global_params = cf._add_suffix(["global_signal"], self.global_signal)
-            cf._check_params(confounds_raw, global_params)
-            return confounds_raw[global_params]
-        else:
-            return pd.DataFrame()
+        global_params = cf._add_suffix(["global_signal"], self.global_signal)
+        cf._check_params(confounds_raw, global_params)
+        return confounds_raw[global_params]
+
 
     def _load_compcor(self, confounds_raw):
         """Load compcor regressors."""
