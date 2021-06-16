@@ -392,7 +392,8 @@ def test_ica_aroma():
     conf = lc.Confounds(strategy=["ica_aroma"], ica_aroma="basic")
     conf.load(file_confounds)
     for col_name in conf.columns_:
-        assert re.match("aroma_motion_+", col_name)
+        # only aroma and non-steady state columns will be present
+        assert re.match("(?:aroma_motion_+|non_steady_state+)", col_name)
 
     # Non-agressive strategy
     conf = lc.Confounds(strategy=["ica_aroma"], ica_aroma="full")
@@ -410,12 +411,15 @@ def test_load_mask():
     """Test load_mask method."""
     conf = lc.Confounds(strategy=["motion", "scrub"], scrub="full", fd_thresh=0.15)
     reg = conf.load(file_confounds)
+    np.savetxt('test.out', reg)
+    print(conf.columns_)
     conf_m = lc.Confounds(strategy=["motion", "scrub"], scrub="full", fd_thresh=0.15)
     reg_m, mask = conf_m.load_mask(file_confounds)
-    # the current test data has 8 time points marked as motion outliers
+    # the current test data has 8 time points marked as motion outliers,
+    # and one nonsteady state (overlap with the first motion outlier)
     assert reg.shape[0] - len(mask) == 8
-    assert reg.shape[1] - reg_m.shape[1] == 8
+    assert reg.shape[1] - reg_m.shape[1] == 9
     # the difference between the two method is in wheather motion outliers
     # are kept in the confound regressors
     for item in list(set(conf.columns_) - set(conf_m.columns_)):
-        assert "motion" in item
+        assert "outlier" in item

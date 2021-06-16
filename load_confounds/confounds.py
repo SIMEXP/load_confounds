@@ -216,14 +216,19 @@ def _confounds_to_df(image_file, flag_acompcor, flag_full_aroma):
     return confounds_raw, confounds_json
 
 
-def _extract_outlier_regressors(confounds, flag_sample_mask):
-    """Separate confounds and outlier regressors."""
+def _get_outlier_cols(confounds_columns):
+    "Get outlier regressor column names."
     outlier_cols = {
         col
-        for col in confounds.columns
+        for col in confounds_columns
         if "motion_outlier" in col or "non_steady_state" in col
     }
-    confounds_col = set(confounds.columns) - outlier_cols
+    confounds_col = set(confounds_columns) - outlier_cols
+    return outlier_cols, confounds_col
+
+def _extract_outlier_regressors(confounds, flag_sample_mask):
+    """Separate confounds and outlier regressors."""
+    outlier_cols, confounds_col = _get_outlier_cols(confounds.columns)
     outliers = confounds[outlier_cols] if outlier_cols else pd.DataFrame()
     sample_mask = _outlier_to_sample_mask(confounds.shape[0], outliers)
 
@@ -248,8 +253,18 @@ def _confounds_to_ndarray(confounds, demean, flag_sample_mask):
     sample_mask, confounds = _extract_outlier_regressors(confounds, flag_sample_mask)
 
     # Convert from DataFrame to numpy ndarray
-    labels = confounds.columns
-    confounds = confounds.values
+    if not flag_sample_mask:
+        outlier_cols, confounds_col = _get_outlier_cols(confounds.columns)
+        if outlier_cols:
+            outliers = confounds.loc[:, outlier_cols]
+            labels = list(confounds_col) + list(outlier_cols)
+        else:
+            outliers = pd.DataFrame()
+            labels = confounds_col
+        confounds = confounds[confounds_col].values
+    else:
+        labels = confounds.columns
+        confounds = confounds.values
 
     # Derivatives have NaN on the first row
     # Replace them by estimates at second time point,
@@ -261,6 +276,9 @@ def _confounds_to_ndarray(confounds, demean, flag_sample_mask):
         # Optionally demean confounds
         if demean:
             confounds = scale(confounds, axis=0, with_std=False)
+            if not flag_sample_mask and outliers.size > 0:  # put outliers back
+                confounds = np.hstack([confounds, outliers])
+
     return sample_mask, confounds, labels
 
 
