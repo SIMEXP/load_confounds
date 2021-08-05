@@ -9,7 +9,7 @@ with open(path.join(here, "README.md"), encoding="utf-8") as f:
 
 setup(
     name="load_confounds",
-    version="0.11.1",
+    version="0.12.0",
     description="load fMRIprep confounds in python",
     license="MIT",
     url="https://github.com/simexp/load_confounds",
@@ -32,7 +32,7 @@ setup(
         "nilearn>=0.7.1",
     ],  # external packages as dependencies
     classifiers=[
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
         "Topic :: Software Development :: Build Tools",
         "License :: OSI Approved :: MIT License",
@@ -40,6 +40,7 @@ setup(
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
     ],
     python_requires=">=3.5",
 )
