@@ -226,20 +226,14 @@ def _get_outlier_cols(confounds_columns):
     confounds_col = set(confounds_columns) - outlier_cols
     return outlier_cols, confounds_col
 
+
 def _extract_outlier_regressors(confounds, flag_sample_mask):
     """Separate confounds and outlier regressors."""
     outlier_cols, confounds_col = _get_outlier_cols(confounds.columns)
     outliers = confounds[outlier_cols] if outlier_cols else pd.DataFrame()
-    sample_mask = _outlier_to_sample_mask(confounds.shape[0], outliers)
-
-    if outlier_cols and not flag_sample_mask:
-        outliers = confounds.loc[:, outlier_cols]
-        labels = list(confounds_col) + list(outlier_cols)
-    else:
-        outliers = pd.DataFrame()
-        labels = confounds_col
     confounds = confounds[confounds_col]
-    return labels, sample_mask, confounds.values, outliers.values
+    sample_mask = _outlier_to_sample_mask(confounds.shape[0], outliers)
+    return sample_mask, confounds, outliers
 
 
 def _outlier_to_sample_mask(n_scans, outlier_flag):
@@ -252,21 +246,28 @@ def _outlier_to_sample_mask(n_scans, outlier_flag):
 
 def _confounds_to_ndarray(confounds, demean, flag_sample_mask):
     """Convert confounds from a pandas dataframe to a numpy array."""
-    labels, sample_mask, confounds, outliers = _extract_outlier_regressors(confounds, flag_sample_mask)
-    # Derivatives have NaN on the first row
-    # Replace them by estimates at second time point,
-    # otherwise nilearn will crash.
+    sample_mask, confounds, outliers = _extract_outlier_regressors(confounds, flag_sample_mask)
     if confounds.size != 0:  # ica_aroma = "full" generate empty output
-        mask_nan = np.isnan(confounds[0, :])
-        confounds[0, mask_nan] = confounds[1, mask_nan]
-
-        # Optionally demean confounds
+        # Derivatives have NaN on the first row
+        # Replace them by estimates at second time point,
+        # otherwise nilearn will crash.
+        mask_nan = np.isnan(confounds.values[0, :])
+        confounds.iloc[0, mask_nan] = confounds.iloc[1, mask_nan]
         if demean:
-            confounds = scale(confounds, axis=0, with_std=False)
-            if not flag_sample_mask and outliers.size > 0:  # put outliers back
-                confounds = np.hstack([confounds, outliers])
-
+            confounds = _demean_confounds(confounds, outliers, flag_sample_mask)
+    labels = list(confounds.columns)
+    confounds = confounds.values
     return sample_mask, confounds, labels
+
+
+def _demean_confounds(confounds, outliers, flag_sample_mask):
+    """Demean the confounds"""
+    confound_cols = confounds.columns
+    confounds = scale(confounds, axis=0, with_std=False)
+    confounds = pd.DataFrame(confounds, columns=confound_cols)
+    if not flag_sample_mask and outliers.size > 0:  # put outliers back
+        confounds = pd.concat([confounds, outliers], axis=1)
+    return confounds
 
 
 class MissingConfound(Exception):
