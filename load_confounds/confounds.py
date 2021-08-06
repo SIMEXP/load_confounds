@@ -217,7 +217,7 @@ def _confounds_to_df(image_file, flag_acompcor, flag_full_aroma):
 
 
 def _get_outlier_cols(confounds_columns):
-    "Get outlier regressor column names."
+    """Get outlier regressor column names."""
     outlier_cols = {
         col
         for col in confounds_columns
@@ -232,12 +232,14 @@ def _extract_outlier_regressors(confounds, flag_sample_mask):
     outliers = confounds[outlier_cols] if outlier_cols else pd.DataFrame()
     sample_mask = _outlier_to_sample_mask(confounds.shape[0], outliers)
 
-    # return original output if not applying sample_mask
-    if not flag_sample_mask:
-        return sample_mask, confounds
-    # mask confound to remove non-steady state and scrubbed regressors
+    if outlier_cols and not flag_sample_mask:
+        outliers = confounds.loc[:, outlier_cols]
+        labels = list(confounds_col) + list(outlier_cols)
     else:
-        return sample_mask, confounds.loc[:, confounds_col]
+        outliers = pd.DataFrame()
+        labels = confounds_col
+    confounds = confounds[confounds_col]
+    return labels, sample_mask, confounds.values, outliers.values
 
 
 def _outlier_to_sample_mask(n_scans, outlier_flag):
@@ -250,22 +252,7 @@ def _outlier_to_sample_mask(n_scans, outlier_flag):
 
 def _confounds_to_ndarray(confounds, demean, flag_sample_mask):
     """Convert confounds from a pandas dataframe to a numpy array."""
-    sample_mask, confounds = _extract_outlier_regressors(confounds, flag_sample_mask)
-
-    # Convert from DataFrame to numpy ndarray
-    if not flag_sample_mask:
-        outlier_cols, confounds_col = _get_outlier_cols(confounds.columns)
-        if outlier_cols:
-            outliers = confounds.loc[:, outlier_cols]
-            labels = list(confounds_col) + list(outlier_cols)
-        else:
-            outliers = pd.DataFrame()
-            labels = confounds_col
-        confounds = confounds[confounds_col].values
-    else:
-        labels = confounds.columns
-        confounds = confounds.values
-
+    labels, sample_mask, confounds, outliers = _extract_outlier_regressors(confounds, flag_sample_mask)
     # Derivatives have NaN on the first row
     # Replace them by estimates at second time point,
     # otherwise nilearn will crash.

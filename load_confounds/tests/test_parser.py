@@ -411,15 +411,17 @@ def test_load_mask():
     """Test load_mask method."""
     conf = lc.Confounds(strategy=["motion", "scrub"], scrub="full", fd_thresh=0.15)
     reg = conf.load(file_confounds)
-    np.savetxt('test.out', reg)
-    print(conf.columns_)
-    conf_m = lc.Confounds(strategy=["motion", "scrub"], scrub="full", fd_thresh=0.15)
-    reg_m, mask = conf_m.load_mask(file_confounds)
+
+    conf_masked = lc.Confounds(strategy=["motion", "scrub"], scrub="full", fd_thresh=0.15)
+    reg_masked, mask = conf_masked.load_mask(file_confounds)
     # the current test data has 8 time points marked as motion outliers,
     # and one nonsteady state (overlap with the first motion outlier)
     assert reg.shape[0] - len(mask) == 8
-    assert reg.shape[1] - reg_m.shape[1] == 9
+    assert reg_masked.shape[0] - len(mask) == 8
+    assert reg.shape[1] - reg_masked.shape[1] == 9
     # the difference between the two method is in wheather motion outliers
     # are kept in the confound regressors
-    for item in list(set(conf.columns_) - set(conf_m.columns_)):
+    outlier_cols = list(set(conf.columns_) - set(conf_masked.columns_))
+    assert len(outlier_cols) == reg.shape[1] - reg_masked.shape[1]
+    for item in outlier_cols:
         assert "outlier" in item
