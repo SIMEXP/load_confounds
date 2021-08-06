@@ -261,7 +261,7 @@ def _confounds_to_ndarray(confounds, demean, flag_sample_mask):
 
 
 def _demean_confounds(confounds, outliers, flag_sample_mask):
-    """Demean the confounds"""
+    """Demean the confounds."""
     confound_cols = confounds.columns
     confounds = scale(confounds, axis=0, with_std=False)
     confounds = pd.DataFrame(confounds, columns=confound_cols)
