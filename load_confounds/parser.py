@@ -231,7 +231,7 @@ class Confounds:
         confounds :  ndarray or list of ndarray
             A reduced version of fMRIprep confounds based on selected strategy and flags.
             An intercept is automatically added to the list of confounds.
-        sample_masks : list or list of list
+        sample_mask : list or list of list
             Index of time point to be preserved in the analysis
         """
         return self._parse(img_files, flag_sample_mask=True)
@@ -241,7 +241,7 @@ class Confounds:
         img_files, flag_single = cf._sanitize_confounds(img_files)
         confounds_out = []
         columns_out = []
-        sample_masks_out = []
+        sample_mask_out = []
         self.missing_confounds_ = []
         self.missing_keys_ = []
 
@@ -249,20 +249,20 @@ class Confounds:
             sample_mask, conf, col = self._load_single(file, flag_sample_mask)
             confounds_out.append(conf)
             columns_out.append(col)
-            sample_masks_out.append(sample_mask)
+            sample_mask_out.append(sample_mask)
 
         # If a single input was provided,
         # send back a single output instead of a list
         if flag_single:
             confounds_out = confounds_out[0]
             columns_out = columns_out[0]
-            sample_masks_out = sample_masks_out[0]
+            sample_mask_out = sample_mask_out[0]
 
         self.confounds_ = confounds_out
         self.columns_ = columns_out
         if flag_sample_mask:
-            self.sample_masks_ = sample_masks_out
-            return confounds_out, sample_masks_out
+            self.sample_mask_ = sample_mask_out
+            return confounds_out, sample_mask_out
         else:
             return confounds_out
 

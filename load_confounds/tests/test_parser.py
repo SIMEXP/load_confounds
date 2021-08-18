@@ -419,7 +419,7 @@ def test_load_mask():
     assert reg.shape[0] - len(mask) == 8
     assert reg_masked.shape[0] - len(mask) == 8
     assert reg.shape[1] - reg_masked.shape[1] == 9
-    # the difference between the two method is in wheather motion outliers
+    # the difference between the two methods is in whether motion outliers
     # are kept in the confound regressors
     outlier_cols = list(set(conf.columns_) - set(conf_masked.columns_))
     assert len(outlier_cols) == reg.shape[1] - reg_masked.shape[1]
