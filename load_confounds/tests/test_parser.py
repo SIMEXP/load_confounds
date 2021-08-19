@@ -221,6 +221,9 @@ def test_sanitize_strategy():
     with pytest.raises(ValueError):
         lc.Confounds(strategy=[0])
 
+    conf = lc.Confounds(strategy=["motion"])
+    assert "non_steady_state" in conf.strategy
+
 
 def test_motion():
 

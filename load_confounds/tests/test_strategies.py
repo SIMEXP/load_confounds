@@ -19,7 +19,7 @@ def test_Minimal():
     """Test the Minimal strategy."""
     # Try to load the confounds, whithout PCA reduction
     conf = lc.Minimal()
-    assert conf.strategy == ["high_pass", "motion", "wm_csf"]
+    assert conf.strategy == ["high_pass", "motion", "wm_csf", "non_steady_state"]
     assert hasattr(conf, "global_signal") == False
     conf.load(file_confounds)
 
@@ -39,7 +39,7 @@ def test_Minimal():
 
     # maker sure global signal works
     conf = lc.Minimal(global_signal="basic")
-    assert conf.strategy == ["high_pass", "motion", "wm_csf", "global"]
+    assert conf.strategy == ["high_pass", "motion", "wm_csf", "non_steady_state", "global"]
     assert conf.global_signal == "basic"
 
 
@@ -47,7 +47,7 @@ def test_Scrubbing():
     """Test the Scrubbing strategy."""
     conf = lc.Scrubbing(fd_thresh=0.15)
     # make sure global signal is not there
-    assert conf.strategy == ["high_pass", "motion", "wm_csf", "scrub"]
+    assert conf.strategy == ["high_pass", "motion", "wm_csf", "scrub", "non_steady_state"]
     assert hasattr(conf, "global_signal") == False
     conf.load(file_confounds)
 
@@ -95,7 +95,7 @@ def test_Scrubbing():
 
     # maker sure global signal works
     conf = lc.Scrubbing(global_signal="full")
-    assert conf.strategy == ["high_pass", "motion", "wm_csf", "scrub", "global"]
+    assert conf.strategy == ["high_pass", "motion", "wm_csf", "scrub", "non_steady_state", "global"]
     assert conf.global_signal == "full"
 
 
@@ -233,7 +233,7 @@ def test_ICAAROMA():
     """Test the (non-aggressive) ICA-AROMA strategy."""
     conf = lc.ICAAROMA(global_signal="basic")
     assert conf.global_signal == "basic"
-    assert conf.strategy == ["wm_csf", "high_pass", "ica_aroma", "global"]
+    assert conf.strategy == ["wm_csf", "high_pass", "ica_aroma", "non_steady_state", "global"]
     conf.load(file_aroma)
 
     # Check that all fixed name model categories have been successfully loaded

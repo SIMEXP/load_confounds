@@ -180,7 +180,7 @@ class Confounds:
         demean=True,
     ):
         """Default parameters."""
-        self.strategy = strategy
+        self.strategy = _sanitize_strategy(strategy)
         self.motion = motion
         self.n_motion = n_motion
         self.scrub = scrub
@@ -219,7 +219,6 @@ class Confounds:
     def _parse(self, img_files):
         """Parse input image, find confound files and scrubbing etc."""
         img_files, flag_single = cf._sanitize_confounds(img_files)
-        self.strategy = _sanitize_strategy(self.strategy)
 
         confounds_out = []
         columns_out = []
