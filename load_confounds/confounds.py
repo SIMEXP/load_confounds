@@ -227,7 +227,7 @@ def _get_outlier_cols(confounds_columns):
     return outlier_cols, confounds_col
 
 
-def _extract_outlier_regressors(confounds, flag_sample_mask):
+def _extract_outlier_regressors(confounds):
     """Separate confounds and outlier regressors."""
     outlier_cols, confounds_col = _get_outlier_cols(confounds.columns)
     outliers = confounds[outlier_cols] if outlier_cols else pd.DataFrame()
@@ -244,9 +244,9 @@ def _outlier_to_sample_mask(n_scans, outlier_flag):
     return np.where(outlier_flag == 0)[0].tolist()
 
 
-def _confounds_to_ndarray(confounds, demean, flag_sample_mask):
+def _confounds_to_ndarray(confounds, demean, scrub_mask):
     """Convert confounds from a pandas dataframe to a numpy array."""
-    sample_mask, confounds, outliers = _extract_outlier_regressors(confounds, flag_sample_mask)
+    sample_mask, confounds, outliers = _extract_outlier_regressors(confounds)
     if confounds.size != 0:  # ica_aroma = "full" generate empty output
         # Derivatives have NaN on the first row
         # Replace them by estimates at second time point,
@@ -254,18 +254,18 @@ def _confounds_to_ndarray(confounds, demean, flag_sample_mask):
         mask_nan = np.isnan(confounds.values[0, :])
         confounds.iloc[0, mask_nan] = confounds.iloc[1, mask_nan]
         if demean:
-            confounds = _demean_confounds(confounds, outliers, flag_sample_mask)
+            confounds = _demean_confounds(confounds, outliers, scrub_mask)
     labels = list(confounds.columns)
     confounds = confounds.values
     return sample_mask, confounds, labels
 
 
-def _demean_confounds(confounds, outliers, flag_sample_mask):
+def _demean_confounds(confounds, outliers, scrub_mask):
     """Demean the confounds."""
     confound_cols = confounds.columns
     confounds = scale(confounds, axis=0, with_std=False)
     confounds = pd.DataFrame(confounds, columns=confound_cols)
-    if not flag_sample_mask and outliers.size > 0:  # put outliers back
+    if not scrub_mask and outliers.size > 0:  # put outliers back
         confounds = pd.concat([confounds, outliers], axis=1)
     return confounds
 

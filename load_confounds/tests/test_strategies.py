@@ -81,16 +81,17 @@ def test_Scrubbing():
 
     for check in list_check:
         assert check in conf.columns_
-    # should have six motion outliers from scrubbing
-    assert sum("motion_outlier_" in col for col in conf.columns_) == 8
-    # assert len(conf.sample_mask_) == 24
+    # out of 30 vols, should have 6 motion outliers from scrubbing,
+    # and 2 vol removed by srubbing strategy "full"
+    assert len(conf.sample_mask_) == 22
+    # shape of confound regressors untouched
+    assert len(conf.confounds_) == 30
 
     # also load confounds with very liberal scrubbing thresholds
     # this should not produce an error
     conf = lc.Scrubbing(fd_thresh=1, std_dvars_thresh=5)
     conf.load(file_confounds)
-    assert "motion_outlier_0" not in conf.columns_
-    # assert len(conf.sample_mask_) == 30
+    assert len(conf.sample_mask_) == 30  # no volumes removed
 
     # maker sure global signal works
     conf = lc.Scrubbing(global_signal="full")

@@ -196,26 +196,6 @@ class Confounds:
 
     def load(self, img_files):
         """
-        Load fMRIprep confounds
-
-        Parameters
-        ----------
-        img_files : path to processed image files, optionally as a list.
-            Processed nii.gz/dtseries.nii/func.gii file from fmriprep.
-            `nii.gz` or `dtseries.nii`: path to files, optionally as a list.
-            `func.gii`: list of a pair of paths to files, optionally as a list of lists.
-            The companion tsv will be automatically detected.
-
-        Returns
-        -------
-        confounds :  ndarray or list of ndarray
-            A reduced version of fMRIprep confounds based on selected strategy and flags.
-            An intercept is automatically added to the list of confounds.
-        """
-        return self._parse(img_files, flag_sample_mask=False)
-
-    def load_mask(self, img_files):
-        """
         Load fMRIprep confounds and sample mask
 
         Parameters
@@ -234,9 +214,9 @@ class Confounds:
         sample_mask : list or list of list
             Index of time point to be preserved in the analysis
         """
-        return self._parse(img_files, flag_sample_mask=True)
+        return self._parse(img_files)
 
-    def _parse(self, img_files, flag_sample_mask):
+    def _parse(self, img_files):
         """Parse input image, find confound files and scrubbing etc."""
         img_files, flag_single = cf._sanitize_confounds(img_files)
         confounds_out = []
@@ -246,7 +226,7 @@ class Confounds:
         self.missing_keys_ = []
 
         for file in img_files:
-            sample_mask, conf, col = self._load_single(file, flag_sample_mask)
+            sample_mask, conf, col = self._load_single(file)
             confounds_out.append(conf)
             columns_out.append(col)
             sample_mask_out.append(sample_mask)
@@ -260,13 +240,11 @@ class Confounds:
 
         self.confounds_ = confounds_out
         self.columns_ = columns_out
-        if flag_sample_mask:
-            self.sample_mask_ = sample_mask_out
-            return confounds_out, sample_mask_out
-        else:
-            return confounds_out
+        self.sample_mask_ = sample_mask_out
+        return confounds_out, sample_mask_out
 
-    def _load_single(self, confounds_raw, flag_sample_mask):
+
+    def _load_single(self, confounds_raw):
         """Load a single confounds file from fmriprep."""
         # Convert tsv file to pandas dataframe
         # check if relevant imaging files are present according to the strategy
@@ -284,7 +262,7 @@ class Confounds:
 
         _check_error(self.missing_confounds_, self.missing_keys_)
         sample_mask, confounds, labels = cf._confounds_to_ndarray(
-            confounds, self.demean, flag_sample_mask
+            confounds, self.demean, scrub_mask=True
         )
         return sample_mask, confounds, labels
 

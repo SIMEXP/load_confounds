@@ -25,11 +25,16 @@ def _simu_img(demean=True):
     # as we will stack slices with confounds on top of slices with noise
     nz = 2
     # Load a simple 6 parameters motion models as confounds
-    X = lc.Confounds(strategy=["motion"], motion="basic", demean=demean).load(
+    X, _ = lc.Confounds(strategy=["motion"], motion="basic", demean=demean).load(
         file_confounds
     )
+    # the first row is non-steady state, replace it with the imput from the second row
+    non_steady = X[0, :]
+    X[0, :] = X[1, :]
     # repeat X in length (axis = 0) three times to increase the degree of freedom
     X = np.tile(X, (3, 1))
+    # put non-steady state volume back at the first sample
+    X[0, :] = non_steady
     # the number of time points is based on the example confound file
     nt = X.shape[0]
     # initialize an empty 4D volume
@@ -104,33 +109,33 @@ def _regression(confounds, sample_mask):
 def test_nilearn_regress():
     """Try regressing out all motion types in nilearn."""
     # Regress full motion
-    confounds = lc.Confounds(strategy=["motion"], motion="full").load(file_confounds)
-    sample_mask = None
+    confounds, _ = lc.Confounds(strategy=["motion"], motion="full").load(file_confounds)
+    sample_mask = None  # not testing sample mask here
     _regression(confounds, sample_mask)
 
     # Regress high_pass
-    confounds = lc.Confounds(strategy=["high_pass"]).load(file_confounds)
+    confounds, _ = lc.Confounds(strategy=["high_pass"]).load(file_confounds)
     _regression(confounds, sample_mask)
 
     # Regress wm_csf
-    confounds = lc.Confounds(strategy=["wm_csf"], wm_csf="full").load(file_confounds)
+    confounds, _ = lc.Confounds(strategy=["wm_csf"], wm_csf="full").load(file_confounds)
     _regression(confounds, sample_mask)
     # Regress global
-    confounds = lc.Confounds(strategy=["global"], global_signal="full").load(
+    confounds, _ = lc.Confounds(strategy=["global"], global_signal="full").load(
         file_confounds
     )
     _regression(confounds, sample_mask)
 
     # Regress AnatCompCor
-    confounds = lc.Confounds(strategy=["compcor"], compcor="anat").load(file_confounds)
+    confounds, _ = lc.Confounds(strategy=["compcor"], compcor="anat").load(file_confounds)
     _regression(confounds, sample_mask)
 
     # Regress TempCompCor
-    confounds = lc.Confounds(strategy=["compcor"], compcor="temp").load(file_confounds)
+    confounds, _ = lc.Confounds(strategy=["compcor"], compcor="temp").load(file_confounds)
     _regression(confounds, sample_mask)
 
     # Regress ICA-AROMA
-    confounds = lc.Confounds(strategy=["ica_aroma"], ica_aroma="basic").load(
+    confounds, _ = lc.Confounds(strategy=["ica_aroma"], ica_aroma="basic").load(
         file_confounds
     )
     _regression(confounds, sample_mask)
@@ -407,21 +412,21 @@ def test_ica_aroma():
     assert "ICA-AROMA strategy" in exc_info.value.args[0]
 
 
-def test_load_mask():
-    """Test load_mask method."""
+def test_sample_mask():
+    """Test load method and sample mask."""
+    # create a version with srub_mask not applied;
+    # This is not recommanded
     conf = lc.Confounds(strategy=["motion", "scrub"], scrub="full", fd_thresh=0.15)
-    reg = conf.load(file_confounds)
+    reg, mask = conf.load(file_confounds)
 
-    conf_masked = lc.Confounds(strategy=["motion", "scrub"], scrub="full", fd_thresh=0.15)
-    reg_masked, mask = conf_masked.load_mask(file_confounds)
-    # the current test data has 8 time points marked as motion outliers,
+    # the current test data has 6 time points marked as motion outliers,
     # and one nonsteady state (overlap with the first motion outlier)
+    # 2 time points removed due to the "full" srubbing strategy
     assert reg.shape[0] - len(mask) == 8
-    assert reg_masked.shape[0] - len(mask) == 8
-    assert reg.shape[1] - reg_masked.shape[1] == 9
-    # the difference between the two methods is in whether motion outliers
-    # are kept in the confound regressors
-    outlier_cols = list(set(conf.columns_) - set(conf_masked.columns_))
-    assert len(outlier_cols) == reg.shape[1] - reg_masked.shape[1]
-    for item in outlier_cols:
-        assert "outlier" in item
+    # nilearn requires unmasked confound regressors
+    assert reg.shape[0] == 30
+
+    # non steady state will always be reomoved
+    conf = lc.Confounds(strategy=["motion"])
+    reg, mask = conf.load(file_confounds)
+    assert reg.shape[0] - len(mask) == 1
