@@ -91,7 +91,7 @@ def test_Scrubbing():
     # this should not produce an error
     conf = lc.Scrubbing(fd_thresh=1, std_dvars_thresh=5)
     conf.load(file_confounds)
-    assert len(conf.sample_mask_) == 30  # no volumes removed
+    assert len(conf.sample_mask_) == 29  # only non-steady volumes removed
 
     # maker sure global signal works
     conf = lc.Scrubbing(global_signal="full")

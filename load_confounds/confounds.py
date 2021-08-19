@@ -232,14 +232,14 @@ def _extract_outlier_regressors(confounds):
     outlier_cols, confounds_col = _get_outlier_cols(confounds.columns)
     outliers = confounds[outlier_cols] if outlier_cols else pd.DataFrame()
     confounds = confounds[confounds_col]
-    sample_mask = _outlier_to_sample_mask(confounds.shape[0], outliers)
+    sample_mask = _outlier_to_sample_mask(outliers)
     return sample_mask, confounds, outliers
 
 
-def _outlier_to_sample_mask(n_scans, outlier_flag):
+def _outlier_to_sample_mask(outlier_flag):
     """Generate sample mask from outlier regressors."""
-    if outlier_flag.size == 0:
-        return list(range(n_scans))
+    if outlier_flag.size == 0:  # Do not supply sample mask
+        return None  # consistency with nilearn sample_mask
     outlier_flag = outlier_flag.sum(axis=1).values
     return np.where(outlier_flag == 0)[0].tolist()
 
