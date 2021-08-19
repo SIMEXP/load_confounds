@@ -265,7 +265,8 @@ def _demean_confounds(confounds, outliers, scrub_mask):
     confound_cols = confounds.columns
     confounds = scale(confounds, axis=0, with_std=False)
     confounds = pd.DataFrame(confounds, columns=confound_cols)
-    if not scrub_mask and outliers.size > 0:  # put outliers back
+    # using despike strategy (currently not supported)
+    if not scrub_mask and outliers.size > 0:
         confounds = pd.concat([confounds, outliers], axis=1)
     return confounds
 

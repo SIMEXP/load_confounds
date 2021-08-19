@@ -14,6 +14,9 @@ path_data = os.path.join(os.path.dirname(lc.__file__), "data")
 file_confounds = os.path.join(
     path_data, "test_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz"
 )
+file_no_none_steady = os.path.join(
+    path_data, "nonss_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz"
+)
 
 
 def _simu_img(demean=True):
@@ -433,3 +436,8 @@ def test_sample_mask():
     conf = lc.Confounds(strategy=["motion"])
     reg, mask = conf.load(file_confounds)
     assert reg.shape[0] - len(mask) == 1
+
+    # When no non-steady state volumes are present
+    conf = lc.Confounds(strategy=["motion"])
+    reg, mask = conf.load(file_no_none_steady)
+    assert mask is None
