@@ -58,7 +58,7 @@ class Minimal(Confounds):
         # check if global signal is supplied as a parameter
         # if so, add to strategy
         global_signal = kwargs.get("global_signal", False)
-        strategy = ["high_pass", "motion", "wm_csf"]
+        strategy = ["high_pass", "motion", "wm_csf", "non_steady_state"]
         strategy, global_signal = _update_strategy(strategy, global_signal)
         # warn user for supplying useless parameter
         _check_invalid_parameter(kwargs, valid_keys=["global_signal"])
@@ -146,7 +146,7 @@ class Scrubbing(Confounds):
         # check if global signal is supplied as a parameter
         # if so, add to strategy
         global_signal = kwargs.get("global_signal", False)
-        strategy = ["high_pass", "motion", "wm_csf", "scrub"]
+        strategy = ["high_pass", "motion", "wm_csf", "scrub", "non_steady_state"]
         strategy, global_signal = _update_strategy(strategy, global_signal)
         # warn user for supplying useless parameter
         _check_invalid_parameter(kwargs, valid_keys=["global_signal"])
@@ -214,7 +214,7 @@ class CompCor(Confounds):
     ):
         """Default parameters."""
         # set attributes
-        self.strategy = ["high_pass", "motion", "compcor"]
+        self.strategy = ["high_pass", "motion", "compcor", "non_steady_state"]
         self.motion = motion
         self.n_motion = 0
         self.compcor = compcor
@@ -277,7 +277,6 @@ class ICAAROMA(Confounds):
         "derivatives" global signal and derivative (2 parameters)
         "full" global signal + derivatives + quadratic terms + power2d derivatives (4 parameters)
 
-
     Returns
     -------
     conf :  a Confounds object
@@ -297,7 +296,7 @@ class ICAAROMA(Confounds):
 
     def __init__(self, wm_csf="basic", demean=True, **kwargs):
         """Default parameters."""
-        strategy = ["wm_csf", "high_pass", "ica_aroma"]
+        strategy = ["wm_csf", "high_pass", "ica_aroma", "non_steady_state"]
         global_signal = kwargs.get("global_signal", False)
         strategy, global_signal = _update_strategy(strategy, global_signal)
         # warn user for supplying useless parameter

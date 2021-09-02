@@ -39,14 +39,13 @@ def _check_params(confounds_raw, params):
 
 def _find_confounds(confounds_raw, keywords):
     """Find confounds that contain certain keywords."""
-    list_confounds = []
-    missing_keys = []
+    list_confounds, missing_keys = [], []
     for key in keywords:
         key_found = [col for col in confounds_raw.columns if key in col]
-        if not key_found:
-            missing_keys.append(key)
-        else:
+        if key_found:
             list_confounds.extend(key_found)
+        elif key != "non_steady_state":
+            missing_keys.append(key)
     if missing_keys:
         raise MissingConfound(keywords=missing_keys)
     return list_confounds
@@ -217,24 +216,59 @@ def _confounds_to_df(image_file, flag_acompcor, flag_full_aroma):
     return confounds_raw, confounds_json
 
 
+def _get_outlier_cols(confounds_columns):
+    """Get outlier regressor column names."""
+    outlier_cols = {
+        col
+        for col in confounds_columns
+        if "motion_outlier" in col or "non_steady_state" in col
+    }
+    confounds_col = set(confounds_columns) - outlier_cols
+    return outlier_cols, confounds_col
+
+
+def _extract_outlier_regressors(confounds):
+    """Separate confounds and outlier regressors."""
+    outlier_cols, confounds_col = _get_outlier_cols(confounds.columns)
+    outliers = confounds[outlier_cols] if outlier_cols else pd.DataFrame()
+    confounds = confounds[confounds_col]
+    sample_mask = _outlier_to_sample_mask(outliers)
+    return sample_mask, confounds, outliers
+
+
+def _outlier_to_sample_mask(outlier_flag):
+    """Generate sample mask from outlier regressors."""
+    if outlier_flag.size == 0:  # Do not supply sample mask
+        return None  # consistency with nilearn sample_mask
+    outlier_flag = outlier_flag.sum(axis=1).values
+    return np.where(outlier_flag == 0)[0].tolist()
+
+
 def _confounds_to_ndarray(confounds, demean):
     """Convert confounds from a pandas dataframe to a numpy array."""
-    # Convert from DataFrame to numpy ndarray
-    labels = confounds.columns
-    confounds = confounds.values
-
-    # Derivatives have NaN on the first row
-    # Replace them by estimates at second time point,
-    # otherwise nilearn will crash.
+    sample_mask, confounds, outliers = _extract_outlier_regressors(confounds)
     if confounds.size != 0:  # ica_aroma = "full" generate empty output
-        mask_nan = np.isnan(confounds[0, :])
-        confounds[0, mask_nan] = confounds[1, mask_nan]
-
-        # Optionally demean confounds
+        # Derivatives have NaN on the first row
+        # Replace them by estimates at second time point,
+        # otherwise nilearn will crash.
+        mask_nan = np.isnan(confounds.values[0, :])
+        confounds.iloc[0, mask_nan] = confounds.iloc[1, mask_nan]
         if demean:
-            confounds = scale(confounds, axis=0, with_std=False)
+            confounds = _demean_confounds(confounds, sample_mask)
+    labels = list(confounds.columns)
+    confounds = confounds.values
+    return sample_mask, confounds, labels
 
-    return confounds, labels
+
+def _demean_confounds(confounds, sample_mask):
+    """Demean the confounds. The mean is calculated on non-outlier values."""
+    confound_cols = confounds.columns
+    if sample_mask is None:
+        confounds= scale(confounds, axis=0, with_std=False)
+    else:  # calculate the mean without outliers.
+        confounds_mean = confounds.iloc[sample_mask, :].mean(axis=0)
+        confounds -= confounds_mean
+    return pd.DataFrame(confounds, columns=confound_cols)
 
 
 class MissingConfound(Exception):

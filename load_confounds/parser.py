@@ -16,6 +16,7 @@ all_confounds = [
     "compcor",
     "ica_aroma",
     "scrub",
+    "non_steady_state",
 ]
 
 
@@ -27,6 +28,9 @@ def _sanitize_strategy(strategy):
                 raise ValueError(f"{conf} is not a supported type of confounds.")
     else:
         raise ValueError("strategy needs to be a list of strings")
+    # add non steady state if not present
+    if "non_steady_state" not in strategy:
+        strategy.append("non_steady_state")
     return strategy
 
 
@@ -124,6 +128,7 @@ class Confounds:
         using nilearn with no or zscore standardization, but should be turned off
         with "spc" normalization.
 
+
     Attributes
     ----------
     `confounds_` : ndarray
@@ -131,6 +136,14 @@ class Confounds:
 
     `columns_`: list of str
         The labels of the different confounds
+
+    `sample_mask_` : list of int
+        The index of the niimgs along time/fourth dimension.
+        This list includes indices for valid volumes for subsequent analysis.
+        This attribute should be passed to parameter `sample_mask` of nilearn.NiftiMasker.
+        Volumnes are removed if flagges as following:
+            - Non-steady-state volumes (if present)
+            - Motion outliers detected by scrubbing
 
     Notes
     -----
@@ -183,7 +196,7 @@ class Confounds:
 
     def load(self, img_files):
         """
-        Load fMRIprep confounds
+        Load fMRIprep confounds and sample mask
 
         Parameters
         ----------
@@ -198,27 +211,39 @@ class Confounds:
         confounds :  ndarray or list of ndarray
             A reduced version of fMRIprep confounds based on selected strategy and flags.
             An intercept is automatically added to the list of confounds.
+        sample_mask : list or list of list
+            Index of time point to be preserved in the analysis
         """
+        return self._parse(img_files)
+
+    def _parse(self, img_files):
+        """Parse input image, find confound files and scrubbing etc."""
         img_files, flag_single = cf._sanitize_confounds(img_files)
+
         confounds_out = []
         columns_out = []
+        sample_mask_out = []
         self.missing_confounds_ = []
         self.missing_keys_ = []
 
         for file in img_files:
-            conf, col = self._load_single(file)
+            sample_mask, conf, col = self._load_single(file)
             confounds_out.append(conf)
             columns_out.append(col)
+            sample_mask_out.append(sample_mask)
 
         # If a single input was provided,
         # send back a single output instead of a list
         if flag_single:
             confounds_out = confounds_out[0]
             columns_out = columns_out[0]
+            sample_mask_out = sample_mask_out[0]
 
         self.confounds_ = confounds_out
         self.columns_ = columns_out
-        return confounds_out
+        self.sample_mask_ = sample_mask_out
+        return confounds_out, sample_mask_out
+
 
     def _load_single(self, confounds_raw):
         """Load a single confounds file from fmriprep."""
@@ -237,8 +262,10 @@ class Confounds:
             confounds = pd.concat([confounds, loaded_confounds], axis=1)
 
         _check_error(self.missing_confounds_, self.missing_keys_)
-        confounds, labels = cf._confounds_to_ndarray(confounds, self.demean)
-        return confounds, labels
+        sample_mask, confounds, labels = cf._confounds_to_ndarray(
+            confounds, self.demean
+        )
+        return sample_mask, confounds, labels
 
     def _load_confound(self, confounds_raw, confound):
         """Load a single type of confound."""
@@ -324,3 +351,11 @@ class Confounds:
         ]
         motion_outlier_regressors.columns = column_names
         return motion_outlier_regressors
+
+    def _load_non_steady_state(self, confounds_raw):
+        """Find non steady state regressors."""
+        nss_outliers = cf._find_confounds(confounds_raw, ["non_steady_state"])
+        if nss_outliers:
+            return confounds_raw[nss_outliers]
+        else:
+            return pd.DataFrame()
