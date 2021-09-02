@@ -28,9 +28,10 @@ def _simu_img(demean=True):
     # as we will stack slices with confounds on top of slices with noise
     nz = 2
     # Load a simple 6 parameters motion models as confounds
-    X, _ = lc.Confounds(strategy=["motion"], motion="basic", demean=demean).load(
+    confounds, _ = lc.Confounds(strategy=["motion"], motion="basic", demean=demean).load(
         file_confounds
     )
+    X = confounds.values
     # the first row is non-steady state, replace it with the imput from the second row
     non_steady = X[0, :]
     X[0, :] = X[1, :]
@@ -210,7 +211,7 @@ def test_confounds2df():
         path_data, "test_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz"
     )
     conf.load(file_confounds_nii)
-    assert "trans_x" in conf.columns_
+    assert "trans_x" in conf.confounds_.columns
 
 
 def test_sanitize_strategy():
@@ -242,49 +243,49 @@ def test_motion():
     params = ["trans_x", "trans_y", "trans_z", "rot_x", "rot_y", "rot_z"]
     for param in params:
         # Basic 6 params motion model
-        assert f"{param}" in conf_basic.columns_
-        assert f"{param}_derivative1" not in conf_basic.columns_
-        assert f"{param}_power2" not in conf_basic.columns_
-        assert f"{param}_derivative1_power2" not in conf_basic.columns_
+        assert f"{param}" in conf_basic.confounds_.columns
+        assert f"{param}_derivative1" not in conf_basic.confounds_.columns
+        assert f"{param}_power2" not in conf_basic.confounds_.columns
+        assert f"{param}_derivative1_power2" not in conf_basic.confounds_.columns
 
         # Use a 6 params + derivatives motion model
-        assert f"{param}" in conf_derivatives.columns_
-        assert f"{param}_derivative1" in conf_derivatives.columns_
-        assert f"{param}_power2" not in conf_derivatives.columns_
-        assert f"{param}_derivative1_power2" not in conf_derivatives.columns_
+        assert f"{param}" in conf_derivatives.confounds_.columns
+        assert f"{param}_derivative1" in conf_derivatives.confounds_.columns
+        assert f"{param}_power2" not in conf_derivatives.confounds_.columns
+        assert f"{param}_derivative1_power2" not in conf_derivatives.confounds_.columns
 
         # Use a 6 params + power2 motion model
-        assert f"{param}" in conf_power2.columns_
-        assert f"{param}_derivative1" not in conf_power2.columns_
-        assert f"{param}_power2" in conf_power2.columns_
-        assert f"{param}_derivative1_power2" not in conf_power2.columns_
+        assert f"{param}" in conf_power2.confounds_.columns
+        assert f"{param}_derivative1" not in conf_power2.confounds_.columns
+        assert f"{param}_power2" in conf_power2.confounds_.columns
+        assert f"{param}_derivative1_power2" not in conf_power2.confounds_.columns
 
         # Use a 6 params + derivatives + power2 + power2d derivatives motion model
-        assert f"{param}" in conf_full.columns_
-        assert f"{param}_derivative1" in conf_full.columns_
-        assert f"{param}_power2" in conf_full.columns_
-        assert f"{param}_derivative1_power2" in conf_full.columns_
+        assert f"{param}" in conf_full.confounds_.columns
+        assert f"{param}_derivative1" in conf_full.confounds_.columns
+        assert f"{param}_power2" in conf_full.confounds_.columns
+        assert f"{param}_derivative1_power2" in conf_full.confounds_.columns
 
 
 def test_n_compcor():
 
     conf = lc.Confounds(strategy=["compcor"], compcor="anat", n_compcor=2)
     conf.load(file_confounds)
-    assert "a_comp_cor_00" in conf.columns_
-    assert "a_comp_cor_01" in conf.columns_
-    assert "a_comp_cor_02" not in conf.columns_
+    assert "a_comp_cor_00" in conf.confounds_.columns
+    assert "a_comp_cor_01" in conf.confounds_.columns
+    assert "a_comp_cor_02" not in conf.confounds_.columns
 
 
 def test_n_motion():
 
     conf = lc.Confounds(strategy=["motion"], motion="full", n_motion=0.2)
     conf.load(file_confounds)
-    assert "motion_pca_1" in conf.columns_
-    assert "motion_pca_2" not in conf.columns_
+    assert "motion_pca_1" in conf.confounds_.columns
+    assert "motion_pca_2" not in conf.confounds_.columns
 
     conf = lc.Confounds(strategy=["motion"], motion="full", n_motion=0.95)
     conf.load(file_confounds)
-    assert "motion_pca_6" in conf.columns_
+    assert "motion_pca_6" in conf.confounds_.columns
 
     with pytest.raises(ValueError):
         conf = lc.Confounds(strategy=["motion"], motion="full", n_motion=50)
@@ -402,7 +403,7 @@ def test_ica_aroma():
     # Agressive strategy
     conf = lc.Confounds(strategy=["ica_aroma"], ica_aroma="basic")
     conf.load(file_confounds)
-    for col_name in conf.columns_:
+    for col_name in conf.confounds_.columns:
         # only aroma and non-steady state columns will be present
         assert re.match("(?:aroma_motion_+|non_steady_state+)", col_name)
 

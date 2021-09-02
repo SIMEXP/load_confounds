@@ -227,20 +227,17 @@ class Confounds:
         self.missing_keys_ = []
 
         for file in img_files:
-            sample_mask, conf, col = self._load_single(file)
+            sample_mask, conf = self._load_single(file)
             confounds_out.append(conf)
-            columns_out.append(col)
             sample_mask_out.append(sample_mask)
 
         # If a single input was provided,
         # send back a single output instead of a list
         if flag_single:
             confounds_out = confounds_out[0]
-            columns_out = columns_out[0]
             sample_mask_out = sample_mask_out[0]
 
         self.confounds_ = confounds_out
-        self.columns_ = columns_out
         self.sample_mask_ = sample_mask_out
         return confounds_out, sample_mask_out
 
@@ -262,10 +259,10 @@ class Confounds:
             confounds = pd.concat([confounds, loaded_confounds], axis=1)
 
         _check_error(self.missing_confounds_, self.missing_keys_)
-        sample_mask, confounds, labels = cf._confounds_to_ndarray(
+        sample_mask, confounds= cf._prepare_output(
             confounds, self.demean
         )
-        return sample_mask, confounds, labels
+        return sample_mask, confounds
 
     def _load_confound(self, confounds_raw, confound):
         """Load a single type of confound."""
