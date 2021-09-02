@@ -244,7 +244,7 @@ def _outlier_to_sample_mask(outlier_flag):
     return np.where(outlier_flag == 0)[0].tolist()
 
 
-def _confounds_to_ndarray(confounds, demean, scrub_mask):
+def _confounds_to_ndarray(confounds, demean):
     """Convert confounds from a pandas dataframe to a numpy array."""
     sample_mask, confounds, outliers = _extract_outlier_regressors(confounds)
     if confounds.size != 0:  # ica_aroma = "full" generate empty output
@@ -254,21 +254,21 @@ def _confounds_to_ndarray(confounds, demean, scrub_mask):
         mask_nan = np.isnan(confounds.values[0, :])
         confounds.iloc[0, mask_nan] = confounds.iloc[1, mask_nan]
         if demean:
-            confounds = _demean_confounds(confounds, outliers, scrub_mask)
+            confounds = _demean_confounds(confounds, sample_mask)
     labels = list(confounds.columns)
     confounds = confounds.values
     return sample_mask, confounds, labels
 
 
-def _demean_confounds(confounds, outliers, scrub_mask):
-    """Demean the confounds."""
+def _demean_confounds(confounds, sample_mask):
+    """Demean the confounds. The mean is calculated on non-outlier values."""
     confound_cols = confounds.columns
-    confounds = scale(confounds, axis=0, with_std=False)
-    confounds = pd.DataFrame(confounds, columns=confound_cols)
-    # using despike strategy (currently not supported)
-    if not scrub_mask and outliers.size > 0:
-        confounds = pd.concat([confounds, outliers], axis=1)
-    return confounds
+    if sample_mask is None:
+        confounds= scale(confounds, axis=0, with_std=False)
+    else:  # calculate the mean without outliers.
+        confounds_mean = confounds.iloc[sample_mask, :].mean(axis=0)
+        confounds -= confounds_mean
+    return pd.DataFrame(confounds, columns=confound_cols)
 
 
 class MissingConfound(Exception):

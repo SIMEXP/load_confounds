@@ -432,7 +432,7 @@ def test_sample_mask():
     # nilearn requires unmasked confound regressors
     assert reg.shape[0] == 30
 
-    # non steady state will always be reomoved
+    # non steady state will always be removed
     conf = lc.Confounds(strategy=["motion"])
     reg, mask = conf.load(file_confounds)
     assert reg.shape[0] - len(mask) == 1

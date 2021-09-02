@@ -263,7 +263,7 @@ class Confounds:
 
         _check_error(self.missing_confounds_, self.missing_keys_)
         sample_mask, confounds, labels = cf._confounds_to_ndarray(
-            confounds, self.demean, scrub_mask=True
+            confounds, self.demean
         )
         return sample_mask, confounds, labels
 
