@@ -131,11 +131,9 @@ class Confounds:
 
     Attributes
     ----------
-    `confounds_` : ndarray
-        The confounds loaded using the specified model
-
-    `columns_`: list of str
-        The labels of the different confounds
+    `confounds_` : pandas.DataFrame
+        The confounds loaded using the specified model. The columns of the dataframe
+        contains the labels.
 
     `sample_mask_` : list of int
         The index of the niimgs along time/fourth dimension.
@@ -208,9 +206,11 @@ class Confounds:
 
         Returns
         -------
-        confounds :  ndarray or list of ndarray
+        confounds :  pandas.DataFrame or list of pandas.DataFrame
             A reduced version of fMRIprep confounds based on selected strategy and flags.
             An intercept is automatically added to the list of confounds.
+            The columns contains the labels of the regressors.
+
         sample_mask : list or list of list
             Index of time point to be preserved in the analysis
         """
@@ -221,7 +221,6 @@ class Confounds:
         img_files, flag_single = cf._sanitize_confounds(img_files)
 
         confounds_out = []
-        columns_out = []
         sample_mask_out = []
         self.missing_confounds_ = []
         self.missing_keys_ = []
