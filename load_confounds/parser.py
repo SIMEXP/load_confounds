@@ -131,11 +131,9 @@ class Confounds:
 
     Attributes
     ----------
-    `confounds_` : ndarray
-        The confounds loaded using the specified model
-
-    `columns_`: list of str
-        The labels of the different confounds
+    `confounds_` : pandas.DataFrame
+        The confounds loaded using the specified model. The columns of the dataframe
+        contains the labels.
 
     `sample_mask_` : list of int
         The index of the niimgs along time/fourth dimension.
@@ -208,9 +206,11 @@ class Confounds:
 
         Returns
         -------
-        confounds :  ndarray or list of ndarray
+        confounds :  pandas.DataFrame or list of pandas.DataFrame
             A reduced version of fMRIprep confounds based on selected strategy and flags.
             An intercept is automatically added to the list of confounds.
+            The columns contains the labels of the regressors.
+
         sample_mask : list or list of list
             Index of time point to be preserved in the analysis
         """
@@ -221,26 +221,22 @@ class Confounds:
         img_files, flag_single = cf._sanitize_confounds(img_files)
 
         confounds_out = []
-        columns_out = []
         sample_mask_out = []
         self.missing_confounds_ = []
         self.missing_keys_ = []
 
         for file in img_files:
-            sample_mask, conf, col = self._load_single(file)
+            sample_mask, conf = self._load_single(file)
             confounds_out.append(conf)
-            columns_out.append(col)
             sample_mask_out.append(sample_mask)
 
         # If a single input was provided,
         # send back a single output instead of a list
         if flag_single:
             confounds_out = confounds_out[0]
-            columns_out = columns_out[0]
             sample_mask_out = sample_mask_out[0]
 
         self.confounds_ = confounds_out
-        self.columns_ = columns_out
         self.sample_mask_ = sample_mask_out
         return confounds_out, sample_mask_out
 
@@ -262,10 +258,10 @@ class Confounds:
             confounds = pd.concat([confounds, loaded_confounds], axis=1)
 
         _check_error(self.missing_confounds_, self.missing_keys_)
-        sample_mask, confounds, labels = cf._confounds_to_ndarray(
+        sample_mask, confounds= cf._prepare_output(
             confounds, self.demean
         )
-        return sample_mask, confounds, labels
+        return sample_mask, confounds
 
     def _load_confound(self, confounds_raw, confound):
         """Load a single type of confound."""
