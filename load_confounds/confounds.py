@@ -244,8 +244,8 @@ def _outlier_to_sample_mask(outlier_flag):
     return np.where(outlier_flag == 0)[0].tolist()
 
 
-def _confounds_to_ndarray(confounds, demean):
-    """Convert confounds from a pandas dataframe to a numpy array."""
+def _prepare_output(confounds, demean):
+    """Demean and create sample mask for the selected confounds."""
     sample_mask, confounds, outliers = _extract_outlier_regressors(confounds)
     if confounds.size != 0:  # ica_aroma = "full" generate empty output
         # Derivatives have NaN on the first row
@@ -255,9 +255,7 @@ def _confounds_to_ndarray(confounds, demean):
         confounds.iloc[0, mask_nan] = confounds.iloc[1, mask_nan]
         if demean:
             confounds = _demean_confounds(confounds, sample_mask)
-    labels = list(confounds.columns)
-    confounds = confounds.values
-    return sample_mask, confounds, labels
+    return sample_mask, confounds
 
 
 def _demean_confounds(confounds, sample_mask):

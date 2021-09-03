@@ -3,6 +3,7 @@ import os
 import re
 import load_confounds.strategies as lc
 import numpy as np
+import pandas as pd
 import pytest
 
 
@@ -23,7 +24,7 @@ def test_Minimal():
     assert hasattr(conf, "global_signal") == False
     conf.load(file_confounds)
 
-    assert isinstance(conf.confounds_, np.ndarray)
+    assert isinstance(conf.confounds_, pd.DataFrame)
 
     # Check that all model categories have been successfully loaded
     list_check = [
@@ -35,7 +36,7 @@ def test_Minimal():
         "white_matter",
     ]
     for check in list_check:
-        assert check in conf.columns_
+        assert check in conf.confounds_.columns
 
     # maker sure global signal works
     conf = lc.Minimal(global_signal="basic")
@@ -51,7 +52,7 @@ def test_Scrubbing():
     assert hasattr(conf, "global_signal") == False
     conf.load(file_confounds)
 
-    assert isinstance(conf.confounds_, np.ndarray)
+    assert isinstance(conf.confounds_, pd.DataFrame)
 
     # Check that all model categories have been successfully loaded
     list_check = [
@@ -80,7 +81,7 @@ def test_Scrubbing():
     ]
 
     for check in list_check:
-        assert check in conf.columns_
+        assert check in conf.confounds_.columns
     # out of 30 vols, should have 6 motion outliers from scrubbing,
     # and 2 vol removed by srubbing strategy "full"
     assert len(conf.sample_mask_) == 22
@@ -105,7 +106,7 @@ def test_CompCor_anatomical():
     conf = lc.CompCor()
     conf.load(file_confounds)
 
-    assert isinstance(conf.confounds_, np.ndarray)
+    assert isinstance(conf.confounds_, pd.DataFrame)
 
     list_check = [
         "trans_x",
@@ -129,9 +130,9 @@ def test_CompCor_anatomical():
     ]
 
     for check in list_check:
-        assert check in conf.columns_
+        assert check in conf.confounds_.columns
 
-    compcor_col_str_anat = "".join(conf.columns_)
+    compcor_col_str_anat = "".join(conf.confounds_.columns)
     assert "t_comp_cor_" not in compcor_col_str_anat
     assert (
         "a_comp_cor_57" not in compcor_col_str_anat
@@ -144,7 +145,7 @@ def test_CompCor_anatomical_not_combined():
     conf = lc.CompCor(acompcor_combined=False, n_compcor=5)
     conf.load(file_confounds)
 
-    assert isinstance(conf.confounds_, np.ndarray)
+    assert isinstance(conf.confounds_, pd.DataFrame)
 
     list_check = [
         "trans_x",
@@ -169,9 +170,9 @@ def test_CompCor_anatomical_not_combined():
     ]
 
     for check in list_check:
-        assert check in conf.columns_
+        assert check in conf.confounds_.columns
 
-    compcor_col_str_anat = "".join(conf.columns_)
+    compcor_col_str_anat = "".join(conf.confounds_.columns)
     assert "t_comp_cor_" not in compcor_col_str_anat
     assert (
         "a_comp_cor_00" not in compcor_col_str_anat
@@ -190,7 +191,7 @@ def test_CompCor_temporal():
     conf = lc.CompCor(compcor="temp")
     conf.load(file_confounds)
 
-    assert isinstance(conf.confounds_, np.ndarray)
+    assert isinstance(conf.confounds_, pd.DataFrame)
 
     list_check = [
         "cosine00",
@@ -203,9 +204,9 @@ def test_CompCor_temporal():
         "t_comp_cor_03",
     ]
     for check in list_check:
-        assert check in conf.columns_
+        assert check in conf.confounds_.columns
 
-    compcor_col_str_anat = "".join(conf.columns_)
+    compcor_col_str_anat = "".join(conf.confounds_.columns)
     assert "a_comp_cor_" not in compcor_col_str_anat
 
 
@@ -214,7 +215,7 @@ def test_FullCompCor():
     conf = lc.CompCor(compcor="full", acompcor_combined=False)
     conf.load(file_confounds)
 
-    assert isinstance(conf.confounds_, np.ndarray)
+    assert isinstance(conf.confounds_, pd.DataFrame)
 
     list_check = [
         "t_comp_cor_00",
@@ -226,7 +227,7 @@ def test_FullCompCor():
         "a_comp_cor_105",  # from WM mask
     ]
     for check in list_check:
-        assert check in conf.columns_
+        assert check in conf.confounds_.columns
 
 
 def test_ICAAROMA():
@@ -242,7 +243,7 @@ def test_ICAAROMA():
         "white_matter",
         "global_signal",
     ]
-    for c in conf.columns_:
+    for c in conf.confounds_.columns:
         # Check that all fixed name model categories
         fixed = c in list_check
         cosines = re.match("cosine+", c)
