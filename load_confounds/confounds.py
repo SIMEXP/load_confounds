@@ -245,7 +245,7 @@ def _outlier_to_sample_mask(outlier_flag):
 
 
 def _prepare_output(confounds, demean):
-    """Demean and create sample mask for the confonfounds."""
+    """Demean and create sample mask for the selected confounds."""
     sample_mask, confounds, outliers = _extract_outlier_regressors(confounds)
     if confounds.size != 0:  # ica_aroma = "full" generate empty output
         # Derivatives have NaN on the first row
