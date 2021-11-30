@@ -1,6 +1,6 @@
 # load_confounds
 Load a sensible subset of the fMRI confounds generated with [fMRIprep](https://fmriprep.readthedocs.io/en/stable/) in python (Esteban et al., 2018).
-> ## :warning: **`load_confounds` is now a new feature in NiLearn 0.8.2**. Development of this project will fully migrate to on [NiLearn](https://nilearn.github.io/stable/index.html). Please see the following links for the implementation. :warning: 
+> ## :warning: **`load_confounds` is now a new feature in NiLearn 0.8.2**. Development of this project will fully migrate to [NiLearn](https://nilearn.github.io/stable/index.html). Please see the following links for the implementation. :warning: 
 > 
 > New API:
 > - [`nilearn.interfaces.fmriprep.load_confounds`](https://nilearn.github.io/dev/modules/generated/nilearn.interfaces.fmriprep.load_confounds.html#nilearn.interfaces.fmriprep.load_confounds)
