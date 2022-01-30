@@ -3,7 +3,7 @@ Load a sensible subset of the fMRI confounds generated with [fMRIprep](https://f
 > ## :warning: **`load_confounds` is now a new feature in NiLearn 0.9.0**. Development of this project will fully migrate to [NiLearn](https://nilearn.github.io/stable/index.html). Please see the following links for the implementation. :warning: 
 > 
 > New API:
-> - [`nilearn.interfaces.fmriprep.load_confounds`](https://nilearn.github.io/stable/modules/generated/nilearn.interfaces.fmriprep.load_confounds.html#nilearn.interfaces.fmriprep.load_confounds
+> - [`nilearn.interfaces.fmriprep.load_confounds`](https://nilearn.github.io/stable/modules/generated/nilearn.interfaces.fmriprep.load_confounds.html#nilearn.interfaces.fmriprep.load_confounds)
 > - [`nilearn.interfaces.fmriprep.load_confounds_strategy`](https://nilearn.github.io/stable/modules/generated/nilearn.interfaces.fmriprep.load_confounds_strategy.html#nilearn.interfaces.fmriprep.load_confounds_strategy)
 >
 > The usage examples:
