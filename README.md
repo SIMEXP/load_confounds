@@ -1,6 +1,16 @@
 # load_confounds
 Load a sensible subset of the fMRI confounds generated with [fMRIprep](https://fmriprep.readthedocs.io/en/stable/) in python (Esteban et al., 2018).
-*Warning*: This package is at a beta stage of development. The API may still be subject to changes.
+> ## :warning: **`load_confounds` is now a new feature in NiLearn 0.9.0**. Development of this project will fully migrate to [NiLearn](https://nilearn.github.io/stable/index.html). Please see the following links for the implementation. :warning: 
+> 
+> New API:
+> - [`nilearn.interfaces.fmriprep.load_confounds`](https://nilearn.github.io/stable/modules/generated/nilearn.interfaces.fmriprep.load_confounds.html#nilearn.interfaces.fmriprep.load_confounds
+> - [`nilearn.interfaces.fmriprep.load_confounds_strategy`](https://nilearn.github.io/stable/modules/generated/nilearn.interfaces.fmriprep.load_confounds_strategy.html#nilearn.interfaces.fmriprep.load_confounds_strategy)
+>
+> The usage examples:
+>- [Temporal filtering with masker](https://nilearn.github.io/stable/manipulating_images/masker_objects.html#temporal-filtering-and-confound-removal)
+>- [Extracting signals on a parcellation](https://nilearn.github.io/stable/connectivity/functional_connectomes.html#extracting-signals-on-a-parcellation)
+>- [Example Gallery: create a connectome](https://nilearn.github.io/stable/auto_examples/03_connectivity/plot_signal_extraction.html#sphx-glr-auto-examples-03-connectivity-plot-signal-extraction-py)
+
 
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/SIMEXP/load_confounds/HEAD?filepath=demo%2Fload_confounds_demo.ipynb) [![All Contributors](https://img.shields.io/badge/all_contributors-10-orange.svg?style=flat-square)](#contributors-) [![collaborate brainhack](https://img.shields.io/badge/collaborate-brainhack-FF69A4.svg)](https://mattermost.brainhack.org/brainhack/channels/fmriprep_denoising) [![Pipy Badge](https://img.shields.io/pypi/v/load_confounds)](https://pypi.org/project/load-confounds/) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/1da186ba5c44489b8af6d96a9c50d3c7)](https://app.codacy.com/gh/SIMEXP/load_confounds?utm_source=github.com&utm_medium=referral&utm_content=SIMEXP/load_confounds&utm_campaign=Badge_Grade_Dashboard) [![Maintainability](https://api.codeclimate.com/v1/badges/ce6f2bf20aa87accaaa4/maintainability)](https://codeclimate.com/github/SIMEXP/load_confounds/maintainability) [![CircleCI](https://circleci.com/gh/SIMEXP/load_confounds.svg?style=svg)](https://circleci.com/gh/SIMEXP/load_confounds) [![codecov](https://codecov.io/gh/SIMEXP/load_confounds/branch/master/graph/badge.svg)](https://codecov.io/gh/SIMEXP/load_confounds) [![black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
